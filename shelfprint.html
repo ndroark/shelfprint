@@ -443,6 +443,7 @@ body.dragging .dropzone,body.dragging .wrap{outline:3px dashed var(--series-1);o
 <script>
 (function(){
 "use strict";
+const VERSION="0.1.1";   // see CHANGELOG.md
 const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const MON=MONTHS.map(m=>m.slice(0,3));
 const $=s=>document.querySelector(s);
@@ -1384,7 +1385,7 @@ function renderFooter(){
     <div>Outside connections: cover links from your sheet <b>${on(CFG.coverUrls)}</b> · cover lookup (Open Library) <b>${on(CFG.coverLookup)}</b>${CFG.coverLookup?` · Google Books <b>${on(CFG.googleBooks)}</b>`:""} · share-image fallback (images.weserv.nl) <b>${on(CFG.exportProxy)}</b> · web font (Google Fonts) <b>${on(CFG.webFont)}</b>${CFG.dataUrl?" · auto-load from your published sheet <b>on</b>":""}. ${LOCKED?"Set by whoever installed this page.":`<button class="linky" type="button" id="foot-set">Change</button>`}</div>
     <div id="unsaved-line" hidden></div>
     ${CFG.coverLookup?`<div>Looked-up covers come from ${OL_LINK}${CFG.googleBooks?` and ${GB_LINK}`:""}.</div>`:""}
-    <div class="foot-brand"><b>Shelfprint</b> · Make something of your reading${TEMPLATE_URL?` · <a href="${esc(TEMPLATE_URL)}" target="_blank" rel="noopener">Get the tracker template</a>`:""}${sourceUrl()?` · <a href="${esc(sourceUrl())}" target="_blank" rel="noopener">About and source</a>`:""}</div>`;
+    <div class="foot-brand"><b>Shelfprint</b> ${VERSION} · Make something of your reading${TEMPLATE_URL?` · <a href="${esc(TEMPLATE_URL)}" target="_blank" rel="noopener">Get the tracker template</a>`:""}${sourceUrl()?` · <a href="${esc(sourceUrl())}" target="_blank" rel="noopener">About and source</a>`:""}</div>`;
   $("#foot-set")?.addEventListener("click",openSettings);
   if(typeof updateUnsavedLine==="function") updateUnsavedLine();
   if($("#forget")) $("#forget").onclick=()=>{ store.del("wrapup:data"); store.del("wrapup:name"); location.hash=""; location.reload(); };

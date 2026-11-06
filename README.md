@@ -76,6 +76,7 @@ Just want to see what it does? On the first screen, click **try it with sample b
 | [Google Sheets template](https://docs.google.com/spreadsheets/d/1dd7IoW6CZ1FUxA6jXaDFAfBWa-cRUX_9D34pGI1SGjk/copy) | The same template for Google Sheets. The link makes a copy in your own Google Drive. |
 | `index.html` | Sends visitors to `shelfprint.html`, so the page opens at the site's main address on GitHub Pages. |
 | `README.md` | This file. |
+| `CHANGELOG.md` | What changed in each version. |
 | `LICENSE` | The MIT License. |
 
 ---
