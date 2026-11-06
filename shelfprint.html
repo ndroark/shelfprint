@@ -428,7 +428,8 @@ body.dragging .dropzone,body.dragging .wrap{outline:3px dashed var(--series-1);o
           <label><input type="radio" name="scount" value="0">All</label></div></fieldset>
         <div id="s-single-opts"><label class="check"><input type="checkbox" id="s-titles" checked>Titles under covers</label>
         <label class="check"><input type="checkbox" id="s-stats" checked>Stats line</label>
-        <label class="check"><input type="checkbox" id="s-ranks">Rank numbers</label></div>
+        <label class="check"><input type="checkbox" id="s-ranks">Rank numbers</label>
+        <label class="check" id="s-filter-f" hidden><input type="checkbox" id="s-filter"><span id="s-filter-l"></span></label></div>
         <label style="display:block;font-size:13px;font-weight:600;margin:14px 0 6px" for="s-handle">Your handle</label>
         <input id="s-handle" class="handle-in" type="text" maxlength="40" spellcheck="false" placeholder="Optional, e.g. @yourname">
 
@@ -617,6 +618,8 @@ const FILTER_KINDS={
   flag:{label:"",test:(b,v)=>!!b[v]}, stars:{label:"rated",test:(b,v)=>b.rating!=null && Math.round(b.rating*2)/2===+v},
   origLang:{label:"originally in",test:(b,v)=>b.origLang===v}
 };
+// Filters whose values can name a person or a private group. Images leave them out unless the reader turns them on.
+const PERSONAL_KINDS=new Set(["rec","found","source"]);
 const FLAG_LABEL={isNew:"by new-to-you authors",bipoc:"by BIPOC authors",reread:"that were rereads",translated:"in translation"};
 const KIND_LABEL={audio:"Audiobook",print:"Print",ebook:"Ebook"};
 const KIND_ORDER=["audio","print","ebook",""];
@@ -934,6 +937,7 @@ function render(){
   renderReport();
   if(FILTER){
     const fb=H("div",{class:"filterbar"},`<span>Showing only books ${filterText(FILTER)}: <b>${finished.length}</b> finished${isYear?" this year":" this month"}.</span>`);
+    if(!isYear){ const y=H("button",{class:"btn small",type:"button"},`Show all of ${esc(YEAR??"the year")}`); y.onclick=()=>go("year"); fb.appendChild(y); }   // keeps the filter
     const c=H("button",{class:"btn small",type:"button"},"Clear filter"); c.onclick=clearFilter; fb.appendChild(c); main.appendChild(fb);
   }
   renderTiles(finished,dnf,isYear);
@@ -1427,7 +1431,11 @@ function openBook(b){
   const dl=[["Series",b.series?`<button class="linky" data-f="series" data-v="${esc(b.series)}">${esc(b.series)}</button>${b.seriesNum?` #${b.seriesNum}`:""}`:""],
     ["Read",[b.start?b.start.toLocaleDateString(undefined,{month:"short",day:"numeric"}):"",b.end?b.end.toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}):""].filter(Boolean).join(" – ")+(b.days?` (${plural(b.days,"day")})`:"")],
     ["Narrator",b.narrator?b.narrator.split(", ").map(n=>`<button class="linky" data-f="narrator" data-v="${esc(n)}">${esc(n)}</button>`).join(", ")+(b.speed&&b.speed!==1?` · at ${b.speed}×`:""):""],
-    ["Translator",esc(b.translator)+(b.origLang?` from ${esc(b.origLang)}`:"")+(b.origTitle?`, <i>${esc(b.origTitle)}</i>`:"")],
+    // A Translator row only for a named translator. Without one, the original language shows only when Language read
+    // says the book was read in another language (never assumed), and an original title shows on its own.
+    ["Translator",b.translator?esc(b.translator)+(b.origLang?` from ${esc(b.origLang)}`:"")+(b.origTitle?`, <i>${esc(b.origTitle)}</i>`:""):""],
+    ["Original language",!b.translator&&b.translated?esc(b.origLang):""],
+    ["Original title",!b.translator&&b.origTitle?`<i>${esc(b.origTitle)}</i>`:""],
     ["Illustrator",esc(b.illustrator)],
     ["Publisher",b.publisher?`<button class="linky" data-f="publisher" data-v="${esc(b.publisher)}">${esc(b.publisher)}</button>${b.imprint?` · ${esc(b.imprint)}`:""}`:""],
     ["Source",b.source?`<button class="linky" data-f="source" data-v="${esc(b.source)}">${esc(b.source)}</button>`:""],
@@ -1645,6 +1653,8 @@ function drawDiamonds(ctx,rating,x,y,size,color){ const r=size/2,step=size*1.12;
     if(rating>=i-0.01){ path(r); ctx.fill(); } else { path(r-ctx.lineWidth/2); ctx.stroke(); if(rating>=i-0.51){ ctx.save(); ctx.beginPath(); ctx.rect(cx-r,cy-r,r,size); ctx.clip(); path(r); ctx.fill(); ctx.restore(); } } } }
 let SHARE=null;
 function openShare(books,title,kicker,mode){ SHARE={books:ranked(books),title,kicker}; WRAP=null;
+  const personal=!!FILTER && PERSONAL_KINDS.has(FILTER.kind);   // off every time the dialog opens, never remembered
+  $("#s-filter-f").hidden=!personal; $("#s-filter").checked=false; if(personal) $("#s-filter-l").innerHTML=`Show “${filterText(FILTER)}” on the image`;
   const r=document.querySelector(`input[name="smode"][value="${mode==="wrapped"&&VIEW==="year"?"wrapped":"single"}"]`); if(r) r.checked=true;
   openModal($("#share")); drawShare(); }
 function syncShareMode(){ const w=wrapMode();
@@ -1679,7 +1689,7 @@ async function drawSingle(){
   ctx.fillStyle=th.ink; ctx.fillText(SHARE.title,pad-3,y+22+mSize*0.98); y+=22+mSize*0.98;
   if(showStats){ const rated=all.filter(b=>b.rating!=null),avg=mean(rated.map(b=>b.rating)); const hrs=all.reduce((a,b)=>a+(b.audio||0),0),pages=all.reduce((a,b)=>a+(b.kind!=="audio"&&b.pages?b.pages:0),0);
     const parts=[plural(all.length,"book")]; if(hrs) parts.push(`${Math.round(hrs).toLocaleString()} hours of audio`); if(pages) parts.push(`${pages.toLocaleString()} pages`); if(avg!=null) parts.push(`${ratingLabel(all)}/5`);
-    if(FILTER) parts.unshift(FILTER.kind==="flag"?({isNew:"New-to-you authors",bipoc:"BIPOC authors",reread:"Rereads",translated:"In translation"})[FILTER.value]:filterText(FILTER).replace(/<[^>]+>/g,""));
+    if(FILTER && (!PERSONAL_KINDS.has(FILTER.kind) || $("#s-filter").checked)) parts.unshift(FILTER.kind==="flag"?({isNew:"New-to-you authors",bipoc:"BIPOC authors",reread:"Rereads",translated:"In translation"})[FILTER.value]:filterText(FILTER).replace(/<[^>]+>/g,""));
     ctx.font=`400 28px ${SANS}`; ctx.fillStyle=th.sec; ctx.fillText(fitText(ctx,parts.join("  ·  "),W-2*pad),pad,y+52); y+=52; }
   y+=fmt==="story"?34:26; ctx.fillStyle=th.rule; ctx.fillRect(pad,y,W-2*pad,2); y+=fmt==="story"?36:26;
   const footH=72, themes=tagCounts(all), newA=new Set(all.filter(b=>b.isNew).map(b=>b.author||b.title)).size, foot=[];
@@ -1716,6 +1726,7 @@ async function drawSingle(){
     if(titles){ const t=tl[i]; ctx.font=`400 ${t.size}px ${SERIF}`; ctx.fillStyle=th.ink; t.lines.forEach((l,k)=>ctx.fillText(l,x,my+dSize/2+10+t.size*0.85+k*t.size*1.22)); } });
   const noUrl=books.filter((b,i)=>!imgs[i]&&!b._hasCover).length, blocked=missing-noUrl;
   const notes=[]; if(showTitles&&!titles) notes.push("Titles are left off above 30 books.");
+  if(showStats && FILTER && PERSONAL_KINDS.has(FILTER.kind) && !$("#s-filter").checked) notes.push("The filter isn't named on the image, because it may name a person.");
   if(!missing) notes.push(`All ${n} covers embedded.`);
   if(noUrl) notes.push(`${noUrl} ${noUrl===1?"book shows a title card":"books show title cards"}: no cover is set up yet.`);
   if(blocked) notes.push(`${blocked} ${blocked===1?"cover's":"covers'"} host wouldn't let ${blocked===1?"it":"them"} into the image${CFG.exportProxy?"":"; the share-image fallback in Settings can fix that"}.`);
