@@ -287,7 +287,7 @@ Open any book and click **Create image card** to make an image about that book. 
 
 The new-author note reads "First book I've read by this author" only for the earliest dated book marked new-to-me by that author; any others say "New-to-me author."
 
-Text is never cut off to fit. If it doesn't fit at a readable size, the card says so and can't be saved until you choose **Edit for card** to shorten it, or make room. If a cover's host won't let it into the image, you can use an image from your device or fetch that one cover through images.weserv.nl, for that card only. If the card could only use a different cover than the one you chose (for example, the Open Library cover still in your sheet's Found cover column), it says so and offers the same choices, or you can keep it. Sizes, looks, and the choices under **Include** are remembered in this browser.
+Text is never cut off to fit. If it doesn't fit at a readable size, the card says so and can't be saved until you choose **Edit for card** to shorten it, or make room. If a cover's host won't let it into the image, you can use an image from your device or fetch that one cover through images.weserv.nl, for that card only. If the card could only use a different cover than the one you chose (for example, the Open Library cover still in your sheet's Found cover column), it says so and offers the same choices, or you can use the cover it found. Your saved cover choice doesn't change. Sizes, looks, and the choices under **Include** are remembered in this browser.
 
 ---
 

@@ -369,7 +369,7 @@ body.dragging .dropzone,body.dragging .wrap{outline:3px dashed var(--series-1);o
 .c-tags input{position:absolute;opacity:0;pointer-events:none}.c-tags label:has(input:checked){background:var(--surface-2);color:var(--text-primary);border-color:var(--text-secondary)}
 .c-tags label:has(input:focus-visible){outline:2px solid var(--series-1);outline-offset:2px}
 .card-notice{background:color-mix(in srgb,var(--series-2) 16%,var(--page));border-radius:8px;padding:10px 12px;font-size:12.5px;max-width:480px}
-.card-notice p{margin:0}.card-notice .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.card-notice p{margin:0}.card-notice .lead{display:block;font-weight:600;margin-bottom:2px}.card-notice .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 #card-canvas{max-width:100%;max-height:68vh;width:auto;height:auto;border-radius:4px;box-shadow:0 4px 18px rgba(0,0,0,.2)}
 .short{display:none}
 @media (max-width:760px){ .long{display:none} .short{display:inline} #set-open{padding:5px 8px}
@@ -442,8 +442,8 @@ body.dragging .dropzone,body.dragging .wrap{outline:3px dashed var(--series-1);o
         <div class="share-status" id="card-status" aria-live="polite"></div>
         <div class="card-notice" id="card-blocked" hidden>
           <p id="card-blocked-msg"></p>
-          <div class="row"><button class="btn small" type="button" data-cardfile>Use an image from this device</button><button class="btn small" type="button" id="card-proxy">Fetch it through images.weserv.nl</button><button class="btn small" type="button" id="card-keep" hidden>Keep this cover</button></div>
-          <p class="hint">For this card only. An image from your device isn’t saved or sent anywhere.<span id="card-proxy-note"> The fetch sends only the image’s address to images.weserv.nl.</span></p>
+          <div class="row"><button class="btn small" type="button" data-cardfile>Choose image from device</button><button class="btn small" type="button" id="card-proxy">Try cover through proxy</button><button class="btn small" type="button" id="card-keep" hidden>Use this cover</button></div>
+          <p class="hint">For this card only; your saved cover preference won’t change. An image from your device isn’t saved or sent anywhere.<span id="card-proxy-note"> The proxy is images.weserv.nl, and it receives only the image’s address.</span></p>
         </div>
         <p class="hint" id="card-own"><button class="linky" type="button" data-cardfile>Use an image from this device for this card</button></p>
         <input type="file" id="card-file" accept="image/*" hidden>
@@ -2154,7 +2154,7 @@ async function drawCard(){
   const img=CARD.img||CARD.proxied||fetched, blocked=!img && b._hasCover;
   // a different cover made it into the image than the one shown on the page: say so, never swap quietly
   const swapped=!!fetched && !CARD.img && !CARD.proxied && !!b._gotUrl && !!b._wantUrl && b._gotUrl!==b._wantUrl;
-  const from=u=>u===b.coverUrl?"your sheet’s Cover URL column":u===b.foundCover?"your sheet’s Found cover column":isGoogleUrl(u)?"Google Books":/openlibrary\.org/.test(u)?"Open Library":"another link for this book";
+  const via=u=>/openlibrary\.org/.test(u)?"Open Library":isGoogleUrl(u)?"Google Books":null;   // who serves the cover in use
   const inc=k=>{ const el=$("#c-inc-"+k); return !!el && el.checked && !el.disabled; };
   const facts=[[inc("genre")&&b.genre,inc("sub")&&cardSubs(b).join(", ")].filter(Boolean).join(" · "), inc("isNew")&&newAuthorLabel(b), inc("reread")&&"Reread",
     inc("length")&&[b.format,b.audio?`${fmt1(b.audio)} hours`:b.pages?`${b.pages.toLocaleString()} pages`:""].filter(Boolean).join(", "),
@@ -2169,17 +2169,20 @@ async function drawCard(){
   CARD.over=res.over;
   const notice=blocked||(swapped&&!CARD.keepSwap);
   $("#card-blocked").hidden=!notice; $("#card-own").hidden=notice; $("#card-keep").hidden=!swapped;
-  $("#card-blocked-msg").textContent=blocked?"This cover’s host won’t let it be copied into an image, so the card shows a title card instead."
-    :`Your chosen cover’s host won’t let it be copied into an image, so this card is using the cover from ${from(b._gotUrl)} instead.`;
-  // offer the fetch only when the Share-image fallback is off and the host hasn't locked settings
-  const proxyOk=!CFG.exportProxy && !LOCKED;
-  $("#card-proxy").hidden=!proxyOk||!!CARD.proxied; $("#card-proxy-note").hidden=!proxyOk;
-  $("#card-proxy").textContent=swapped?"Fetch your chosen cover through images.weserv.nl":"Fetch it through images.weserv.nl";
+  // offer the proxy only when the Share-image fallback is off and the host hasn't locked settings
+  const proxyOk=!CFG.exportProxy && !LOCKED, showProxy=proxyOk&&!CARD.proxied, src=swapped?via(b._gotUrl):null;
+  $("#card-proxy").hidden=!showProxy; $("#card-proxy-note").hidden=!showProxy;
+  $("#card-proxy").textContent=swapped?"Try custom cover through proxy":"Try cover through proxy";
+  $("#card-keep").textContent=src?`Use ${src} cover`:"Use this cover";
+  const m=$("#card-blocked-msg");
+  if(blocked) m.textContent="This cover’s host won’t let it be copied into an image, so the card shows a title card instead.";
+  else { m.innerHTML=""; m.append(H("span",{class:"lead"},"Your custom cover can’t be included in this image."),
+    document.createTextNode(` Shelfprint is showing ${src?`the available ${src} cover`:"another available cover"} instead. ${showProxy?"You can use it, choose an image from your device, or try loading your custom cover through an image proxy.":"You can use it or choose an image from your device."}`)); }
   const notes=[];
   if(res.over) notes.push(radioVal("clayout")==="feature"?"Cover feature only has room for a short note. Choose Standard, or Edit for card to shorten the text."
     :"The text doesn’t fit on this card at a readable size. Choose Edit for card to shorten it, or turn off matrix scores or tags to make room. Text is never cut off to fit, so this card can’t be saved until something changes.");
   if(!res.over && res.smallCover) notes.push("There isn’t much room for the cover at this size. Try Post 4:5 or Story 9:16, turn off some details, or choose Standard.");
-  if(swapped && CARD.keepSwap) notes.push(`Using the cover from ${from(b._gotUrl)}, not the one you chose.`);
+  if(swapped && CARD.keepSwap) notes.push(`Using the ${src?src+" ":""}cover, not your custom cover. Your saved cover preference won’t change.`);
   if(CARD.img) notes.push("Using the image from your device, for this card only.");
   else if(!img && !b._hasCover) notes.push("There’s no cover to use for this book, so the card shows a title card.");
   st.textContent=notes.join(" ");
