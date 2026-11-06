@@ -1990,9 +1990,19 @@ function textKind(t){ t=t.trim(); const marks=(t.match(/[“”"]/g)||[]).length
 const unquote=t=>t.trim().replace(/^[“"]\s*/,"").replace(/\s*[”"]$/,"");
 
 const BC=(()=>{
-  const W=1080, P=80;
+  const W=1080, P=80, MIN_FEATURE_COVER=160;
   const rr=(ctx,x,y,w,h,r)=>{ ctx.beginPath(); ctx.roundRect(x,y,w,h,r); };
-  const wrap=(ctx,text,maxW)=>{ const out=[]; let line=""; for(const w of String(text).split(/\s+/).filter(Boolean)){ const t=line?line+" "+w:w; if(ctx.measureText(t).width>maxW&&line){ out.push(line); line=w; } else line=t; } if(line) out.push(line); return out; };
+  /* A word wider than its line (a long link, an unbroken string, a script written without spaces) is broken between
+     characters, so it wraps inside the card instead of running off it. Graphemes keep accents and emoji whole. */
+  const SEG=typeof Intl!=="undefined"&&Intl.Segmenter?new Intl.Segmenter(undefined,{granularity:"grapheme"}):null;
+  const graphemes=t=>SEG?[...SEG.segment(t)].map(s=>s.segment):Array.from(t);
+  function split(ctx,t,maxW){ if(ctx.measureText(t).width<=maxW) return [t]; const out=[]; let cur="";
+    for(const g of graphemes(t)){ if(cur && ctx.measureText(cur+g).width>maxW){ out.push(cur); cur=g; } else cur+=g; }
+    if(cur) out.push(cur); return out; }
+  const wrap=(ctx,text,maxW)=>{ const out=[]; let line="";
+    for(const w0 of String(text).split(/\s+/).filter(Boolean)) split(ctx,w0,maxW).forEach((w,i)=>{
+      const t=line&&!i?line+" "+w:w; if((i||ctx.measureText(t).width>maxW)&&line){ out.push(line); line=w; } else line=t; });
+    if(line) out.push(line); return out; };
   const spaced=(ctx,t,x,y,ls=5)=>{ if("letterSpacing" in ctx) ctx.letterSpacing=ls+"px"; ctx.fillText(t,x,y); const w=ctx.measureText(t).width; if("letterSpacing" in ctx) ctx.letterSpacing="0px"; return w; };
   const diamonds=(ctx,r,x,y,s,c)=>{ drawDiamonds(ctx,r,x,y,s,c); return 4*s*1.12+s; };
   const fmtR=r=>String(Math.round(r*100)/100);
@@ -2004,18 +2014,40 @@ const BC=(()=>{
       if(mode==="mixed" && /[”"][)\].,;:!?…]*$/.test(w) && !/^[“"][)\].,;:!?…]*$/.test(w)) it=false; }));
     return out; }
   function layout(ctx,words,maxW,size){ const lines=[]; let line=[], x=0; const f=it=>`${it?"italic ":""}400 ${size}px ${SERIF}`;
-    for(const w of words){ if(w.para){ if(line.length) lines.push(line); lines.push(null); line=[]; x=0; }
-      ctx.font=f(w.it); const ww=ctx.measureText(w.t).width, sp=line.length?ctx.measureText(" ").width:0;
-      if(line.length && x+sp+ww>maxW){ lines.push(line); line=[]; x=0; }
-      const at=line.length?x+sp:0; line.push({t:w.t,it:w.it,x:at}); x=at+ww; }
+    for(const w0 of words){ ctx.font=f(w0.it);
+      split(ctx,w0.t,maxW).forEach((t,i)=>{ const w={t,it:w0.it};
+        if(!i && w0.para){ if(line.length) lines.push(line); lines.push(null); line=[]; x=0; }
+        const ww=ctx.measureText(t).width, sp=line.length?ctx.measureText(" ").width:0;
+        if(line.length && (i || x+sp+ww>maxW)){ lines.push(line); line=[]; x=0; }   // the rest of a broken word starts a new line
+        const at=line.length?x+sp:0; line.push({t,it:w.it,x:at}); x=at+ww; }); }
     if(line.length) lines.push(line); return lines; }
   const height=(L,s,lh)=>L.reduce((a,l)=>a+(l?s*lh:s*lh*.55),0);
   function drawAt(ctx,L,x,y,s,lh,color,center){ ctx.fillStyle=color; let yy=y;
     for(const l of L){ if(!l){ yy+=s*lh*.55; continue; } yy+=s*lh; let ox=x;
-      if(center){ ctx.font=`400 ${s}px ${SERIF}`; const last=l[l.length-1]; ctx.font=`${last.it?"italic ":""}400 ${s}px ${SERIF}`; ox=x+(center-(last.x+ctx.measureText(last.t).width))/2; }
+      if(center){ const last=l[l.length-1]; ctx.font=`${last.it?"italic ":""}400 ${s}px ${SERIF}`; ox=x+(center-(last.x+ctx.measureText(last.t).width))/2; }
       l.forEach(w=>{ ctx.font=`${w.it?"italic ":""}400 ${s}px ${SERIF}`; ctx.fillText(w.t,ox+w.x,yy-s*(lh-1)-s*.18); }); }
     return yy; }
   function fitTo(ctx,words,w,h,max,min,lh){ for(let s=max;s>=min;s-=2){ const L=layout(ctx,words,w,s); if(height(L,s,lh)<=h) return {L,s}; } return null; }
+  /* The quotation's credit wraps like any other text: "— Author," in the sans, the source work in italics. */
+  const AF=`400 26px ${SANS}`, BF=`italic 400 29px ${SERIF}`, ALH=38;
+  function attrLines(ctx,who,from,maxW){
+    const toks=[], add=(s,f)=>String(s).split(/\s+/).filter(Boolean).forEach(t=>{ ctx.font=f; split(ctx,t,maxW).forEach((p,i)=>toks.push({t:p,f,brk:i>0})); });
+    if(who) add(`— ${who}${from?",":""}`,AF); else add("—",AF); if(from) add(from,BF);
+    const lines=[]; let line=[], x=0;
+    for(const k of toks){ ctx.font=k.f; const ww=ctx.measureText(k.t).width; ctx.font=AF; const sp=line.length?ctx.measureText(" ").width:0;
+      if(line.length && (k.brk || x+sp+ww>maxW)){ lines.push(line); line=[]; x=0; }
+      const at=line.length?x+sp:0; line.push({...k,x:at,w:ww}); x=at+ww; }
+    if(line.length) lines.push(line); return lines; }
+  function drawAttr(ctx,lines,x,y,color,centerW){ ctx.fillStyle=color;
+    lines.forEach((l,i)=>{ const lw=l[l.length-1].x+l[l.length-1].w, ox=centerW?x+(centerW-lw)/2:x; l.forEach(k=>{ ctx.font=k.f; ctx.fillText(k.t,ox+k.x,y+30+i*ALH); }); });
+    return y+lines.length*ALH; }
+  /* Tags wrap onto up to three rows. Any that still don't fit are named, and the card can't be saved until the reader
+     turns some off: a chosen tag never just disappears. */
+  function chipRows(ctx,tags,maxW,rowsMax=3){ ctx.font=`400 26px ${SANS}`; const rows=[[]], left=[]; let x=0;
+    for(const t of tags){ const w=ctx.measureText(t).width+34; if(w>maxW){ left.push(t); continue; }
+      if(x && x+w>maxW){ if(rows.length===rowsMax){ left.push(t); continue; } rows.push([]); x=0; }
+      rows[rows.length-1].push([t,x,w]); x+=w+12; }
+    return {rows:rows.filter(r=>r.length),left}; }
 
   function cover(ctx,b,img,bx,by,bw,bh){
     const iw=img?img.naturalWidth||img.width:2, ih=img?img.naturalHeight||img.height:3, s=Math.min(bw/iw,bh/ih), w=iw*s, h=ih*s, x=bx+(bw-w)/2, y=by, r=Math.max(4,w*.025);
@@ -2023,82 +2055,98 @@ const BC=(()=>{
     ctx.save(); rr(ctx,x,y,w,h,r); ctx.clip();
     if(img) ctx.drawImage(img,x,y,w,h);
     else { ctx.fillStyle="#fff"; let fs=Math.round(w/7); ctx.font=`400 ${fs}px ${SERIF}`;
-      const longW=()=>Math.max(...b.short.split(/\s+/).map(t=>ctx.measureText(t).width)); while(longW()>w*.8&&fs>12){ fs--; ctx.font=`400 ${fs}px ${SERIF}`; }
-      wrap(ctx,b.short,w*.8).slice(0,7).forEach((l,k)=>ctx.fillText(l,x+w*.1,y+w*.14+fs+k*fs*1.14));
+      while(fs>9 && wrap(ctx,b.short,w*.8).length*fs*1.14>h-w*.36){ fs--; ctx.font=`400 ${fs}px ${SERIF}`; }   // the placeholder's title shrinks to fit the cover
+      wrap(ctx,b.short,w*.8).forEach((l,k)=>ctx.fillText(l,x+w*.1,y+w*.14+fs+k*fs*1.14));
       ctx.font=`600 ${Math.round(w/15)}px ${SANS}`; ctx.globalAlpha=.9; ctx.fillText(fitText(ctx,b.author.toUpperCase(),w*.8),x+w*.1,y+h-w*.1); ctx.globalAlpha=1; }
     const g=ctx.createLinearGradient(x,0,x+w*.07,0); g.addColorStop(0,"rgba(0,0,0,.20)"); g.addColorStop(.4,"rgba(255,255,255,.08)"); g.addColorStop(1,"rgba(0,0,0,0)"); ctx.fillStyle=g; ctx.fillRect(x,y,w*.07,h); ctx.restore();
     rr(ctx,x+.5,y+.5,w-1,h-1,r); ctx.strokeStyle="rgba(0,0,0,.16)"; ctx.lineWidth=1.5; ctx.stroke();   // keeps a pale cover's edge on Paper
     return {x,y,w,h}; }
+  // a title is fitted whole: smaller type for a long one, never cut off after a set number of lines
+  function titleLines(ctx,title,maxW,max,min,most){ let s=max; ctx.font=`400 ${s}px ${SERIF}`; let L=wrap(ctx,title,maxW);
+    while(L.length>most && s>min){ s-=2; ctx.font=`400 ${s}px ${SERIF}`; L=wrap(ctx,title,maxW); } return {L,s}; }
 
   function render(cv,o){
     const H=CARD_H[o.size], th=CARD_THEME[o.look], b=o.b, story=o.size==="story";
     const T=P+(story?110:0), FOOT=H-P-60-(story?150:0);   // a story keeps clear of the app's own buttons at top and bottom
     cv.width=W; cv.height=H; const ctx=cv.getContext("2d"); ctx.textBaseline="alphabetic"; ctx.textAlign="left";
+    // Every piece of text drawn above the footer is measured as it's drawn. Anything past the card's margins or into
+    // the footer makes the card unsaveable: a last check that nothing selected is lost off an edge.
+    const marks=[], covers=[];
+    ctx.fillText=function(t,x,y){ const m=CanvasRenderingContext2D.prototype.measureText.call(this,t), a=this.textAlign, l=a==="center"?x-m.width/2:a==="right"?x-m.width:x;
+      marks.push({l,r:l+m.width,b:y+(m.actualBoundingBoxDescent||0)}); return CanvasRenderingContext2D.prototype.fillText.apply(this,arguments); };
     ctx.fillStyle=th.bg; ctx.fillRect(0,0,W,H);
     if(th.glow){ const g=ctx.createRadialGradient(W*.3,H*.22,40,W*.3,H*.22,W*.9); g.addColorStop(0,th.glow); g.addColorStop(1,th.bg); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); }
     if(o.kicker){ ctx.font=`600 24px ${SANS}`; ctx.fillStyle=th.muted; spaced(ctx,o.kicker.toUpperCase(),P,T+24); }
-    let over=false, used=0, bandTop=0, size=0, smallCover=false;
-    const facts=o.facts;
-    const top=T+76;
+    const why=new Set(); let used=0, bandTop=0, size=0, smallCover=false, lostTags=[];
+    const facts=o.facts, top=T+76;
     if(o.layout==="feature"){
-      const bottom=FOOT-56; ctx.font=`400 62px ${SERIF}`; const tl=wrap(ctx,b.title,W-2*P).slice(0,3), titleH=tl.length*66;
-      let note=null; if(o.text){ const wd=runs(o.text,o.kind==="quote"?"quote":o.kind==="mixed"?"mixed":"review"); note=fitTo(ctx,wd,W-2*P-80,story?320:180,50,38,1.25); if(!note) over=true; }
-      ctx.font=`400 28px ${SANS}`; const fl=facts.length?wrap(ctx,facts.join("  ·  "),W-2*P):[];
-      const isQuote=o.kind==="quote"&&!!note, attrLine=isQuote&&(o.attr[0]||o.attr[1]);
-      const under=48+titleH+52+(o.rating!=null?62:0)+(fl.length?18+fl.length*40:0)+(note?36+height(note.L,note.s,1.25):0)+(isQuote?70:0)+(attrLine?50:0);
+      const bottom=FOOT-56, cw=W-2*P;
+      const tt=titleLines(ctx,b.title,cw,62,40,3), tlh=tt.s*1.06, titleH=tt.L.length*tlh;
+      ctx.font=`400 32px ${SANS}`; const al=wrap(ctx,b.author,cw);
+      let note=null; if(o.text){ const wd=runs(o.text,o.kind==="quote"?"quote":o.kind==="mixed"?"mixed":"review"); note=fitTo(ctx,wd,cw-80,story?320:180,50,38,1.25); if(!note) why.add("text"); }
+      ctx.font=`400 28px ${SANS}`; const fl=facts.length?wrap(ctx,facts.join("  ·  "),cw):[];
+      const isQuote=o.kind==="quote"&&!!note, attr=isQuote&&(o.attr[0]||o.attr[1])?attrLines(ctx,o.attr[0],o.attr[1],cw-80):null;
+      const under=48+titleH+12+al.length*40+(o.rating!=null?62:0)+(fl.length?18+fl.length*40:0)+(note?36+height(note.L,note.s,1.25):0)+(isQuote?70:0)+(attr?14+attr.length*ALH:0);
       const img=o.img, iw=img?img.naturalWidth||img.width:2, ih=img?img.naturalHeight||img.height:3;
-      const boxH=Math.max(200,Math.min(story?980:760,bottom-top-under)), s=Math.min((W-2*P)/iw,boxH/ih), groupH=ih*s+under, y0=top+Math.max(0,(bottom-top-groupH)/2);
-      const cb=cover(ctx,b,img,P,y0,W-2*P,ih*s); smallCover=cb.h<300;
-      let y=cb.y+cb.h+48; ctx.textAlign="center"; ctx.fillStyle=th.ink; ctx.font=`400 62px ${SERIF}`; tl.forEach((l,k)=>ctx.fillText(l,W/2,y+52+k*66)); y+=titleH;
-      ctx.font=`400 32px ${SANS}`; ctx.fillStyle=th.sec; ctx.fillText(b.author,W/2,y+40); y+=52;
+      // the cover gets whatever height the rest leaves; if that's too little, the card says so instead of overlapping the footer
+      const room=bottom-top-under; if(room<MIN_FEATURE_COVER) why.add("feature");
+      const boxH=Math.max(1,Math.min(story?980:760,room)), s=Math.min(cw/iw,boxH/ih), groupH=ih*s+under, y0=top+Math.max(0,(bottom-top-groupH)/2);
+      const cb=cover(ctx,b,img,P,y0,cw,ih*s); covers.push(cb); smallCover=cb.h<300;
+      let y=cb.y+cb.h+48; ctx.textAlign="center"; ctx.fillStyle=th.ink; ctx.font=`400 ${tt.s}px ${SERIF}`; tt.L.forEach((l,k)=>ctx.fillText(l,W/2,y+tt.s*.84+k*tlh)); y+=titleH+12;
+      ctx.font=`400 32px ${SANS}`; ctx.fillStyle=th.sec; al.forEach(l=>{ y+=40; ctx.fillText(l,W/2,y-6); });
       if(o.rating!=null){ ctx.textAlign="left"; const dw=4*36*1.12+36; ctx.font=`400 28px ${SANS}`; const lab=`${fmtR(o.rating)}/5`, tw=ctx.measureText(lab).width, x=(W-(dw+14+tw))/2;
         diamonds(ctx,o.rating,x,y+38,36,th.accent); ctx.fillStyle=th.sec; ctx.fillText(lab,x+dw+14,y+49); y+=62; ctx.textAlign="center"; }
       if(fl.length){ ctx.font=`400 28px ${SANS}`; ctx.fillStyle=th.sec; y+=18; fl.forEach(l=>{ y+=40; ctx.fillText(l,W/2,y-8); }); }
       ctx.textAlign="left";
       if(note){ y+=36;
         if(isQuote){ ctx.textAlign="center"; ctx.font=`400 150px ${SERIF}`; ctx.fillStyle=th.accent; ctx.fillText("“",W/2,y+104); ctx.textAlign="left"; y+=70; }   // centered above the quotation, pull-quote style
-        y=drawAt(ctx,note.L,P+40,y,note.s,1.25,th.ink,W-2*P-80);
-        if(attrLine){ const a=`— ${o.attr[0]}${o.attr[0]&&o.attr[1]?", ":""}`; ctx.font=`400 26px ${SANS}`; const aw=ctx.measureText(a).width; ctx.font=`italic 400 29px ${SERIF}`; const fw=ctx.measureText(o.attr[1]).width, x0=(W-aw-fw)/2;
-          ctx.font=`400 26px ${SANS}`; ctx.fillStyle=th.sec; ctx.fillText(a,x0,y+44); ctx.font=`italic 400 29px ${SERIF}`; ctx.fillText(o.attr[1],x0+aw,y+44); } }
+        y=drawAt(ctx,note.L,P+40,y,note.s,1.25,th.ink,cw-80);
+        if(attr) drawAttr(ctx,attr,P+40,y+14,th.sec,cw-80); }
     } else {
-      const top2=top+(o.dy||0), cb=cover(ctx,b,o.img,P,top2,300,450), rx=P+352, rw=W-P-rx;
-      let ts=64; ctx.font=`400 ${ts}px ${SERIF}`; let tl=wrap(ctx,b.title,rw); while(tl.length>3&&ts>42){ ts-=4; ctx.font=`400 ${ts}px ${SERIF}`; tl=wrap(ctx,b.title,rw); }
-      tl=tl.slice(0,4); ctx.fillStyle=th.ink; tl.forEach((l,k)=>ctx.fillText(l,rx-2,top2+ts*.86+k*ts*1.06)); let y=top2+ts*.86+(tl.length-1)*ts*1.06;
+      const top2=top+(o.dy||0), cb=cover(ctx,b,o.img,P,top2,300,450), rx=P+352, rw=W-P-rx; covers.push(cb);
+      const tt=titleLines(ctx,b.title,rw,64,40,3), tlh=tt.s*1.06; ctx.fillStyle=th.ink; ctx.font=`400 ${tt.s}px ${SERIF}`;
+      tt.L.forEach((l,k)=>ctx.fillText(l,rx-2,top2+tt.s*.86+k*tlh)); let y=top2+tt.s*.86+(tt.L.length-1)*tlh;
       ctx.font=`400 32px ${SANS}`; ctx.fillStyle=th.sec; y+=50; wrap(ctx,b.author,rw).forEach((l,k)=>{ if(k) y+=40; ctx.fillText(l,rx,y); });
       if(o.rating!=null){ y+=58; const dw=diamonds(ctx,o.rating,rx,y-11,36,th.accent); ctx.font=`400 28px ${SANS}`; ctx.fillStyle=th.sec; ctx.fillText(`${fmtR(o.rating)}/5`,rx+dw+14,y); }
       if(facts.length){ ctx.font=`400 28px ${SANS}`; ctx.fillStyle=th.sec; y+=24; facts.forEach(f=>wrap(ctx,f,rw).forEach(l=>{ y+=40; ctx.fillText(l,rx,y); })); }
       // matrix and tags sit in a band above the footer, under the reader's words
       let band=FOOT-40;
-      if(o.tags.length){ ctx.font=`400 26px ${SANS}`; const chips=[]; let x=P; for(const t of o.tags){ const w=ctx.measureText(t).width+34; if(x+w>W-P) break; chips.push([t,x,w]); x+=w+12; }
-        band-=46; chips.forEach(([t,x,w])=>{ ctx.fillStyle=th.chip; rr(ctx,x,band,w,46,23); ctx.fill(); ctx.fillStyle=th.chipInk; ctx.fillText(t,x+17,band+32); }); band-=26; }
-      if(o.matrix){ const rows=o.matrix, gap=rows.length>5?10:16, cw=(W-2*P-gap*(rows.length-1))/rows.length; band-=152;
+      if(o.tags.length){ const cr=chipRows(ctx,o.tags,W-2*P); lostTags=cr.left; if(lostTags.length) why.add("tags");
+        band-=cr.rows.length*46+(cr.rows.length-1)*10; ctx.font=`400 26px ${SANS}`;
+        cr.rows.forEach((row,ri)=>row.forEach(([t,x,w])=>{ const yy=band+ri*56; ctx.fillStyle=th.chip; rr(ctx,P+x,yy,w,46,23); ctx.fill(); ctx.fillStyle=th.chipInk; ctx.fillText(t,P+x+17,yy+32); }));
+        band-=26; }
+      if(o.matrix){ const rows=o.matrix, gap=rows.length>5?10:16, mw=(W-2*P-gap*(rows.length-1))/rows.length; band-=152;
         ctx.font=`600 22px ${SANS}`; ctx.fillStyle=th.muted; spaced(ctx,"MY MATRIX",P,band+22,4);
         if(o.avg!=null){ ctx.textAlign="right"; ctx.font=`600 24px ${SANS}`; ctx.fillStyle=th.ink; ctx.fillText(`average ${fmt1(o.avg)}`,W-P,band+22); ctx.textAlign="left"; }
-        rows.forEach(([lab,v],i)=>{ const x=P+i*(cw+gap), yy=band+44; ctx.fillStyle=th.chip; rr(ctx,x,yy,cw,108,12); ctx.fill();
-          ctx.font=`400 23px ${SANS}`; ctx.fillStyle=th.sec; ctx.fillText(fitText(ctx,lab,cw-24),x+14,yy+34);
+        rows.forEach(([lab,v],i)=>{ const x=P+i*(mw+gap), yy=band+44; ctx.fillStyle=th.chip; rr(ctx,x,yy,mw,108,12); ctx.fill();
+          ctx.font=`400 23px ${SANS}`; ctx.fillStyle=th.sec; ctx.fillText(fitText(ctx,lab,mw-24),x+14,yy+34);
           ctx.font=`400 44px ${SERIF}`; ctx.fillStyle=th.ink; ctx.fillText(fmtR(v),x+14,yy+82);
-          ctx.fillStyle=th.track; rr(ctx,x+14,yy+92,cw-28,6,3); ctx.fill(); ctx.fillStyle=th.accent; rr(ctx,x+14,yy+92,(cw-28)*v/5,6,3); ctx.fill(); });
+          ctx.fillStyle=th.track; rr(ctx,x+14,yy+92,mw-28,6,3); ctx.fill(); ctx.fillStyle=th.accent; rr(ctx,x+14,yy+92,(mw-28)*v/5,6,3); ctx.fill(); });
         band-=18; }
       const wt=Math.max(cb.y+cb.h,y)+64, wb=band-28, w=W-2*P, h=wb-wt;
       used=Math.max(cb.y+cb.h,y); bandTop=wb;
+      if(y>wb+28) why.add("bounds");   // the title block itself reaches into the band or footer
       // the second pass keeps the size chosen in the first, so moving the block down can't change the type size
       const fit=(ctx,wd,w,h,max,min,lh)=>o.size2?{L:layout(ctx,wd,w,o.size2),s:o.size2}:fitTo(ctx,wd,w,h,max,min,lh);
       const draw=(...a)=>{ const e=drawAt(...a); used=Math.max(used,e); return e; };
-      if(o.text){ const mode=o.kind==="quote"?"quote":o.kind==="mixed"?"mixed":"review", wd=runs(o.text,mode);
-        if(o.kind==="quote"){ const ind=84, attr=o.attr[0]||o.attr[1]; const f=fit(ctx,wd,w-ind,h-(attr?70:0)-20,44,34,1.42);
-          if(!f) over=true; else { size=f.s; ctx.font=`400 170px ${SERIF}`; ctx.fillStyle=th.accent; ctx.fillText("“",P-10,wt+112);
+      if(o.text && h>0){ const mode=o.kind==="quote"?"quote":o.kind==="mixed"?"mixed":"review", wd=runs(o.text,mode);
+        if(o.kind==="quote"){ const ind=84, attr=o.attr[0]||o.attr[1]?attrLines(ctx,o.attr[0],o.attr[1],w-ind):null, ah=attr?14+attr.length*ALH:0;
+          const f=fit(ctx,wd,w-ind,h-ah-20,44,34,1.42);
+          if(!f) why.add("text"); else { size=f.s; ctx.font=`400 170px ${SERIF}`; ctx.fillStyle=th.accent; ctx.fillText("“",P-10,wt+112);
             const yy=draw(ctx,f.L,P+ind,wt+8,f.s,1.42,th.ink);
-            if(attr){ ctx.font=`400 26px ${SANS}`; ctx.fillStyle=th.sec; const a=`— ${o.attr[0]}${o.attr[0]&&o.attr[1]?", ":""}`; ctx.fillText(a,P+ind,yy+46);
-              const aw=ctx.measureText(a).width; ctx.font=`italic 400 29px ${SERIF}`; ctx.fillText(o.attr[1],P+ind+aw,yy+46); used=Math.max(used,yy+56); } } }
+            if(attr) used=Math.max(used,drawAttr(ctx,attr,P+ind,yy+14,th.sec)); } }
         else if(mode==="review" && !/\n/.test(o.text) && o.text.split(/\s+/).length<=30){ const f=fit(ctx,wd,w,h,68,50,1.22);
-          if(!f) over=true; else { size=f.s; draw(ctx,f.L,P,wt+(h-height(f.L,f.s,1.22))/2,f.s,1.22,th.ink); } }
-        else { const f=fit(ctx,wd,w,h,46,34,1.45); if(!f) over=true; else { size=f.s; draw(ctx,f.L,P,wt,f.s,1.45,th.ink); } } }
+          if(!f) why.add("text"); else { size=f.s; draw(ctx,f.L,P,wt+(h-height(f.L,f.s,1.22))/2,f.s,1.22,th.ink); } }
+        else { const f=fit(ctx,wd,w,h,46,34,1.45); if(!f) why.add("text"); else { size=f.s; draw(ctx,f.L,P,wt,f.s,1.45,th.ink); } } }
+      else if(o.text) why.add("text");
     }
+    delete ctx.fillText;   // the footer itself isn't checked against the footer
+    if(marks.some(m=>m.l<P-16||m.r>W-P+4||m.b>FOOT-6) || covers.some(c=>c.y+c.h>FOOT-6)) why.add("bounds");
     // footer: the optional credit on the left, the reader's handle on the right
     ctx.fillStyle=th.rule; ctx.fillRect(P,FOOT,W-2*P,2); const fy=FOOT+60;
     if(o.credit){ ctx.font=`400 31px ${SERIF}`; ctx.fillStyle=th.muted; ctx.fillText("Shelfprint",P,fy); }
     if(o.handle){ ctx.textAlign="right"; ctx.font=`600 28px ${SANS}`; ctx.fillStyle=th.ink; ctx.fillText(fitText(ctx,o.handle,W-2*P-(o.credit?220:0)),W-P,fy); ctx.textAlign="left"; }
-    return {over,used,bandTop,size,smallCover};
+    return {over:why.size>0,why:[...why],lostTags,used,bandTop,size,smallCover};
   }
   // Standard: when a card has room to spare (a short note, or the tall story size), center the block vertically
   function renderCard(cv,o){
@@ -2186,8 +2234,13 @@ async function drawCard(){
   else { m.innerHTML=""; m.append(H("span",{class:"lead"},"Your custom cover can’t be included in this image."),
     document.createTextNode(` Shelfprint is showing ${src?`the available ${src} cover`:"another available cover"} instead. ${showProxy?"You can use it, choose an image from your device, or try loading your custom cover through an image proxy.":"You can use it or choose an image from your device."}`)); }
   const notes=[];
-  if(res.over) notes.push(radioVal("clayout")==="feature"?"Cover feature only has room for a short note. Choose Standard, or Edit for card to shorten the text."
-    :"The text doesn’t fit on this card at a readable size. Choose Edit for card to shorten it, or turn off matrix scores or tags to make room. Text is never cut off to fit, so this card can’t be saved until something changes.");
+  const feat=radioVal("clayout")==="feature";
+  if(res.why.includes("text")) notes.push(feat?"Cover feature only has room for a short note. Choose Standard, or Edit for card to shorten the text."
+    :"The text doesn’t fit on this card at a readable size. Choose Edit for card to shorten it, or turn off matrix scores or tags to make room.");
+  if(res.why.includes("feature")) notes.push("Cover feature doesn’t have room for all of this at this size. Try Post 4:5 or Story 9:16, turn off some details, shorten the text, or choose Standard.");
+  if(res.why.includes("tags")) notes.push(`${res.lostTags.length===1?"This selected tag doesn’t":"These selected tags don’t"} fit: ${res.lostTags.join(", ")}. Turn some tags off to choose which ones appear.`);
+  if(res.why.includes("bounds") && !res.why.some(w=>w!=="bounds")) notes.push("Something on this card would run past its edges or into the footer. Try another size, or turn off some details.");
+  if(res.over) notes.push("Nothing is cut off to fit, so this card can’t be saved until something changes.");
   if(!res.over && res.smallCover) notes.push("There isn’t much room for the cover at this size. Try Post 4:5 or Story 9:16, turn off some details, or choose Standard.");
   if(swapped && CARD.keepSwap) notes.push(`Using the ${src?src+" ":""}cover, not your custom cover. Your saved cover preference won’t change.`);
   if(CARD.img) notes.push("Using the image from your device, for this card only.");

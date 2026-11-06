@@ -16,6 +16,7 @@ Shelfprint uses [semantic versioning](https://semver.org): the middle number goe
 - An optional name or handle, and the word "Shelfprint" in small type, which you can turn off.
 - If a cover can't be copied into the image, use an image from your device, or fetch that one cover through images.weserv.nl, for that card only. If the card could only use a different cover than the one you chose, such as the one in your sheet's Found cover column, it says so instead of swapping quietly.
 - Covers are shown whole, never cropped, whatever their shape.
+- Nothing on a card is cut off: titles print whole, long words and text without spaces wrap, quotation credits wrap, and tags wrap onto up to three rows. If something still doesn't fit, the card names it and can't be saved until something changes. As a last check, any text that would run past the card's edges or into the footer also keeps the card from being saved.
 
 ## 0.3.0 — 2026-11-06
 
