@@ -1953,14 +1953,18 @@ const CARD_THEME={
   dark:{bg:"#151412",ink:"#f3f0e9",sec:"#d2cec2",muted:"#b3afa3",accent:"#eba582",rule:"#3f3d37",chip:"#2a2925",chipInk:"#e2ded2",track:"#34322d",glow:"#24211c"}};
 const CARD_PERSONAL=[["source","Source"],["found","How I found it"],["rec","Recommended by"]];
 const CARD_INC=[   // [key, label, available for this book?]   defaults: see cardPrefs()
-  ["rating","Rating",b=>b.rating!=null],["genre","Genre",b=>!!b.genre],["date","When I read it",b=>cardKickerDate(b)!=null,"no date in your sheet"],
+  ["rating","Rating",b=>b.rating!=null],["sub",b=>["Sub-genres",cardSubs(b).join(", ")],b=>cardSubs(b).length>0],["genre",b=>["Genre",b.genre],b=>!!b.genre],["date","When I read it",b=>cardKickerDate(b)!=null,"no date in your sheet"],
   ["isNew",b=>newAuthorLabel(b),b=>b.isNew],["reread","Reread",b=>b.reread],["matrix","Matrix scores",b=>b.hasMatrix],
   ["length","Format and length",b=>!!(b.format||b.pages||b.audio)],["tags","Tags",b=>b.tags.length>0]];
+// Sub-genres without any that just repeat the Genre, so a card never says "Fiction · Fiction"
+const cardSubs=b=>subsOf(b).filter(x=>x.toLowerCase()!==String(b.genre||"").toLowerCase());
+/* Genre and Sub-genres follow each book, not the last card: sub-genres when it has them, otherwise genre */
+const CARD_PER_BOOK={sub:b=>cardSubs(b).length>0,genre:b=>!cardSubs(b).length};
 let CARD=null;   // the open card: {b, img (from this device), proxied, kindSet, layoutSet, tags:Set, blob, over}
 const CARD_EXCERPTS=new Map();   // "Edit for card" text typed this visit, by book; never saved
 function cardPrefs(){ const d={size:"portrait",look:"light",credit:true,inc:{rating:true,genre:true,date:true,isNew:true,reread:true,matrix:false,length:false,tags:false}};
   try{ const s=JSON.parse(store.get("wrapup:card-prefs")||"{}"); return {...d,...s,inc:{...d.inc,...(s.inc||{})}}; }catch(e){ return d; } }
-function saveCardPrefs(){ const inc={}; CARD_INC.forEach(([k])=>{ const el=$("#c-inc-"+k); if(el && !el.disabled) inc[k]=el.checked; });
+function saveCardPrefs(){ const inc={}; CARD_INC.forEach(([k])=>{ const el=$("#c-inc-"+k); if(el && !el.disabled && !CARD_PER_BOOK[k]) inc[k]=el.checked; });
   const old=cardPrefs(); store.set("wrapup:card-prefs",JSON.stringify({size:radioVal("csize"),look:radioVal("clook"),credit:$("#c-credit").checked,inc:{...old.inc,...inc}})); }
 const radioVal=n=>document.querySelector(`input[name="${n}"]:checked`)?.value;
 const setRadio=(n,v)=>{ const el=document.querySelector(`input[name="${n}"][value="${v}"]`); if(el) el.checked=true; };
@@ -2115,8 +2119,9 @@ function openCard(b){
   $("#c-excerpt").value=CARD_EXCERPTS.get(bookKey(b))??b.thoughts.trim(); $("#c-excerpt-f").hidden=true;
   $("#c-attr-who").value=b.author; $("#c-attr-from").value=b.short;
   // what to include: only what this book has; personal details always start off
-  $("#c-inc").innerHTML=CARD_INC.filter(([,,av,why])=>av(b)||why).map(([k,lab,av,why])=>{ const ok=av(b), l=typeof lab==="function"?lab(b):lab;
-    return `<label class="check${ok?"":" off"}"><input type="checkbox" id="c-inc-${k}"${ok&&p.inc[k]?" checked":""}${ok?"":" disabled"}>${esc(l)}${ok?"":` <span class="val">(${why})</span>`}</label>`+
+  $("#c-inc").innerHTML=CARD_INC.filter(([,,av,why])=>av(b)||why).map(([k,lab,av,why])=>{ const ok=av(b), l=typeof lab==="function"?lab(b):lab, on=CARD_PER_BOOK[k]?CARD_PER_BOOK[k](b):p.inc[k];
+    const text=Array.isArray(l)?`${esc(l[0])}: <span class="val">${esc(l[1])}</span>`:esc(l);
+    return `<label class="check${ok?"":" off"}"><input type="checkbox" id="c-inc-${k}"${ok&&on?" checked":""}${ok?"":" disabled"}>${text}${ok?"":` <span class="val">(${why})</span>`}</label>`+
       (k==="tags"?`<div class="c-tags" id="c-tags" hidden>${b.tags.map((t,i)=>`<label><input type="checkbox" value="${esc(t)}"${CARD.tags.has(t)?" checked":""}>${esc(t)}</label>`).join("")}</div>`:""); }).join("");
   const pers=CARD_PERSONAL.filter(([k])=>b[k]); $("#c-personal-f").hidden=!pers.length;
   $("#c-personal").innerHTML=pers.map(([k,lab])=>`<label class="check"><input type="checkbox" id="c-p-${k}">${lab}: <span class="val">${esc(b[k])}</span></label>`).join("");
@@ -2147,7 +2152,7 @@ async function drawCard(){
   const fetched=CARD.img||CARD.proxied?null:await exportImage(b); if(token!==drawCard.token) return;
   const img=CARD.img||CARD.proxied||fetched, blocked=!img && b._hasCover;
   const inc=k=>{ const el=$("#c-inc-"+k); return !!el && el.checked && !el.disabled; };
-  const facts=[inc("genre")&&b.genre, inc("isNew")&&newAuthorLabel(b), inc("reread")&&"Reread",
+  const facts=[[inc("genre")&&b.genre,inc("sub")&&cardSubs(b).join(", ")].filter(Boolean).join(" · "), inc("isNew")&&newAuthorLabel(b), inc("reread")&&"Reread",
     inc("length")&&[b.format,b.audio?`${fmt1(b.audio)} hours`:b.pages?`${b.pages.toLocaleString()} pages`:""].filter(Boolean).join(", "),
     ...CARD_PERSONAL.filter(([k])=>$("#c-p-"+k)?.checked).map(([k,lab])=>k==="rec"?`Recommended by ${b[k]}`:`${lab}: ${b[k]}`)].filter(Boolean);
   const t=cardText(), kind=radioVal("ckind"), text=kind==="quote"?unquote(t):t;
