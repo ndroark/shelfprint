@@ -2031,25 +2031,27 @@ const BC=(()=>{
     ctx.fillStyle=th.bg; ctx.fillRect(0,0,W,H);
     if(th.glow){ const g=ctx.createRadialGradient(W*.3,H*.22,40,W*.3,H*.22,W*.9); g.addColorStop(0,th.glow); g.addColorStop(1,th.bg); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); }
     if(o.kicker){ ctx.font=`600 24px ${SANS}`; ctx.fillStyle=th.muted; spaced(ctx,o.kicker.toUpperCase(),P,T+24); }
-    let over=false, used=0, bandTop=0, size=0;
+    let over=false, used=0, bandTop=0, size=0, smallCover=false;
     const facts=o.facts;
     const top=T+76;
     if(o.layout==="feature"){
       const bottom=FOOT-56; ctx.font=`400 62px ${SERIF}`; const tl=wrap(ctx,b.title,W-2*P).slice(0,3), titleH=tl.length*66;
       let note=null; if(o.text){ const wd=runs(o.text,o.kind==="quote"?"quote":o.kind==="mixed"?"mixed":"review"); note=fitTo(ctx,wd,W-2*P-80,story?320:180,50,38,1.25); if(!note) over=true; }
       ctx.font=`400 28px ${SANS}`; const fl=facts.length?wrap(ctx,facts.join("  ·  "),W-2*P):[];
-      const attrLine=o.kind==="quote"&&note&&(o.attr[0]||o.attr[1]);
-      const under=48+titleH+52+(o.rating!=null?62:0)+(fl.length?18+fl.length*40:0)+(note?36+height(note.L,note.s,1.25):0)+(attrLine?50:0);
+      const isQuote=o.kind==="quote"&&!!note, attrLine=isQuote&&(o.attr[0]||o.attr[1]);
+      const under=48+titleH+52+(o.rating!=null?62:0)+(fl.length?18+fl.length*40:0)+(note?36+height(note.L,note.s,1.25):0)+(isQuote?70:0)+(attrLine?50:0);
       const img=o.img, iw=img?img.naturalWidth||img.width:2, ih=img?img.naturalHeight||img.height:3;
       const boxH=Math.max(200,Math.min(story?980:760,bottom-top-under)), s=Math.min((W-2*P)/iw,boxH/ih), groupH=ih*s+under, y0=top+Math.max(0,(bottom-top-groupH)/2);
-      const cb=cover(ctx,b,img,P,y0,W-2*P,ih*s);
+      const cb=cover(ctx,b,img,P,y0,W-2*P,ih*s); smallCover=cb.h<300;
       let y=cb.y+cb.h+48; ctx.textAlign="center"; ctx.fillStyle=th.ink; ctx.font=`400 62px ${SERIF}`; tl.forEach((l,k)=>ctx.fillText(l,W/2,y+52+k*66)); y+=titleH;
       ctx.font=`400 32px ${SANS}`; ctx.fillStyle=th.sec; ctx.fillText(b.author,W/2,y+40); y+=52;
       if(o.rating!=null){ ctx.textAlign="left"; const dw=4*36*1.12+36; ctx.font=`400 28px ${SANS}`; const lab=`${fmtR(o.rating)}/5`, tw=ctx.measureText(lab).width, x=(W-(dw+14+tw))/2;
         diamonds(ctx,o.rating,x,y+38,36,th.accent); ctx.fillStyle=th.sec; ctx.fillText(lab,x+dw+14,y+49); y+=62; ctx.textAlign="center"; }
       if(fl.length){ ctx.font=`400 28px ${SANS}`; ctx.fillStyle=th.sec; y+=18; fl.forEach(l=>{ y+=40; ctx.fillText(l,W/2,y-8); }); }
       ctx.textAlign="left";
-      if(note){ y+=36; y=drawAt(ctx,note.L,P+40,y,note.s,1.25,th.ink,W-2*P-80);
+      if(note){ y+=36;
+        if(isQuote){ ctx.textAlign="center"; ctx.font=`400 150px ${SERIF}`; ctx.fillStyle=th.accent; ctx.fillText("“",W/2,y+104); ctx.textAlign="left"; y+=70; }   // centered above the quotation, pull-quote style
+        y=drawAt(ctx,note.L,P+40,y,note.s,1.25,th.ink,W-2*P-80);
         if(attrLine){ const a=`— ${o.attr[0]}${o.attr[0]&&o.attr[1]?", ":""}`; ctx.font=`400 26px ${SANS}`; const aw=ctx.measureText(a).width; ctx.font=`italic 400 29px ${SERIF}`; const fw=ctx.measureText(o.attr[1]).width, x0=(W-aw-fw)/2;
           ctx.font=`400 26px ${SANS}`; ctx.fillStyle=th.sec; ctx.fillText(a,x0,y+44); ctx.font=`italic 400 29px ${SERIF}`; ctx.fillText(o.attr[1],x0+aw,y+44); } }
     } else {
@@ -2090,7 +2092,7 @@ const BC=(()=>{
     ctx.fillStyle=th.rule; ctx.fillRect(P,FOOT,W-2*P,2); const fy=FOOT+60;
     if(o.credit){ ctx.font=`400 31px ${SERIF}`; ctx.fillStyle=th.muted; ctx.fillText("Shelfprint",P,fy); }
     if(o.handle){ ctx.textAlign="right"; ctx.font=`600 28px ${SANS}`; ctx.fillStyle=th.ink; ctx.fillText(fitText(ctx,o.handle,W-2*P-(o.credit?220:0)),W-P,fy); ctx.textAlign="left"; }
-    return {over,used,bandTop,size};
+    return {over,used,bandTop,size,smallCover};
   }
   // Standard: when a card has room to spare (a short note, or the tall story size), center the block vertically
   function renderCard(cv,o){
@@ -2125,7 +2127,7 @@ function openCard(b){
 }
 function syncCardKind(){ const t=cardText(); if(!CARD.kindSet) setRadio("ckind",textKind(t));
   const k=radioVal("ckind"); $("#c-attr-f").hidden=k!=="quote";
-  $("#c-kind-why").textContent=!t?"":k==="mixed"?"Mixed keeps your text as typed. Passages inside quotation marks are set in italics.":k==="quote"?"Shown as a quotation, in italics with its author and the source work. Change them below if you’re quoting someone else, such as another reviewer; leave both blank to leave them off.":"Shown as your own words.";
+  $("#c-kind-why").textContent=!t?"":k==="mixed"?"Mixed keeps your text as typed. Passages inside quotation marks are set in italics.":k==="quote"?"Shown as a quotation, with a large quotation mark, its author, and the source work. Change them below if you’re quoting someone else, such as another reviewer; leave both blank to leave them off.":"Shown as your own words.";
   if(!CARD.kindSet && t) $("#c-kind-why").textContent+=" Picked from the quotation marks in the text"+(textKind(t)==="review"?" (there aren’t any)":"")+"; change it here."; }
 /* Cover feature has no room for the matrix or tags: those options are greyed out there, not removed, and they keep
    their setting for when the card goes back to Standard. */
@@ -2161,6 +2163,7 @@ async function drawCard(){
   const notes=[];
   if(res.over) notes.push(radioVal("clayout")==="feature"?"Cover feature only has room for a short note. Choose Standard, or Edit for card to shorten the text."
     :"The text doesn’t fit on this card at a readable size. Choose Edit for card to shorten it, or turn off matrix scores or tags to make room. Text is never cut off to fit, so this card can’t be saved until something changes.");
+  if(!res.over && res.smallCover) notes.push("There isn’t much room for the cover at this size. Try Post 4:5 or Story 9:16, turn off some details, or choose Standard.");
   if(CARD.img) notes.push("Using the image from your device, for this card only.");
   else if(!img && !b._hasCover) notes.push("There’s no cover to use for this book, so the card shows a title card.");
   st.textContent=notes.join(" ");
