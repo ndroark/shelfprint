@@ -4,6 +4,12 @@ What changed in each version of Shelfprint. The version in use appears at the bo
 
 Shelfprint uses [semantic versioning](https://semver.org): the middle number goes up for new features, and the last number for fixes.
 
+## 0.4.1 — 2026-11-06
+
+### Added
+- The month image and My Year in Books carry the same small "Shelfprint" credit as book cards, with the same **Shelfprint name in small type** toggle. It's one choice for all images: turning it off in one place turns it off everywhere.
+- When a cover in the month image or My Year in Books is a different image than the one you chose (because your chosen cover's host won't let it into an image), the status line says how many.
+
 ## 0.4.0 — 2026-11-06
 
 ### Added
