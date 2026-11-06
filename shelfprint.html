@@ -369,7 +369,7 @@ body.dragging .dropzone,body.dragging .wrap{outline:3px dashed var(--series-1);o
 .c-tags input{position:absolute;opacity:0;pointer-events:none}.c-tags label:has(input:checked){background:var(--surface-2);color:var(--text-primary);border-color:var(--text-secondary)}
 .c-tags label:has(input:focus-visible){outline:2px solid var(--series-1);outline-offset:2px}
 .card-notice{background:color-mix(in srgb,var(--series-2) 16%,var(--page));border-radius:8px;padding:10px 12px;font-size:12.5px;max-width:480px}
-.card-notice p{margin:0}.card-notice .lead{display:block;font-weight:600;margin-bottom:2px}.card-notice .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+#c-keep-f{font-size:12.5px;line-height:1.45}.card-notice p{margin:0}.card-notice .lead{display:block;font-weight:600;margin-bottom:2px}.card-notice .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 #card-canvas{max-width:100%;max-height:68vh;width:auto;height:auto;border-radius:4px;box-shadow:0 4px 18px rgba(0,0,0,.2)}
 .short{display:none}
 @media (max-width:760px){ .long{display:none} .short{display:inline} #set-open{padding:5px 8px}
@@ -459,10 +459,11 @@ body.dragging .dropzone,body.dragging .wrap{outline:3px dashed var(--series-1);o
         </div>
         <div class="card-panel"><p class="card-sect">Content</p>
           <div id="c-words-f"><fieldset><legend>Text to share</legend><div class="seg">
-            <label><input type="radio" name="cwords" value="full">As written</label><label><input type="radio" name="cwords" value="excerpt">Edit for card</label><label><input type="radio" name="cwords" value="none">None</label></div></fieldset>
+            <label id="c-asis-l"><input type="radio" name="cwords" value="full">As written</label><label><input type="radio" name="cwords" value="excerpt"><span id="c-edit-l">Edit for card</span></label><label><input type="radio" name="cwords" value="none">None</label></div></fieldset>
             <div id="c-excerpt-f" hidden><textarea id="c-excerpt" class="handle-in" rows="5" aria-label="Text to share, edited for this card"></textarea>
-              <p class="hint">Shorten, tighten, or rewrite your Freeform thoughts for this card, or paste in something else, such as a passage you want to quote. Your sheet isn’t changed.</p>
-              <p class="hint" id="c-revert-f" hidden><button class="linky" type="button" id="c-revert">Revert to Tracker text</button></p></div>
+              <p class="hint" id="c-edit-hint">Shorten, tighten, or rewrite your Freeform thoughts for this card, or paste in something else, such as a passage you want to quote. Your sheet isn’t changed.</p>
+              <p class="hint" id="c-revert-f" hidden><button class="linky" type="button" id="c-revert">Revert to Tracker text</button></p>
+              <p class="savenote" id="c-keep-f" hidden><span id="c-keep-msg"></span> <button class="btn small" type="button" id="c-copytext">Copy text</button><span class="savemsg" id="c-copytext-msg" aria-live="polite"></span></p></div>
             <fieldset><legend>Present as</legend><div class="seg">
               <label><input type="radio" name="ckind" value="review">Review</label><label><input type="radio" name="ckind" value="quote">Quotation</label><label><input type="radio" name="ckind" value="mixed">Mixed</label></div></fieldset>
             <p class="hint" id="c-kind-why"></p>
@@ -2116,8 +2117,10 @@ function openCard(b){
   CARD={b,img:null,proxied:null,keepSwap:false,kindSet:false,layoutSet:false,tags:new Set(b.tags.slice(0,4)),blob:null,over:false};
   setRadio("csize",p.size); setRadio("clook",p.look); $("#c-credit").checked=p.credit;
   { const h=store.get("wrapup-handle"); $("#c-handle").value=h!==null?h:SETTINGS.handle; }
-  const has=!!b.thoughts.trim(); $("#c-words-f").hidden=!has; setRadio("cwords",has?"full":"none");
-  $("#c-excerpt").value=CARD_EXCERPTS.get(bookKey(b))??b.thoughts.trim(); $("#c-excerpt-f").hidden=true;
+  const has=!!b.thoughts.trim(); $("#c-words-f").hidden=false; $("#c-asis-l").hidden=!has; $("#c-edit-l").textContent=has?"Edit for card":"Write for card";
+  $("#c-edit-hint").textContent=has?"Shorten, tighten, or rewrite your Freeform thoughts for this card, or paste in something else, such as a passage you want to quote. Your sheet isn’t changed.":"Write a line or two for this card, or paste in a passage you want to quote.";
+  $("#c-copytext-msg").textContent=""; setRadio("cwords",has?"full":(CARD_EXCERPTS.get(bookKey(b))||"").trim()?"excerpt":"none");   // text written this visit isn't hidden behind None
+  $("#c-excerpt").value=CARD_EXCERPTS.get(bookKey(b))??b.thoughts.trim(); $("#c-excerpt-f").hidden=radioVal("cwords")!=="excerpt";
   $("#c-attr-who").value=b.author; $("#c-attr-from").value=b.short;
   // what to include: only what this book has; personal details always start off
   $("#c-inc").innerHTML=CARD_INC.filter(([,,av,why])=>av(b)||why).map(([k,lab,av,why])=>{ const ok=av(b), l=typeof lab==="function"?lab(b):lab, on=CARD_PER_BOOK[k]?CARD_PER_BOOK[k](b):p.inc[k];
@@ -2141,7 +2144,11 @@ const CARD_STANDARD_ONLY=["matrix","tags"];
 function syncCardStandardOnly(){ const feat=radioVal("clayout")==="feature";
   CARD_STANDARD_ONLY.forEach(k=>{ const el=$("#c-inc-"+k); if(!el) return; el.disabled=feat; const lab=el.closest("label"); lab.classList.toggle("off",feat);
     let n=lab.querySelector(".so"); if(feat&&!n){ n=H("span",{class:"val so"}," (Standard layout only)"); lab.appendChild(n); } if(!feat&&n) n.remove(); }); }
-function syncCardRevert(){ if(!CARD) return; const v=$("#c-excerpt").value.trim(); $("#c-revert-f").hidden=radioVal("cwords")!=="excerpt"||v===CARD.b.thoughts.trim(); }
+function syncCardRevert(){ if(!CARD) return; const v=$("#c-excerpt").value.trim(), orig=CARD.b.thoughts.trim(), editing=radioVal("cwords")==="excerpt";
+  $("#c-revert-f").hidden=!editing||!orig||v===orig;
+  // text that's only on this card: say how to keep it, the same way covers do
+  const keep=editing&&!!v&&v!==orig; $("#c-keep-f").hidden=!keep;
+  if(keep) $("#c-keep-msg").textContent=(orig?"This edit is only on this card.":"This text is only on this card.")+" To keep it, copy it into this book’s Freeform thoughts in your sheet."; }
 function syncCardLayout(){ const t=cardText(), n=t?t.split(/\s+/).length:0;
   if(!CARD.layoutSet) setRadio("clayout",n?"standard":"feature");   // any words: Standard (a line or two is set large); none: Cover feature
   $("#c-layout-why").textContent=CARD.layoutSet?"":n?"Standard, because there’s writing to show.":"Cover feature, because there’s no text on this card."; }
@@ -2197,7 +2204,11 @@ async function drawCard(){
     if(i.name==="cwords"){ $("#c-excerpt-f").hidden=radioVal("cwords")!=="excerpt"; }
     if(i.name==="csize"||i.name==="clook") saveCardPrefs();
     syncCardKind(); syncCardLayout(); syncCardStandardOnly(); syncCardRevert(); drawCard(); }));
-  let et; $("#c-excerpt").addEventListener("input",()=>{ CARD_EXCERPTS.set(bookKey(CARD.b),$("#c-excerpt").value); syncCardRevert(); clearTimeout(et); et=setTimeout(()=>{ syncCardKind(); syncCardLayout(); drawCard(); },250); });
+  let et; $("#c-excerpt").addEventListener("input",()=>{ CARD_EXCERPTS.set(bookKey(CARD.b),$("#c-excerpt").value); syncCardRevert(); clearTimeout(et); et=setTimeout(()=>{ syncCardKind(); syncCardLayout(); syncCardStandardOnly(); drawCard(); },250); });
+  $("#c-copytext").addEventListener("click",async()=>{ const m=$("#c-copytext-msg");
+    try{ await navigator.clipboard.writeText($("#c-excerpt").value.trim()); m.innerHTML=`<span class="note-ok">Copied.</span> Find <i>${esc(CARD.b.short)}</i> in your Reading Log and paste it into its Freeform thoughts cell.`; }
+    catch(e){ const t=$("#c-excerpt"); t.focus(); t.select(); m.textContent="Your browser wouldn’t copy it. The text is selected in the box above; copy it from there."; } });
+  $("#c-excerpt").addEventListener("input",()=>{ $("#c-copytext-msg").textContent=""; });
   $("#c-revert").addEventListener("click",()=>{ $("#c-excerpt").value=CARD.b.thoughts.trim(); CARD_EXCERPTS.delete(bookKey(CARD.b)); syncCardRevert(); syncCardKind(); syncCardLayout(); syncCardStandardOnly(); drawCard(); $("#c-excerpt").focus(); });
   let at; ["#c-attr-who","#c-attr-from"].forEach(s=>$(s).addEventListener("input",()=>{ clearTimeout(at); at=setTimeout(drawCard,250); }));
   let ht; $("#c-handle").addEventListener("input",()=>{ store.set("wrapup-handle",$("#c-handle").value); const sh=$("#s-handle"); if(sh) sh.value=$("#c-handle").value; clearTimeout(ht); ht=setTimeout(drawCard,250); });
