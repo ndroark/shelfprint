@@ -458,15 +458,15 @@ body.dragging .dropzone,body.dragging .wrap{outline:3px dashed var(--series-1);o
             <label><input type="radio" name="clook" value="light">Paper</label><label><input type="radio" name="clook" value="dark">Ink</label></div></fieldset>
         </div>
         <div class="card-panel"><p class="card-sect">Content</p>
-          <div id="c-words-f"><fieldset><legend>Your words</legend><div class="seg">
+          <div id="c-words-f"><fieldset><legend>Text to share</legend><div class="seg">
             <label><input type="radio" name="cwords" value="full">As written</label><label><input type="radio" name="cwords" value="excerpt">Edit for card</label><label><input type="radio" name="cwords" value="none">None</label></div></fieldset>
-            <div id="c-excerpt-f" hidden><textarea id="c-excerpt" class="handle-in" rows="5" aria-label="Your words, edited for this card"></textarea>
-              <p class="hint">Shorten, tighten, or rewrite your Freeform thoughts for this card. Your sheet isn’t changed.</p></div>
-            <fieldset><legend>This text is</legend><div class="seg">
+            <div id="c-excerpt-f" hidden><textarea id="c-excerpt" class="handle-in" rows="5" aria-label="Text to share, edited for this card"></textarea>
+              <p class="hint">Shorten, tighten, or rewrite your Freeform thoughts for this card, or paste in something else, such as a passage you want to quote. Your sheet isn’t changed.</p></div>
+            <fieldset><legend>Present as</legend><div class="seg">
               <label><input type="radio" name="ckind" value="review">Review</label><label><input type="radio" name="ckind" value="quote">Quotation</label><label><input type="radio" name="ckind" value="mixed">Mixed</label></div></fieldset>
             <p class="hint" id="c-kind-why"></p>
-            <div id="c-attr-f" hidden><label class="c-field">Who wrote it <input id="c-attr-who" class="handle-in" type="text" spellcheck="false"></label>
-              <label class="c-field">From <input id="c-attr-from" class="handle-in" type="text" spellcheck="false"></label></div>
+            <div id="c-attr-f" hidden><label class="c-field">Quotation author <input id="c-attr-who" class="handle-in" type="text" spellcheck="false"></label>
+              <label class="c-field">Source work <input id="c-attr-from" class="handle-in" type="text" spellcheck="false"></label></div>
           </div>
           <p class="legend-like">Include</p><div id="c-inc"></div>
           <div id="c-personal-f"><p class="legend-like">Personal details</p>
@@ -2121,7 +2121,7 @@ function openCard(b){
 }
 function syncCardKind(){ const t=cardText(); if(!CARD.kindSet) setRadio("ckind",textKind(t));
   const k=radioVal("ckind"); $("#c-attr-f").hidden=k!=="quote";
-  $("#c-kind-why").textContent=!t?"":k==="mixed"?"Mixed keeps your text as typed. Passages inside quotation marks are set in italics.":k==="quote"?"Shown as a quotation, with a large quotation mark and who wrote it.":"Shown as your own words.";
+  $("#c-kind-why").textContent=!t?"":k==="mixed"?"Mixed keeps your text as typed. Passages inside quotation marks are set in italics.":k==="quote"?"Shown as a quotation, with a large quotation mark, its author, and the source work. Change them below if you’re quoting someone else, such as another reviewer; leave both blank to leave them off.":"Shown as your own words.";
   if(!CARD.kindSet && t) $("#c-kind-why").textContent+=" Picked from the quotation marks in the text"+(textKind(t)==="review"?" (there aren’t any)":"")+"; change it here."; }
 function syncCardLayout(){ const t=cardText(), n=t?t.split(/\s+/).length:0;
   if(!CARD.layoutSet) setRadio("clayout",n?"standard":"feature");   // any words: Standard (a line or two is set large); none: Cover feature
@@ -2148,8 +2148,8 @@ async function drawCard(){
   $("#card-blocked").hidden=!blocked; $("#card-own").hidden=blocked;
   const proxyOk=!CFG.exportProxy && !LOCKED;   // off in Settings and not locked by the host: offer it for this card only $("#card-proxy").hidden=!proxyOk||!!CARD.proxied; $("#card-proxy-note").hidden=!proxyOk;
   const notes=[];
-  if(res.over) notes.push(radioVal("clayout")==="feature"?"Cover feature only has room for a short note. Choose Standard, or Edit for card to shorten it."
-    :"Your words don’t fit on this card at a readable size. Choose Edit for card to shorten them, or turn off matrix scores or tags to make room. Your words are never cut off to fit, so this card can’t be saved until something changes.");
+  if(res.over) notes.push(radioVal("clayout")==="feature"?"Cover feature only has room for a short note. Choose Standard, or Edit for card to shorten the text."
+    :"The text doesn’t fit on this card at a readable size. Choose Edit for card to shorten it, or turn off matrix scores or tags to make room. Text is never cut off to fit, so this card can’t be saved until something changes.");
   if(CARD.img) notes.push("Using the image from your device, for this card only.");
   else if(!img && !b._hasCover) notes.push("There’s no cover to use for this book, so the card shows a title card.");
   st.textContent=notes.join(" ");

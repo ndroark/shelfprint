@@ -279,15 +279,15 @@ Month views have a **Share image…** button at the top of the page. In the year
 Open any book and click **Create image card** to make an image about that book. The book's details window is your record; the card is what you choose to show other people.
 
 - **Layout:** **Standard** (cover, title, and your words) or **Cover feature** (a large cover, for books with no writing on the card). Cards with words start as Standard, cards without start as Cover feature, and you can switch.
-- **Your words:** **As written** (your Freeform thoughts), **Edit for card**, or **None**. **Edit for card** lets you shorten, tighten, or rewrite your words for that card, at any length and in either layout; your sheet isn't changed. A line or two, like a quick one-line take, shows in large type.
-- **This text is:** **Review**, **Quotation**, or **Mixed**. The page starts from your quotation marks: text that's all in quotation marks is shown as a quotation, with a large quotation mark and who wrote it (which you can edit). A quoted passage inside your own words is Mixed, which sets just the quoted part in italics. You can change it either way.
+- **Text to share:** **As written** (your Freeform thoughts), **Edit for card**, or **None**. **Edit for card** lets you shorten, tighten, or rewrite the text for that card, at any length and in either layout, or paste in a passage to quote; your sheet isn't changed. A line or two, like a quick one-line take, shows in large type.
+- **Present as:** **Review**, **Quotation**, or **Mixed**. The page starts from your quotation marks: text that's all in quotation marks is shown as a quotation, with a large quotation mark, the **Quotation author**, and the **Source work**. Those start as the book's author and title; change them if you're quoting someone else, such as another reviewer, or leave them blank. A quoted passage inside your own words is Mixed, which sets just the quoted part in italics. You can change it either way.
 - **Include:** rating, genre, when you read it, the new-author note, reread, matrix scores, format and length, and tags (you pick which). Only what the book has is offered.
 - **Personal details:** Source, How I found it, and Recommended by can name people or places, so they're left off every card until you turn them on, one card at a time. They're never remembered.
 - **Footer:** your name or handle, if you want one, and the word "Shelfprint" in small type, which you can turn off.
 
 The new-author note reads "First book I've read by this author" only for the earliest dated book marked new-to-me by that author; any others say "New-to-me author."
 
-Your words are never cut off to fit. If they don't fit at a readable size, the card says so and can't be saved until you choose **Edit for card** to shorten them, or make room. If a cover's host won't let it into the image, you can use an image from your device or fetch that one cover through images.weserv.nl, for that card only. Sizes, looks, and the choices under **Include** are remembered in this browser.
+Text is never cut off to fit. If it doesn't fit at a readable size, the card says so and can't be saved until you choose **Edit for card** to shorten it, or make room. If a cover's host won't let it into the image, you can use an image from your device or fetch that one cover through images.weserv.nl, for that card only. Sizes, looks, and the choices under **Include** are remembered in this browser.
 
 ---
 
