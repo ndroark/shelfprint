@@ -7,9 +7,9 @@ Shelfprint uses [semantic versioning](https://semver.org): the middle number goe
 ## 0.3.0 — 2026-11-06
 
 ### Added
-- **Arrow keys between books.** With a book's details open, the arrow keys open the book next to it in the gallery you opened it from, as it's laid out on your screen, including any filter. Left and Right move along the row; Up and Down move to the book directly above or below. At an edge or a gap, nothing happens.
-- In the year's month-by-month strips, Up and Down cross into the month above or below.
-- In the table, Up and Down move through the rows in their current sort order.
+- **Arrow keys between books.** With a book's details open, Left and Right open the previous or next book in the list you opened it from, in that list's order (its rank numbers, where it shows them). At the first or last book, nothing happens.
+- In the year's month-by-month strips, Left and Right stay within the month, and Up and Down open the first book of the month above or below.
+- In the table, the arrow keys move through the rows in their current sort order.
 - Closing the book returns you to the last book you moved to.
 
 ## 0.2.0 — 2026-11-06

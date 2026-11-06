@@ -1496,11 +1496,12 @@ addEventListener("keydown",e=>{ if(e.key!=="Tab") return; const m=document.query
   else if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
   else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); } });
 /* ---------- arrow keys between books ----------
-   With a book open, the arrow keys open its neighbor in the gallery it was opened from, as that gallery is laid out
-   on screen right now: filter, sort, and column count included. Left and Right stay in the row; Up and Down need a
-   book directly above or below. At an edge or a gap, nothing happens and nothing wraps. The year's month strips count
-   as one gallery, so Up and Down cross into the month above or below. In the table, Up and Down follow its rows in
-   their current order. A gallery is remembered by its place on the page, so it's found again after a redraw. */
+   With a book open, Left and Right open the previous or next book in the list it was opened from, in that list's own
+   order (the order its covers read in, and its rank numbers where it shows them), whatever the column count. At the
+   first or last book, nothing happens. The year's month strips are one list per month: Left and Right stay in the
+   month, and Up and Down open the first book of the month above or below. Other galleries are a single list, so Up
+   and Down do nothing there. In the table, all four arrows move through its rows in their current order. A list is
+   remembered by its place on the page, so it's found again after a redraw. */
 const NAV_SEL=[".months",".tbl-wrap",".shelf",".topshelf",".facts-grid",".strip",".pair"];
 let NAV=null;   // {sel, k: which one of those on the page, i: position in it, table}
 function navItems(n){ const g=main.querySelectorAll(n.sel)[n.k]; return g?[...g.querySelectorAll(n.table?"td button[data-id]":"button.book")]:[]; }
@@ -1511,18 +1512,13 @@ function navFrom(el){
 }
 function navStep(key){
   const items=navItems(NAV), cur=items[NAV.i]; if(!cur) return null;
-  if(NAV.table){ const j=NAV.i+(key==="ArrowDown"?1:key==="ArrowUp"?-1:0); return j!==NAV.i && j>=0 && j<items.length?j:null; }
-  const rs=items.map(e=>e.getBoundingClientRect()), r=rs[NAV.i], tol=Math.max(4,Math.min(r.height,r.width)/2), mid=x=>x.left+x.width/2;
-  const sameRow=x=>Math.abs(x.top-r.top)<tol;
-  let best=null;
-  if(key==="ArrowLeft"||key==="ArrowRight"){ const dir=key==="ArrowRight"?1:-1;
-    rs.forEach((x,j)=>{ if(j===NAV.i || !sameRow(x) || (mid(x)-mid(r))*dir<=0) return; if(best==null || Math.abs(mid(x)-mid(r))<Math.abs(mid(rs[best])-mid(r))) best=j; });
-    return best; }
-  const dir=key==="ArrowDown"?1:-1;
-  let rowTop=null; rs.forEach(x=>{ if((x.top-r.top)*dir<=tol) return; if(rowTop==null || Math.abs(x.top-r.top)<Math.abs(rowTop-r.top)) rowTop=x.top; });
-  if(rowTop==null) return null;
-  rs.forEach((x,j)=>{ if(Math.abs(x.top-rowTop)>=tol || Math.abs(mid(x)-mid(r))>=r.width/2) return; if(best==null || Math.abs(mid(x)-mid(r))<Math.abs(mid(rs[best])-mid(r))) best=j; });
-  return best;   // nothing directly above or below: stay put
+  const lists=NAV.sel===".months"   // one list per month strip
+    ? [...main.querySelectorAll(".months")[NAV.k].querySelectorAll(".strip")].map(st=>[...st.querySelectorAll("button.book")])
+    : [items];
+  const li=lists.findIndex(l=>l.includes(cur)), list=lists[li], pos=list.indexOf(cur);
+  const fwd=key==="ArrowRight"||(NAV.table&&key==="ArrowDown"), back=key==="ArrowLeft"||(NAV.table&&key==="ArrowUp");
+  const next=fwd?list[pos+1]:back?list[pos-1]:lists[li+(key==="ArrowDown"?1:-1)]?.[0];   // Up/Down: first book of that month
+  return next?items.indexOf(next):null;
 }
 addEventListener("keydown",e=>{
   if(!NAV || !/^Arrow(Up|Down|Left|Right)$/.test(e.key) || e.altKey||e.ctrlKey||e.metaKey||e.shiftKey || $("#bookm").hidden) return;
