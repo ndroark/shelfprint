@@ -274,6 +274,21 @@ Month views have a **Share image…** button at the top of the page. In the year
 
 **Download PNG**, **Copy image**, or on phones, **Share…**. The status line under the preview says how many covers made it in. Some image hosts don't allow their covers to be copied into an image. Those books show title cards, and the optional **Share-image fallback** in Settings can usually fix that.
 
+### Image cards for one book
+
+Open any book and click **Create image card** to make an image about that book. The book's details window is your record; the card is what you choose to show other people.
+
+- **Layout:** **Standard** (cover, title, and your words) or **Cover feature** (a large cover, for books with little or no writing). The page picks one from how much you wrote, and you can switch.
+- **Your words:** your Freeform thoughts, an **Excerpt** you pick or edit for this card only, or none. Your Freeform thoughts aren't changed. A sentence or two shows in large type.
+- **This text is:** **Review**, **Quotation**, or **Mixed**. The page starts from your quotation marks: text that's all in quotation marks is shown as a quotation, with a large quotation mark and who wrote it (which you can edit). A quoted passage inside your own words is Mixed, which sets just the quoted part in italics. You can change it either way.
+- **Include:** rating, genre, when you read it, the new-author note, reread, matrix scores, format and length, and tags (you pick which). Only what the book has is offered.
+- **Personal details:** Source, How I found it, and Recommended by can name people or places, so they're left off every card until you turn them on, one card at a time. They're never remembered.
+- **Footer:** your name or handle, if you want one, and the word "Shelfprint" in small type, which you can turn off.
+
+The new-author note reads "First book I've read by this author" only for the earliest dated book marked new-to-me by that author; any others say "New-to-me author."
+
+Your words are never cut off to fit. If they don't fit at a readable size, the card says so and can't be saved until you choose an excerpt or make room. If a cover's host won't let it into the image, you can use an image from your device or fetch that one cover through images.weserv.nl, for that card only. Sizes, looks, and the choices under **Include** are remembered in this browser.
+
 ---
 
 ## My Year in Books

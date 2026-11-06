@@ -352,6 +352,25 @@ body.dragging .dropzone,body.dragging .wrap{outline:3px dashed var(--series-1);o
 .share-actions{display:flex;flex-direction:column;gap:8px;margin-top:18px}
 .share-note{font-size:12px;color:var(--text-muted);margin-top:12px}
 .share-preview .share-actions{flex-direction:row;flex-wrap:wrap;justify-content:center;margin:4px 0 0}
+.head-acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.card-box{max-width:1100px}#cardm{align-items:flex-start}
+.card-grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:22px;align-items:start}
+@media (max-width:760px){.card-grid{grid-template-columns:1fr}}
+.card-opts fieldset{border:0;padding:0;margin:10px 0 0}.card-opts legend{font-size:13px;font-weight:600;margin-bottom:6px}
+.card-panel{border:1px solid var(--grid);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.card-sect{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text-secondary);margin:0 0 8px}
+.card-opts .legend-like{font-size:13px;font-weight:600;margin:14px 0 6px}
+.card-opts .check{display:flex;gap:8px;align-items:flex-start;font-size:13px;margin:0 0 6px}.card-opts .check input{margin-top:2px}
+.card-opts .check.off{color:var(--text-muted)}.card-opts .check .val{color:var(--text-secondary)}
+.card-opts .hint,.share-preview .hint{font-size:12px;color:var(--text-secondary);margin:6px 0 0}
+.c-field{display:block;font-size:12.5px;font-weight:600;margin:8px 0 4px}.c-field .muted{font-weight:400;color:var(--text-muted)}.c-field input{margin-top:4px;font-weight:400}
+#c-excerpt{margin-top:8px;resize:vertical;font-family:"Newsreader",Georgia,serif;font-size:15px;line-height:1.4}
+.c-tags{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 8px 24px}.c-tags label{font-size:12px;border:1px solid var(--axis);border-radius:999px;padding:2px 9px;cursor:pointer;color:var(--text-secondary)}
+.c-tags input{position:absolute;opacity:0;pointer-events:none}.c-tags label:has(input:checked){background:var(--surface-2);color:var(--text-primary);border-color:var(--text-secondary)}
+.c-tags label:has(input:focus-visible){outline:2px solid var(--series-1);outline-offset:2px}
+.card-notice{background:color-mix(in srgb,var(--series-2) 16%,var(--page));border-radius:8px;padding:10px 12px;font-size:12.5px;max-width:480px}
+.card-notice p{margin:0}.card-notice .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+#card-canvas{max-width:100%;max-height:68vh;width:auto;height:auto;border-radius:4px;box-shadow:0 4px 18px rgba(0,0,0,.2)}
 .short{display:none}
 @media (max-width:760px){ .long{display:none} .short{display:inline} #set-open{padding:5px 8px}
   .tabs.more{-webkit-mask-image:linear-gradient(to right,#000 80%,transparent);mask-image:linear-gradient(to right,#000 80%,transparent)}
@@ -398,7 +417,7 @@ body.dragging .dropzone,body.dragging .wrap{outline:3px dashed var(--series-1);o
 
 <div class="modal viz-root" id="bookm" hidden style="min-height:0;background:rgba(0,0,0,.55)">
   <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="bookm-h">
-    <div class="modal-head"><span class="kicker" id="bookm-k" style="margin:0"></span><button class="btn" type="button" data-close>Close</button></div>
+    <div class="modal-head"><span class="kicker" id="bookm-k" style="margin:0"></span><span class="head-acts"><button class="btn" type="button" id="bookm-card">Create image card</button><button class="btn" type="button" data-close>Close</button></span></div>
     <div id="bookm-body"></div>
   </div>
 </div>
@@ -410,6 +429,58 @@ body.dragging .dropzone,body.dragging .wrap{outline:3px dashed var(--series-1);o
   </div>
 </div>
 
+<div class="modal viz-root" id="cardm" hidden style="min-height:0;background:rgba(0,0,0,.55)">
+  <div class="modal-box card-box" role="dialog" aria-modal="true" aria-labelledby="cardm-h">
+    <div class="modal-head"><h3 id="cardm-h">Create image card</h3><button class="btn" type="button" data-close>Close</button></div>
+    <div class="card-grid">
+      <div class="share-preview"><canvas id="card-canvas" width="1080" height="1350" aria-label="Preview of the image card"></canvas>
+        <div class="share-actions">
+          <button class="btn primary" type="button" id="card-native" hidden>Share…</button>
+          <button class="btn primary" type="button" id="card-dl">Download PNG</button>
+          <button class="btn" type="button" id="card-copy">Copy image</button>
+        </div>
+        <div class="share-status" id="card-status" aria-live="polite"></div>
+        <div class="card-notice" id="card-blocked" hidden>
+          <p>This cover’s host won’t let it be copied into an image, so the card shows a title card instead.</p>
+          <div class="row"><button class="btn small" type="button" data-cardfile>Use an image from this device</button><button class="btn small" type="button" id="card-proxy">Fetch it through images.weserv.nl</button></div>
+          <p class="hint">For this card only. An image from your device isn’t saved or sent anywhere.<span id="card-proxy-note"> The fetch sends only the image’s address to images.weserv.nl.</span></p>
+        </div>
+        <p class="hint" id="card-own"><button class="linky" type="button" data-cardfile>Use an image from this device for this card</button></p>
+        <input type="file" id="card-file" accept="image/*" hidden>
+      </div>
+      <div class="card-opts">
+        <div class="card-panel"><p class="card-sect">Layout</p>
+          <div class="seg" id="c-layout"><label><input type="radio" name="clayout" value="standard">Standard</label><label><input type="radio" name="clayout" value="feature">Cover feature</label></div>
+          <p class="hint" id="c-layout-why"></p>
+          <fieldset><legend>Size</legend><div class="seg">
+            <label><input type="radio" name="csize" value="portrait">Post 4:5</label><label><input type="radio" name="csize" value="square">Square</label><label><input type="radio" name="csize" value="story">Story 9:16</label></div></fieldset>
+          <fieldset><legend>Look</legend><div class="seg">
+            <label><input type="radio" name="clook" value="light">Paper</label><label><input type="radio" name="clook" value="dark">Ink</label></div></fieldset>
+        </div>
+        <div class="card-panel"><p class="card-sect">Content</p>
+          <div id="c-words-f"><fieldset><legend>Your words</legend><div class="seg">
+            <label><input type="radio" name="cwords" value="full">Freeform thoughts</label><label><input type="radio" name="cwords" value="excerpt">Excerpt</label><label><input type="radio" name="cwords" value="none">None</label></div></fieldset>
+            <div id="c-excerpt-f" hidden><textarea id="c-excerpt" class="handle-in" rows="5" aria-label="Excerpt for this card"></textarea>
+              <p class="hint">Changes here are only for this card. Your Freeform thoughts aren’t changed.</p></div>
+            <fieldset><legend>This text is</legend><div class="seg">
+              <label><input type="radio" name="ckind" value="review">Review</label><label><input type="radio" name="ckind" value="quote">Quotation</label><label><input type="radio" name="ckind" value="mixed">Mixed</label></div></fieldset>
+            <p class="hint" id="c-kind-why"></p>
+            <div id="c-attr-f" hidden><label class="c-field">Who wrote it <input id="c-attr-who" class="handle-in" type="text" spellcheck="false"></label>
+              <label class="c-field">From <input id="c-attr-from" class="handle-in" type="text" spellcheck="false"></label></div>
+          </div>
+          <p class="legend-like">Include</p><div id="c-inc"></div>
+          <div id="c-personal-f"><p class="legend-like">Personal details</p>
+            <p class="hint">These can name people or places. They’re left off every card until you turn them on here, one card at a time.</p><div id="c-personal"></div></div>
+        </div>
+        <div class="card-panel"><p class="card-sect">Footer</p>
+          <label class="c-field" for="c-handle">Your name or handle <span class="muted">(optional)</span></label>
+          <input id="c-handle" class="handle-in" type="text" maxlength="40" spellcheck="false" placeholder="Optional, e.g. @yourname">
+          <label class="check" style="margin-top:10px"><input type="checkbox" id="c-credit">Shelfprint name in small type</label>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 <div class="modal viz-root" id="share" hidden style="min-height:0;background:rgba(0,0,0,.55)">
   <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="share-h">
     <div class="modal-head"><h3 id="share-h">Share image</h3><button class="btn" type="button" data-close>Close</button></div>
@@ -454,7 +525,7 @@ body.dragging .dropzone,body.dragging .wrap{outline:3px dashed var(--series-1);o
 <script>
 (function(){
 "use strict";
-const VERSION="0.3.0";   // see CHANGELOG.md
+const VERSION="0.4.0";   // see CHANGELOG.md
 const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const MON=MONTHS.map(m=>m.slice(0,3));
 const $=s=>document.querySelector(s);
@@ -1528,8 +1599,9 @@ addEventListener("keydown",e=>{
   const el=navItems(NAV)[j], b=el&&ALL.find(x=>x.id===el.dataset.id); if(!b) return;
   NAV.i=j; openBook(b); $("#bookm .modal-box").scrollTop=0;
 });
+let CUR_BOOK=null;   // the book whose details are open, for Create image card
 function openBook(b){
-  if(!b) return; hideTip();
+  if(!b) return; hideTip(); CUR_BOOK=b;
   const body=$("#bookm-body");
   const scopeBooks=ALL.filter(x=>inScope(x,VIEW));
   const tc=new Map(tagCounts(scopeBooks));
@@ -1867,6 +1939,251 @@ document.querySelectorAll('#share input[type=radio],#share input[type=checkbox]'
 { const h=$("#s-handle"); const saved=store.get("wrapup-handle"); h.value=saved!==null?saved:SETTINGS.handle; let ht; h.addEventListener("input",()=>{ store.set("wrapup-handle",h.value); clearTimeout(ht); ht=setTimeout(drawShare,250); }); }
 $("#share-dl").onclick=async()=>{ try{ const blob=await canvasBlob(),a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=shareName(); document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); }catch(e){ $("#share-status").textContent="Couldn't export the image: "+e.message; } };
 $("#share-copy").onclick=async()=>{ const st=$("#share-status"),prev=st.textContent; try{ const blob=await canvasBlob(); await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]); st.textContent="Copied. Paste it into your post."; setTimeout(()=>st.textContent=prev,2500); }catch(e){ st.textContent="This browser won't copy images. Use Download PNG instead."; } };
+
+/* ================= Image cards for one book =================
+   A book's details window is a record; an image card is a publication. A card is built only from the fields named
+   here, so a column added to the sheet later never appears on one by default. Personal details (Source, How I found
+   it, Recommended by) are off every time the dialog opens and are never remembered; other choices are remembered in
+   this browser. The reader's words are never shortened: when they don't fit, the dialog says so and the card can't be
+   exported until something changes. No AI, and nothing is worded as an opinion the reader didn't write. */
+const CARD_H={portrait:1350,square:1080,story:1920};
+const CARD_THEME={
+  light:{bg:"#f6f4ef",ink:"#121211",sec:"#45443f",muted:"#5e5d58",accent:"#8a3b1f",rule:"#cdc9bd",chip:"#e7e3d8",chipInk:"#34332f",track:"#dedace",glow:null},
+  dark:{bg:"#151412",ink:"#f3f0e9",sec:"#d2cec2",muted:"#b3afa3",accent:"#eba582",rule:"#3f3d37",chip:"#2a2925",chipInk:"#e2ded2",track:"#34322d",glow:"#24211c"}};
+const CARD_PERSONAL=[["source","Source"],["found","How I found it"],["rec","Recommended by"]];
+const CARD_INC=[   // [key, label, available for this book?]   defaults: see cardPrefs()
+  ["rating","Rating",b=>b.rating!=null],["genre","Genre",b=>!!b.genre],["date","When I read it",b=>cardKickerDate(b)!=null,"no date in your sheet"],
+  ["isNew",b=>newAuthorLabel(b),b=>b.isNew],["reread","Reread",b=>b.reread],["matrix","Matrix scores",b=>b.hasMatrix],
+  ["length","Format and length",b=>!!(b.format||b.pages||b.audio)],["tags","Tags",b=>b.tags.length>0]];
+let CARD=null;   // the open card: {b, img (from this device), proxied, kindSet, layoutSet, tags:Set, blob, over}
+const CARD_EXCERPTS=new Map();   // excerpts typed this visit, by book; never saved
+function cardPrefs(){ const d={size:"portrait",look:"light",credit:true,inc:{rating:true,genre:true,date:true,isNew:true,reread:true,matrix:false,length:false,tags:false}};
+  try{ const s=JSON.parse(store.get("wrapup:card-prefs")||"{}"); return {...d,...s,inc:{...d.inc,...(s.inc||{})}}; }catch(e){ return d; } }
+function saveCardPrefs(){ const inc={}; CARD_INC.forEach(([k])=>{ const el=$("#c-inc-"+k); if(el && !el.disabled) inc[k]=el.checked; });
+  const old=cardPrefs(); store.set("wrapup:card-prefs",JSON.stringify({size:radioVal("csize"),look:radioVal("clook"),credit:$("#c-credit").checked,inc:{...old.inc,...inc}})); }
+const radioVal=n=>document.querySelector(`input[name="${n}"]:checked`)?.value;
+const setRadio=(n,v)=>{ const el=document.querySelector(`input[name="${n}"][value="${v}"]`); if(el) el.checked=true; };
+
+/* "First book I've read by this author" only where the log shows it: the earliest dated new-to-me book by that author.
+   Other new-to-me books by them, or undated ones, say "New-to-me author". */
+function newAuthorLabel(b){
+  if(!b.isNew) return "";
+  const same=ALL.filter(x=>x.isNew && x.author===b.author);
+  if(same.length===1) return "First book I've read by this author";
+  const dated=same.filter(x=>x.end||x.start); if(dated.length!==same.length) return "New-to-me author";
+  const t=x=>+(x.end||x.start), first=Math.min(...dated.map(t)), firsts=dated.filter(x=>t(x)===first);
+  return firsts.length===1&&firsts[0]===b?"First book I've read by this author":"New-to-me author";
+}
+function cardKickerDate(b){ if(b.month==null||b.yr==null) return null; return `${MONTHS[b.month]} ${b.yr}`; }
+/* The text's kind starts from its quotation marks: all of it in quotation marks is a quotation; a quoted passage
+   inside other words is mixed; otherwise a review. The reader can change it either way. */
+function textKind(t){ t=t.trim(); const marks=(t.match(/[“”"]/g)||[]).length;
+  if(/^[“"]/.test(t) && /[”"]$/.test(t) && marks===2) return "quote";
+  return /[“"][^“”"]{30,}[”"]/.test(t)?"mixed":"review"; }
+const unquote=t=>t.trim().replace(/^[“"]\s*/,"").replace(/\s*[”"]$/,"");
+
+const BC=(()=>{
+  const W=1080, P=80;
+  const rr=(ctx,x,y,w,h,r)=>{ ctx.beginPath(); ctx.roundRect(x,y,w,h,r); };
+  const wrap=(ctx,text,maxW)=>{ const out=[]; let line=""; for(const w of String(text).split(/\s+/).filter(Boolean)){ const t=line?line+" "+w:w; if(ctx.measureText(t).width>maxW&&line){ out.push(line); line=w; } else line=t; } if(line) out.push(line); return out; };
+  const spaced=(ctx,t,x,y,ls=5)=>{ if("letterSpacing" in ctx) ctx.letterSpacing=ls+"px"; ctx.fillText(t,x,y); const w=ctx.measureText(t).width; if("letterSpacing" in ctx) ctx.letterSpacing="0px"; return w; };
+  const diamonds=(ctx,r,x,y,s,c)=>{ drawDiamonds(ctx,r,x,y,s,c); return 4*s*1.12+s; };
+  const fmtR=r=>String(Math.round(r*100)/100);
+  // words as runs, so Mixed can set passages inside quotation marks in italics and leave the rest as typed
+  function runs(text,mode){ const out=[]; let it=mode==="quote";
+    String(text).split(/\n+/).forEach((para,pi)=>para.split(/\s+/).filter(Boolean).forEach((w,wi)=>{
+      if(mode==="mixed" && /^[(\[]?[“"]/.test(w)) it=true;
+      out.push({t:w,it,para:pi>0&&wi===0});
+      if(mode==="mixed" && /[”"][)\].,;:!?…]*$/.test(w) && !/^[“"][)\].,;:!?…]*$/.test(w)) it=false; }));
+    return out; }
+  function layout(ctx,words,maxW,size){ const lines=[]; let line=[], x=0; const f=it=>`${it?"italic ":""}400 ${size}px ${SERIF}`;
+    for(const w of words){ if(w.para){ if(line.length) lines.push(line); lines.push(null); line=[]; x=0; }
+      ctx.font=f(w.it); const ww=ctx.measureText(w.t).width, sp=line.length?ctx.measureText(" ").width:0;
+      if(line.length && x+sp+ww>maxW){ lines.push(line); line=[]; x=0; }
+      const at=line.length?x+sp:0; line.push({t:w.t,it:w.it,x:at}); x=at+ww; }
+    if(line.length) lines.push(line); return lines; }
+  const height=(L,s,lh)=>L.reduce((a,l)=>a+(l?s*lh:s*lh*.55),0);
+  function drawAt(ctx,L,x,y,s,lh,color,center){ ctx.fillStyle=color; let yy=y;
+    for(const l of L){ if(!l){ yy+=s*lh*.55; continue; } yy+=s*lh; let ox=x;
+      if(center){ ctx.font=`400 ${s}px ${SERIF}`; const last=l[l.length-1]; ctx.font=`${last.it?"italic ":""}400 ${s}px ${SERIF}`; ox=x+(center-(last.x+ctx.measureText(last.t).width))/2; }
+      l.forEach(w=>{ ctx.font=`${w.it?"italic ":""}400 ${s}px ${SERIF}`; ctx.fillText(w.t,ox+w.x,yy-s*(lh-1)-s*.18); }); }
+    return yy; }
+  function fitTo(ctx,words,w,h,max,min,lh){ for(let s=max;s>=min;s-=2){ const L=layout(ctx,words,w,s); if(height(L,s,lh)<=h) return {L,s}; } return null; }
+
+  function cover(ctx,b,img,bx,by,bw,bh){
+    const iw=img?img.naturalWidth||img.width:2, ih=img?img.naturalHeight||img.height:3, s=Math.min(bw/iw,bh/ih), w=iw*s, h=ih*s, x=bx+(bw-w)/2, y=by, r=Math.max(4,w*.025);
+    ctx.save(); ctx.shadowColor="rgba(0,0,0,.30)"; ctx.shadowBlur=w*.08; ctx.shadowOffsetY=w*.03; rr(ctx,x,y,w,h,r); ctx.fillStyle=img?"#000":PH_COLORS[hash(b.title)%PH_COLORS.length]; ctx.fill(); ctx.restore();
+    ctx.save(); rr(ctx,x,y,w,h,r); ctx.clip();
+    if(img) ctx.drawImage(img,x,y,w,h);
+    else { ctx.fillStyle="#fff"; let fs=Math.round(w/7); ctx.font=`400 ${fs}px ${SERIF}`;
+      const longW=()=>Math.max(...b.short.split(/\s+/).map(t=>ctx.measureText(t).width)); while(longW()>w*.8&&fs>12){ fs--; ctx.font=`400 ${fs}px ${SERIF}`; }
+      wrap(ctx,b.short,w*.8).slice(0,7).forEach((l,k)=>ctx.fillText(l,x+w*.1,y+w*.14+fs+k*fs*1.14));
+      ctx.font=`600 ${Math.round(w/15)}px ${SANS}`; ctx.globalAlpha=.9; ctx.fillText(fitText(ctx,b.author.toUpperCase(),w*.8),x+w*.1,y+h-w*.1); ctx.globalAlpha=1; }
+    const g=ctx.createLinearGradient(x,0,x+w*.07,0); g.addColorStop(0,"rgba(0,0,0,.20)"); g.addColorStop(.4,"rgba(255,255,255,.08)"); g.addColorStop(1,"rgba(0,0,0,0)"); ctx.fillStyle=g; ctx.fillRect(x,y,w*.07,h); ctx.restore();
+    rr(ctx,x+.5,y+.5,w-1,h-1,r); ctx.strokeStyle="rgba(0,0,0,.16)"; ctx.lineWidth=1.5; ctx.stroke();   // keeps a pale cover's edge on Paper
+    return {x,y,w,h}; }
+
+  function render(cv,o){
+    const H=CARD_H[o.size], th=CARD_THEME[o.look], b=o.b, story=o.size==="story";
+    const T=P+(story?110:0), FOOT=H-P-60-(story?150:0);   // a story keeps clear of the app's own buttons at top and bottom
+    cv.width=W; cv.height=H; const ctx=cv.getContext("2d"); ctx.textBaseline="alphabetic"; ctx.textAlign="left";
+    ctx.fillStyle=th.bg; ctx.fillRect(0,0,W,H);
+    if(th.glow){ const g=ctx.createRadialGradient(W*.3,H*.22,40,W*.3,H*.22,W*.9); g.addColorStop(0,th.glow); g.addColorStop(1,th.bg); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); }
+    if(o.kicker){ ctx.font=`600 24px ${SANS}`; ctx.fillStyle=th.muted; spaced(ctx,o.kicker.toUpperCase(),P,T+24); }
+    let over=false, used=0, bandTop=0, size=0;
+    const facts=o.facts;
+    const top=T+76;
+    if(o.layout==="feature"){
+      const bottom=FOOT-56; ctx.font=`400 62px ${SERIF}`; const tl=wrap(ctx,b.title,W-2*P).slice(0,3), titleH=tl.length*66;
+      let note=null; if(o.text){ const wd=runs(o.text,o.kind==="quote"?"quote":o.kind==="mixed"?"mixed":"review"); note=fitTo(ctx,wd,W-2*P-80,story?320:180,50,38,1.25); if(!note) over=true; }
+      ctx.font=`400 28px ${SANS}`; const fl=facts.length?wrap(ctx,facts.join("  ·  "),W-2*P):[];
+      const under=48+titleH+52+(o.rating!=null?62:0)+(fl.length?18+fl.length*40:0)+(note?36+height(note.L,note.s,1.25):0);
+      const img=o.img, iw=img?img.naturalWidth||img.width:2, ih=img?img.naturalHeight||img.height:3;
+      const boxH=Math.max(200,Math.min(story?980:760,bottom-top-under)), s=Math.min((W-2*P)/iw,boxH/ih), groupH=ih*s+under, y0=top+Math.max(0,(bottom-top-groupH)/2);
+      const cb=cover(ctx,b,img,P,y0,W-2*P,ih*s);
+      let y=cb.y+cb.h+48; ctx.textAlign="center"; ctx.fillStyle=th.ink; ctx.font=`400 62px ${SERIF}`; tl.forEach((l,k)=>ctx.fillText(l,W/2,y+52+k*66)); y+=titleH;
+      ctx.font=`400 32px ${SANS}`; ctx.fillStyle=th.sec; ctx.fillText(b.author,W/2,y+40); y+=52;
+      if(o.rating!=null){ ctx.textAlign="left"; const dw=4*36*1.12+36; ctx.font=`400 28px ${SANS}`; const lab=`${fmtR(o.rating)}/5`, tw=ctx.measureText(lab).width, x=(W-(dw+14+tw))/2;
+        diamonds(ctx,o.rating,x,y+38,36,th.accent); ctx.fillStyle=th.sec; ctx.fillText(lab,x+dw+14,y+49); y+=62; ctx.textAlign="center"; }
+      if(fl.length){ ctx.font=`400 28px ${SANS}`; ctx.fillStyle=th.sec; y+=18; fl.forEach(l=>{ y+=40; ctx.fillText(l,W/2,y-8); }); }
+      ctx.textAlign="left";
+      if(note){ y+=36; drawAt(ctx,note.L,P+40,y,note.s,1.25,th.ink,W-2*P-80); }
+    } else {
+      const top2=top+(o.dy||0), cb=cover(ctx,b,o.img,P,top2,300,450), rx=P+352, rw=W-P-rx;
+      let ts=64; ctx.font=`400 ${ts}px ${SERIF}`; let tl=wrap(ctx,b.title,rw); while(tl.length>3&&ts>42){ ts-=4; ctx.font=`400 ${ts}px ${SERIF}`; tl=wrap(ctx,b.title,rw); }
+      tl=tl.slice(0,4); ctx.fillStyle=th.ink; tl.forEach((l,k)=>ctx.fillText(l,rx-2,top2+ts*.86+k*ts*1.06)); let y=top2+ts*.86+(tl.length-1)*ts*1.06;
+      ctx.font=`400 32px ${SANS}`; ctx.fillStyle=th.sec; y+=50; wrap(ctx,b.author,rw).forEach((l,k)=>{ if(k) y+=40; ctx.fillText(l,rx,y); });
+      if(o.rating!=null){ y+=58; const dw=diamonds(ctx,o.rating,rx,y-11,36,th.accent); ctx.font=`400 28px ${SANS}`; ctx.fillStyle=th.sec; ctx.fillText(`${fmtR(o.rating)}/5`,rx+dw+14,y); }
+      if(facts.length){ ctx.font=`400 28px ${SANS}`; ctx.fillStyle=th.sec; y+=24; facts.forEach(f=>wrap(ctx,f,rw).forEach(l=>{ y+=40; ctx.fillText(l,rx,y); })); }
+      // matrix and tags sit in a band above the footer, under the reader's words
+      let band=FOOT-40;
+      if(o.tags.length){ ctx.font=`400 26px ${SANS}`; const chips=[]; let x=P; for(const t of o.tags){ const w=ctx.measureText(t).width+34; if(x+w>W-P) break; chips.push([t,x,w]); x+=w+12; }
+        band-=46; chips.forEach(([t,x,w])=>{ ctx.fillStyle=th.chip; rr(ctx,x,band,w,46,23); ctx.fill(); ctx.fillStyle=th.chipInk; ctx.fillText(t,x+17,band+32); }); band-=26; }
+      if(o.matrix){ const rows=o.matrix, gap=rows.length>5?10:16, cw=(W-2*P-gap*(rows.length-1))/rows.length; band-=152;
+        ctx.font=`600 22px ${SANS}`; ctx.fillStyle=th.muted; spaced(ctx,"MY MATRIX",P,band+22,4);
+        if(o.avg!=null){ ctx.textAlign="right"; ctx.font=`600 24px ${SANS}`; ctx.fillStyle=th.ink; ctx.fillText(`average ${fmt1(o.avg)}`,W-P,band+22); ctx.textAlign="left"; }
+        rows.forEach(([lab,v],i)=>{ const x=P+i*(cw+gap), yy=band+44; ctx.fillStyle=th.chip; rr(ctx,x,yy,cw,108,12); ctx.fill();
+          ctx.font=`400 23px ${SANS}`; ctx.fillStyle=th.sec; ctx.fillText(fitText(ctx,lab,cw-24),x+14,yy+34);
+          ctx.font=`400 44px ${SERIF}`; ctx.fillStyle=th.ink; ctx.fillText(fmtR(v),x+14,yy+82);
+          ctx.fillStyle=th.track; rr(ctx,x+14,yy+92,cw-28,6,3); ctx.fill(); ctx.fillStyle=th.accent; rr(ctx,x+14,yy+92,(cw-28)*v/5,6,3); ctx.fill(); });
+        band-=18; }
+      const wt=Math.max(cb.y+cb.h,y)+64, wb=band-28, w=W-2*P, h=wb-wt;
+      used=Math.max(cb.y+cb.h,y); bandTop=wb;
+      // the second pass keeps the size chosen in the first, so moving the block down can't change the type size
+      const fit=(ctx,wd,w,h,max,min,lh)=>o.size2?{L:layout(ctx,wd,w,o.size2),s:o.size2}:fitTo(ctx,wd,w,h,max,min,lh);
+      const draw=(...a)=>{ const e=drawAt(...a); used=Math.max(used,e); return e; };
+      if(o.text){ const mode=o.kind==="quote"?"quote":o.kind==="mixed"?"mixed":"review", wd=runs(o.text,mode);
+        if(o.kind==="quote"){ const ind=84, attr=o.attr[0]||o.attr[1]; const f=fit(ctx,wd,w-ind,h-(attr?70:0)-20,44,34,1.42);
+          if(!f) over=true; else { size=f.s; ctx.font=`400 170px ${SERIF}`; ctx.fillStyle=th.accent; ctx.fillText("“",P-10,wt+112);
+            const yy=draw(ctx,f.L,P+ind,wt+8,f.s,1.42,th.ink);
+            if(attr){ ctx.font=`400 26px ${SANS}`; ctx.fillStyle=th.sec; const a=`— ${o.attr[0]}${o.attr[0]&&o.attr[1]?", ":""}`; ctx.fillText(a,P+ind,yy+46);
+              const aw=ctx.measureText(a).width; ctx.font=`italic 400 29px ${SERIF}`; ctx.fillText(o.attr[1],P+ind+aw,yy+46); used=Math.max(used,yy+56); } } }
+        else if(mode==="review" && !/\n/.test(o.text) && o.text.split(/\s+/).length<=30){ const f=fit(ctx,wd,w,h,68,50,1.22);
+          if(!f) over=true; else { size=f.s; draw(ctx,f.L,P,wt+(h-height(f.L,f.s,1.22))/2,f.s,1.22,th.ink); } }
+        else { const f=fit(ctx,wd,w,h,46,34,1.45); if(!f) over=true; else { size=f.s; draw(ctx,f.L,P,wt,f.s,1.45,th.ink); } } }
+    }
+    // footer: the optional credit on the left, the reader's handle on the right
+    ctx.fillStyle=th.rule; ctx.fillRect(P,FOOT,W-2*P,2); const fy=FOOT+60;
+    if(o.credit){ ctx.font=`400 31px ${SERIF}`; ctx.fillStyle=th.muted; ctx.fillText("Shelfprint",P,fy); }
+    if(o.handle){ ctx.textAlign="right"; ctx.font=`600 28px ${SANS}`; ctx.fillStyle=th.ink; ctx.fillText(fitText(ctx,o.handle,W-2*P-(o.credit?220:0)),W-P,fy); ctx.textAlign="left"; }
+    return {over,used,bandTop,size};
+  }
+  // Standard: when a card has room to spare (a short note, or the tall story size), center the block vertically
+  function renderCard(cv,o){
+    if(o.layout!=="standard") return render(cv,o);
+    const r=render(document.createElement("canvas"),o), slack=r.bandTop-r.used;
+    if(r.over||slack<80) return render(cv,o);
+    return render(cv,{...o,dy:Math.round(slack/2),size2:r.size||null});
+  }
+  return {render:renderCard};
+})();
+
+function cardText(){ if(!CARD) return ""; const w=radioVal("cwords"); if(w==="none") return ""; if(w==="excerpt") return $("#c-excerpt").value.trim(); return CARD.b.thoughts.trim(); }
+function openCard(b){
+  if(!b) return; const p=cardPrefs();
+  if(CARD?.url) URL.revokeObjectURL(CARD.url);
+  CARD={b,img:null,proxied:null,kindSet:false,layoutSet:false,tags:new Set(b.tags.slice(0,4)),blob:null,over:false};
+  setRadio("csize",p.size); setRadio("clook",p.look); $("#c-credit").checked=p.credit;
+  { const h=store.get("wrapup-handle"); $("#c-handle").value=h!==null?h:SETTINGS.handle; }
+  const has=!!b.thoughts.trim(); $("#c-words-f").hidden=!has; setRadio("cwords",has?"full":"none");
+  $("#c-excerpt").value=CARD_EXCERPTS.get(bookKey(b))??b.thoughts.trim(); $("#c-excerpt-f").hidden=true;
+  $("#c-attr-who").value=b.author; $("#c-attr-from").value=b.short;
+  // what to include: only what this book has; personal details always start off
+  $("#c-inc").innerHTML=CARD_INC.filter(([,,av,why])=>av(b)||why).map(([k,lab,av,why])=>{ const ok=av(b), l=typeof lab==="function"?lab(b):lab;
+    return `<label class="check${ok?"":" off"}"><input type="checkbox" id="c-inc-${k}"${ok&&p.inc[k]?" checked":""}${ok?"":" disabled"}>${esc(l)}${ok?"":` <span class="val">(${why})</span>`}</label>`+
+      (k==="tags"?`<div class="c-tags" id="c-tags" hidden>${b.tags.map((t,i)=>`<label><input type="checkbox" value="${esc(t)}"${CARD.tags.has(t)?" checked":""}>${esc(t)}</label>`).join("")}</div>`:""); }).join("");
+  const pers=CARD_PERSONAL.filter(([k])=>b[k]); $("#c-personal-f").hidden=!pers.length;
+  $("#c-personal").innerHTML=pers.map(([k,lab])=>`<label class="check"><input type="checkbox" id="c-p-${k}">${lab}: <span class="val">${esc(b[k])}</span></label>`).join("");
+  $("#c-inc").querySelectorAll("input,#c-tags input").forEach(i=>i.addEventListener("change",()=>{ if(i.closest("#c-tags")){ i.checked?CARD.tags.add(i.value):CARD.tags.delete(i.value); } else saveCardPrefs(); drawCard(); }));
+  $("#c-personal").querySelectorAll("input").forEach(i=>i.addEventListener("change",drawCard));
+  syncCardKind(); syncCardLayout();
+  openModal($("#cardm")); drawCard();
+}
+function syncCardKind(){ const t=cardText(); if(!CARD.kindSet) setRadio("ckind",textKind(t));
+  const k=radioVal("ckind"); $("#c-attr-f").hidden=k!=="quote";
+  $("#c-kind-why").textContent=!t?"":k==="mixed"?"Mixed keeps your text as typed. Passages inside quotation marks are set in italics.":k==="quote"?"Shown as a quotation, with a large quotation mark and who wrote it.":"Shown as your own words.";
+  if(!CARD.kindSet && t) $("#c-kind-why").textContent+=" Picked from the quotation marks in the text"+(textKind(t)==="review"?" (there aren’t any)":"")+"; change it here."; }
+function syncCardLayout(){ const t=cardText(), n=t?t.split(/\s+/).length:0;
+  if(!CARD.layoutSet) setRadio("clayout",n<=8?"feature":"standard");
+  $("#c-layout-why").textContent=CARD.layoutSet?"":n?(n<=8?"Cover feature, because the note is short.":"Standard, because there’s writing to show."):"Cover feature, because there’s no text on this card."; }
+async function drawCard(){
+  if(!CARD) return; const b=CARD.b, token=drawCard.token=(drawCard.token||0)+1;
+  ["#card-dl","#card-copy","#card-native"].forEach(s=>$(s).disabled=true); CARD.blob=null;
+  const st=$("#card-status"); st.textContent="Making the card…";
+  try{ await Promise.race([Promise.all([document.fonts.load(`400 60px Newsreader`),document.fonts.load(`italic 400 40px Newsreader`)]),new Promise(r=>setTimeout(r,2500))]); }catch(e){}
+  const fetched=CARD.img||CARD.proxied?null:await exportImage(b); if(token!==drawCard.token) return;
+  const img=CARD.img||CARD.proxied||fetched, blocked=!img && b._hasCover;
+  const inc=k=>{ const el=$("#c-inc-"+k); return !!el && el.checked && !el.disabled; };
+  const facts=[inc("genre")&&b.genre, inc("isNew")&&newAuthorLabel(b), inc("reread")&&"Reread",
+    inc("length")&&[b.format,b.audio?`${fmt1(b.audio)} hours`:b.pages?`${b.pages.toLocaleString()} pages`:""].filter(Boolean).join(", "),
+    ...CARD_PERSONAL.filter(([k])=>$("#c-p-"+k)?.checked).map(([k,lab])=>k==="rec"?`Recommended by ${b[k]}`:`${lab}: ${b[k]}`)].filter(Boolean);
+  const t=cardText(), kind=radioVal("ckind"), text=kind==="quote"?unquote(t):t;
+  const when=cardKickerDate(b), kicker=inc("date")&&when?(b.status==="DNF"?`I set this aside in ${when}`:`I read this in ${when}`):(t&&kind!=="quote"?"My review":"");
+  const res=BC.render($("#card-canvas"),{b,img,size:radioVal("csize"),look:radioVal("clook"),layout:radioVal("clayout"),kicker,facts,
+    rating:inc("rating")?b.rating:null, matrix:inc("matrix")?DIMS.map(d=>[d.short,b.scores[d.key]]):null, avg:b.avg,
+    tags:inc("tags")?b.tags.filter(x=>CARD.tags.has(x)):[], text, kind, attr:[$("#c-attr-who").value.trim(),$("#c-attr-from").value.trim()],
+    credit:$("#c-credit").checked, handle:$("#c-handle").value.trim()});
+  const tg=$("#c-tags"); if(tg) tg.hidden=!inc("tags");
+  CARD.over=res.over;
+  $("#card-blocked").hidden=!blocked; $("#card-own").hidden=blocked;
+  const proxyOk=!CFG.exportProxy && !LOCKED;   // off in Settings and not locked by the host: offer it for this card only $("#card-proxy").hidden=!proxyOk||!!CARD.proxied; $("#card-proxy-note").hidden=!proxyOk;
+  const notes=[];
+  if(res.over) notes.push(radioVal("clayout")==="feature"?"Cover feature only has room for a short note. Choose Standard, or Excerpt to pick part of your words."
+    :"Your words don’t fit on this card at a readable size. Choose Excerpt to pick part of them, or turn off matrix scores or tags to make room. Your words are never cut off to fit, so this card can’t be saved until something changes.");
+  if(CARD.img) notes.push("Using the image from your device, for this card only.");
+  else if(!img && !b._hasCover) notes.push("There’s no cover to use for this book, so the card shows a title card.");
+  st.textContent=notes.join(" ");
+  if(res.over) return;
+  ["#card-dl","#card-copy","#card-native"].forEach(s=>$(s).disabled=false);
+  $("#card-canvas").toBlob(bl=>{ if(token===drawCard.token) CARD.blob=bl; },"image/png");
+}
+{ // dialog wiring
+  $("#bookm-card").addEventListener("click",()=>openCard(CUR_BOOK));
+  document.querySelectorAll('#cardm input[type=radio]').forEach(i=>i.addEventListener("change",()=>{
+    if(i.name==="ckind") CARD.kindSet=true; if(i.name==="clayout") CARD.layoutSet=true;
+    if(i.name==="cwords"){ $("#c-excerpt-f").hidden=radioVal("cwords")!=="excerpt"; }
+    if(i.name==="csize"||i.name==="clook") saveCardPrefs();
+    syncCardKind(); syncCardLayout(); drawCard(); }));
+  let et; $("#c-excerpt").addEventListener("input",()=>{ CARD_EXCERPTS.set(bookKey(CARD.b),$("#c-excerpt").value); clearTimeout(et); et=setTimeout(()=>{ syncCardKind(); syncCardLayout(); drawCard(); },250); });
+  let at; ["#c-attr-who","#c-attr-from"].forEach(s=>$(s).addEventListener("input",()=>{ clearTimeout(at); at=setTimeout(drawCard,250); }));
+  let ht; $("#c-handle").addEventListener("input",()=>{ store.set("wrapup-handle",$("#c-handle").value); const sh=$("#s-handle"); if(sh) sh.value=$("#c-handle").value; clearTimeout(ht); ht=setTimeout(drawCard,250); });
+  $("#c-credit").addEventListener("change",()=>{ saveCardPrefs(); drawCard(); });
+  document.querySelectorAll("#cardm [data-cardfile]").forEach(x=>x.addEventListener("click",()=>$("#card-file").click()));
+  $("#card-file").addEventListener("change",e=>{ const f=e.target.files[0]; e.target.value=""; if(!f||!CARD) return;
+    const url=URL.createObjectURL(f), im=new Image(); im.onload=()=>{ if(CARD.url) URL.revokeObjectURL(CARD.url); CARD.url=url; CARD.img=im; drawCard(); };
+    im.onerror=()=>{ URL.revokeObjectURL(url); $("#card-status").textContent="That file couldn’t be opened as an image. Try a JPG, PNG, or WebP."; }; im.src=url; });
+  $("#card-proxy").addEventListener("click",async()=>{ const b=CARD.b, st=$("#card-status"); st.textContent="Fetching the cover through images.weserv.nl…";
+    let urls=[]; try{ urls=await (coverCache.get(b.id)||findCover(b)); }catch(e){}
+    for(const u of [...new Set([b.coverSrc,...urls].filter(Boolean))]){ try{ CARD.proxied=await loadCors("https://images.weserv.nl/?url="+encodeURIComponent(u)); break; }catch(e){} }
+    if(!CARD.proxied){ st.textContent="That didn’t work either. Use an image from your device instead."; return; }
+    drawCard(); });
+  const name=()=>"book-card-"+CARD.b.short.toLowerCase().replace(/[^\p{L}\p{N}]+/gu,"-").replace(/^-|-$/g,"")+".png";
+  const blob=()=>CARD.blob?Promise.resolve(CARD.blob):new Promise((res,rej)=>$("#card-canvas").toBlob(b=>b?res(b):rej(new Error("empty")),"image/png"));
+  $("#card-dl").onclick=async()=>{ try{ const bl=await blob(), a=document.createElement("a"); a.href=URL.createObjectURL(bl); a.download=name(); document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); }catch(e){ $("#card-status").textContent="Couldn’t save the image: "+e.message; } };
+  $("#card-copy").onclick=async()=>{ const st=$("#card-status"); try{ await navigator.clipboard.write([new ClipboardItem({"image/png":await blob()})]); st.textContent="Copied. Paste it into your post."; }catch(e){ st.textContent="This browser won’t copy images. Use Download PNG instead."; } };
+  if(CAN_SHARE_FILES){ $("#card-native").hidden=false; $("#card-dl").classList.remove("primary"); }
+  $("#card-native").onclick=async()=>{ try{ await navigator.share({files:[new File([await blob()],name(),{type:"image/png"})],title:CARD.b.short}); }catch(e){ if(e.name!=="AbortError") $("#card-status").textContent="Sharing didn’t work here. Use Download PNG instead."; } };
+}
 
 /* ================= Wrapped: a short series of cards about one year =================
    Built only from the loaded log, in this browser. Every card says what it counted; the panel beside the preview

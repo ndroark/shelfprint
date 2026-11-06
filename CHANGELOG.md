@@ -4,6 +4,19 @@ What changed in each version of Shelfprint. The version in use appears at the bo
 
 Shelfprint uses [semantic versioning](https://semver.org): the middle number goes up for new features, and the last number for fixes.
 
+## 0.4.0 — 2026-11-06
+
+### Added
+- **Create image card**, in each book's details: an image about one book to share wherever you like, in post, square, or story size, on Paper or Ink.
+- Two layouts: **Standard** (cover, title, and your words) and **Cover feature** (a large cover, for books with little or no writing). The page picks one from how much you wrote; you can switch.
+- Your words can be your Freeform thoughts, an excerpt you edit for that card only, or nothing. Your Freeform thoughts aren't changed, and your words are never cut off to fit: if they don't fit at a readable size, the card says so and can't be saved until something changes.
+- **Review, Quotation, or Mixed**, starting from your quotation marks and changeable either way. Quotations get a large quotation mark and an editable "who wrote it."
+- Choose what to include: rating, genre, when you read it, the new-author note, reread, matrix scores, format and length, and tags.
+- Source, How I found it, and Recommended by are left off every card until you turn them on, one card at a time, and are never remembered.
+- An optional name or handle, and the word "Shelfprint" in small type, which you can turn off.
+- If a cover can't be copied into the image, use an image from your device, or fetch that one cover through images.weserv.nl, for that card only.
+- Covers are shown whole, never cropped, whatever their shape.
+
 ## 0.3.0 — 2026-11-06
 
 ### Added
