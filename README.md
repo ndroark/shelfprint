@@ -274,6 +274,21 @@ Month views have a **Share image…** button at the top of the page. In the year
 
 **Download PNG**, **Copy image**, or on phones, **Share…**. The status line under the preview says how many covers made it in. Some image hosts don't allow their covers to be copied into an image. Those books show title cards, and the optional **Share-image fallback** in Settings can usually fix that.
 
+### Image cards for one book
+
+Open any book and click **Create image card** to make an image about that book. The book's details window is your record; the card is what you choose to show other people.
+
+- **Layout:** **Standard** (cover, title, and your words) or **Cover feature** (a large cover, for books with no writing on the card). Cards with words start as Standard, cards without start as Cover feature, and you can switch.
+- **Text to share:** **As written** (your Freeform thoughts), **Edit for card**, or **None**. **Edit for card** lets you shorten, tighten, or rewrite the text for that card, at any length and in either layout, or paste in a passage to quote; your sheet isn't changed. **Revert to Tracker text** puts back what's in your sheet. For a book with no Freeform thoughts, the choice is **Write for card**. Either way, the card reminds you that the text is only on that card, with a **Copy text** button so you can paste it into your sheet to keep it. A line or two, like a quick one-line take, shows in large type.
+- **Present as:** **Review**, **Quotation**, or **Mixed**. The page starts from your quotation marks: text that's all in quotation marks is shown as a quotation, with a large quotation mark, the **Quotation author**, and the **Source work**. Those start as the book's author and title; change them if you're quoting someone else, such as another reviewer, or leave them blank. A quoted passage inside your own words is Mixed, which sets just the quoted part in italics. You can change it either way.
+- **Include:** rating, sub-genres and genre, when you read it, the new-author note, reread, matrix scores, format and length, and tags (you pick which). Only what the book has is offered. Matrix scores and tags show only in the Standard layout, so they're greyed out in Cover feature and come back when you switch. Sub-genres and Genre each show their values. A book with sub-genres starts with just those checked; one without starts with Genre. Check both to show both, such as "Fiction · Historical fiction, Sapphic romance."
+- **Personal details:** Source, How I found it, and Recommended by can name people or places, so they're left off every card until you turn them on, one card at a time. They're never remembered.
+- **Footer:** your name or handle, if you want one, and the word "Shelfprint" in small type, which you can turn off.
+
+The new-author note reads "First book I've read by this author" only for the earliest dated book marked new-to-me by that author; any others say "New-to-me author."
+
+Nothing on a card is cut off to fit. Titles print whole, long words, links, and text without spaces wrap, quotation credits wrap, and tags wrap onto up to three rows. If something still doesn't fit at a readable size, the card says what and can't be saved until you change it, for example by choosing **Edit for card**, turning off some details or tags, or trying another size. If a cover's host won't let it into the image, you can use an image from your device or fetch that one cover through images.weserv.nl, for that card only. If the card could only use a different cover than the one you chose (for example, the Open Library cover still in your sheet's Found cover column), it says so and offers the same choices, or you can use the cover it found. Your saved cover choice doesn't change. Sizes, looks, and the choices under **Include** are remembered in this browser.
+
 ---
 
 ## My Year in Books

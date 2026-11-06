@@ -4,6 +4,20 @@ What changed in each version of Shelfprint. The version in use appears at the bo
 
 Shelfprint uses [semantic versioning](https://semver.org): the middle number goes up for new features, and the last number for fixes.
 
+## 0.4.0 — 2026-11-06
+
+### Added
+- **Create image card**, in each book's details: an image about one book to share wherever you like, in post, square, or story size, on Paper or Ink.
+- Two layouts: **Standard** (cover, title, and your words) and **Cover feature** (a large cover, for cards with no writing). Cards with words start as Standard; you can switch.
+- **Text to share** can be **As written**, **Edit for card** (shorten, tighten, or rewrite it for that card, at any length, or paste in a passage to quote), or **None**. Your sheet isn't changed, and **Revert to Tracker text** puts its text back. Books with no Freeform thoughts can still have text: choose **Write for card**. Text that's only on the card comes with a reminder and a **Copy text** button for pasting it into your sheet. A line or two shows in large type. Text is never cut off to fit: if it doesn't fit at a readable size, the card says so and can't be saved until something changes.
+- **Present as Review, Quotation, or Mixed**, starting from your quotation marks and changeable either way. Quotations get a large quotation mark, a **Quotation author**, and a **Source work**, which start as the book's author and title and can be changed, for example to quote another reviewer.
+- Choose what to include: rating, sub-genres and genre (sub-genres by default when a book has them), when you read it, the new-author note, reread, matrix scores, format and length, and tags. Matrix scores and tags are for the Standard layout and are greyed out in Cover feature.
+- Source, How I found it, and Recommended by are left off every card until you turn them on, one card at a time, and are never remembered.
+- An optional name or handle, and the word "Shelfprint" in small type, which you can turn off.
+- If a cover can't be copied into the image, use an image from your device, or fetch that one cover through images.weserv.nl, for that card only. If the card could only use a different cover than the one you chose, such as the one in your sheet's Found cover column, it says so instead of swapping quietly.
+- Covers are shown whole, never cropped, whatever their shape.
+- Nothing on a card is cut off: titles print whole, long words and text without spaces wrap, quotation credits wrap, and tags wrap onto up to three rows. If something still doesn't fit, the card names it and can't be saved until something changes. As a last check, any text that would run past the card's edges or into the footer also keeps the card from being saved.
+
 ## 0.3.0 — 2026-11-06
 
 ### Added
