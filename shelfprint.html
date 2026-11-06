@@ -516,6 +516,7 @@ body.dragging .dropzone,body.dragging .wrap{outline:3px dashed var(--series-1);o
         <label class="check" id="s-filter-f" hidden><input type="checkbox" id="s-filter"><span id="s-filter-l"></span></label></div>
         <label style="display:block;font-size:13px;font-weight:600;margin:14px 0 6px" for="s-handle">Your handle</label>
         <input id="s-handle" class="handle-in" type="text" maxlength="40" spellcheck="false" placeholder="Optional, e.g. @yourname">
+        <label class="check" style="margin-top:10px"><input type="checkbox" id="s-credit">Shelfprint name in small type</label>
 
         <div id="w-opts" hidden><p class="legend-like">Images</p><ol class="w-list" id="w-list"></ol><div class="w-basis" id="w-basis" aria-live="polite"></div><div class="w-shelves" id="w-shelves"></div></div>
         <p class="share-note" id="share-note">1080 px wide, sized for Instagram, Threads, Bluesky, and Mastodon.</p>
@@ -527,7 +528,7 @@ body.dragging .dropzone,body.dragging .wrap{outline:3px dashed var(--series-1);o
 <script>
 (function(){
 "use strict";
-const VERSION="0.4.0";   // see CHANGELOG.md
+const VERSION="0.4.1";   // see CHANGELOG.md
 const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const MON=MONTHS.map(m=>m.slice(0,3));
 const $=s=>document.querySelector(s);
@@ -1814,6 +1815,10 @@ const SHARE_FMT={portrait:[1080,1350],square:[1080,1080],story:[1080,1920]};
 const SHARE_THEME={light:{bg:"#f6f4ef",ink:"#0b0b0b",sec:"#52514e",accent:"#8a3b1f",rule:"#d9d6cc"},dark:{bg:"#141413",ink:"#f0efec",sec:"#c3c2b7",accent:"#e39a76",rule:"#33322f"}};
 function loadCors(src){ return new Promise((res,rej)=>{ const i=new Image(); i.crossOrigin="anonymous"; i.referrerPolicy="no-referrer"; i.onload=()=>i.naturalWidth>20?res(i):rej(new Error("tiny")); i.onerror=()=>rej(new Error("load")); i.src=src; }); }
 const bust=u=>u+(u.includes("?")?"&":"?")+"share=1";
+/* A different cover made it into an image than the one shown on the page (usually: the chosen Cover URL's host
+   blocks copying, so the Found cover was used). Images say so instead of swapping quietly. */
+const swappedCover=b=>!!b._gotUrl && !!b._wantUrl && b._gotUrl!==b._wantUrl;
+const swapNote=n=>`${n} ${n===1?"cover uses a different image than the one you chose, because its host":"covers use a different image than the ones you chose, because their hosts"} wouldn't let ${n===1?"it":"them"} into the image${CFG.exportProxy?"":"; the share-image fallback in Settings may fix that"}.`;
 function exportImage(b){
   if(exportImgCache.has(b.id)) return exportImgCache.get(b.id);
   const p=(async()=>{ let urls=[]; try{ urls=await (coverCache.get(b.id)||findCover(b)); }catch(e){}
@@ -1836,7 +1841,7 @@ function drawDiamonds(ctx,rating,x,y,size,color){ const r=size/2,step=size*1.12;
     ctx.fillStyle=color; ctx.strokeStyle=color; ctx.lineWidth=Math.max(1.5,size*0.09);
     if(rating>=i-0.01){ path(r); ctx.fill(); } else { path(r-ctx.lineWidth/2); ctx.stroke(); if(rating>=i-0.51){ ctx.save(); ctx.beginPath(); ctx.rect(cx-r,cy-r,r,size); ctx.clip(); path(r); ctx.fill(); ctx.restore(); } } } }
 let SHARE=null;
-function openShare(books,title,kicker,mode){ SHARE={books:ranked(books),title,kicker}; WRAP=null;
+function openShare(books,title,kicker,mode){ SHARE={books:ranked(books),title,kicker}; WRAP=null; $("#s-credit").checked=creditOn();
   const personal=!!FILTER && PERSONAL_KINDS.has(FILTER.kind);   // off every time the dialog opens, never remembered
   $("#s-filter-f").hidden=!personal; $("#s-filter").checked=false; if(personal) $("#s-filter-l").innerHTML=`Show “${filterText(FILTER)}” on the image`;
   const r=document.querySelector(`input[name="smode"][value="${mode==="wrapped"&&VIEW==="year"?"wrapped":"single"}"]`); if(r) r.checked=true;
@@ -1880,7 +1885,8 @@ async function drawSingle(){
   if(themes.length&&themes[0][1].length>1) foot.push(`${VIEW==="year"?"Thread of the year":"Thread of the month"}: ${themes[0][0].toLowerCase()}`); if(newA) foot.push(`${newA} new-to-me author${newA>1?"s":""}`);
   const footY=Hh-pad-(fmt==="story"?60:0); ctx.fillStyle=th.rule; ctx.fillRect(pad,footY-footH+18,W-2*pad,2);
   let handleW=0; if(handle){ ctx.font=`600 30px ${SANS}`; handleW=ctx.measureText(handle).width; ctx.fillStyle=th.ink; ctx.textAlign="right"; ctx.fillText(handle,W-pad,footY); ctx.textAlign="left"; }
-  const footMax=W-2*pad-(handle?handleW+36:0), footTxt=foot.join("  ·  "); let fsz=30; ctx.font=`italic 400 ${fsz}px ${SERIF}`;
+  let creditW=0; if($("#s-credit").checked){ ctx.font=`400 30px ${SERIF}`; ctx.fillStyle=th.sec; ctx.globalAlpha=.85; ctx.textAlign="right"; ctx.fillText("Shelfprint",W-pad-(handle?handleW+30:0),footY); creditW=ctx.measureText("Shelfprint").width+30; ctx.textAlign="left"; ctx.globalAlpha=1; }
+  const footMax=W-2*pad-(handle?handleW+36:0)-creditW, footTxt=foot.join("  ·  "); let fsz=30; ctx.font=`italic 400 ${fsz}px ${SERIF}`;
   while(ctx.measureText(footTxt).width>footMax&&fsz>22){ fsz--; ctx.font=`italic 400 ${fsz}px ${SERIF}`; }
   ctx.fillStyle=th.sec; ctx.fillText(fitText(ctx,footTxt,footMax),pad,footY);
   const top=y,bottom=footY-footH,availW=W-2*pad,availH=bottom-top,n=books.length;
@@ -1914,6 +1920,8 @@ async function drawSingle(){
   if(!missing) notes.push(`All ${n} covers embedded.`);
   if(noUrl) notes.push(`${noUrl} ${noUrl===1?"book shows a title card":"books show title cards"}: no cover is set up yet.`);
   if(blocked) notes.push(`${blocked} ${blocked===1?"cover's":"covers'"} host wouldn't let ${blocked===1?"it":"them"} into the image${CFG.exportProxy?"":"; the share-image fallback in Settings can fix that"}.`);
+  const swapped=books.filter((b,i)=>imgs[i]&&swappedCover(b)).length;
+  if(swapped) notes.push(swapNote(swapped));
   status.textContent=notes.join(" ");
   canvasBlob().then(b=>{ if(token===drawShare.token) SHARE_BLOB=b; }).catch(()=>{}); setShareBusy(false);
 }
@@ -1939,6 +1947,7 @@ $("#share-native").onclick=async()=>{ const st=$("#share-status"), btn=$("#share
 const shareName=()=>wrapMode()&&WRAP?`my-year-in-books-${WRAP.y}-${pad2(WRAP.cur+1)}.png`:"shelfprint-"+(SHARE?.title||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")+".png";
 const canvasBlob=()=>new Promise((res,rej)=>{ try{ $("#share-canvas").toBlob(b=>b?res(b):rej(new Error("empty")),"image/png"); }catch(e){ rej(e); } });
 document.querySelectorAll('#share input[type=radio],#share input[type=checkbox]').forEach(i=>i.addEventListener("change",drawShare));
+$("#s-credit").addEventListener("change",e=>setCredit(e.target.checked));
 { const h=$("#s-handle"); const saved=store.get("wrapup-handle"); h.value=saved!==null?saved:SETTINGS.handle; let ht; h.addEventListener("input",()=>{ store.set("wrapup-handle",h.value); clearTimeout(ht); ht=setTimeout(drawShare,250); }); }
 $("#share-dl").onclick=async()=>{ try{ const blob=await canvasBlob(),a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=shareName(); document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); }catch(e){ $("#share-status").textContent="Couldn't export the image: "+e.message; } };
 $("#share-copy").onclick=async()=>{ const st=$("#share-status"),prev=st.textContent; try{ const blob=await canvasBlob(); await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]); st.textContent="Copied. Paste it into your post."; setTimeout(()=>st.textContent=prev,2500); }catch(e){ st.textContent="This browser won't copy images. Use Download PNG instead."; } };
@@ -1964,6 +1973,9 @@ const cardSubs=b=>subsOf(b).filter(x=>x.toLowerCase()!==String(b.genre||"").toLo
 const CARD_PER_BOOK={sub:b=>cardSubs(b).length>0,genre:b=>!cardSubs(b).length};
 let CARD=null;   // the open card: {b, img (from this device), proxied, kindSet, layoutSet, tags:Set, blob, over}
 const CARD_EXCERPTS=new Map();   // "Edit for card" text typed this visit, by book; never saved
+/* One remembered choice for the "Shelfprint" credit, shared by book cards, the month image, and My Year in Books */
+function creditOn(){ return cardPrefs().credit; }
+function setCredit(on){ const p=cardPrefs(); p.credit=!!on; store.set("wrapup:card-prefs",JSON.stringify(p)); }
 function cardPrefs(){ const d={size:"portrait",look:"light",credit:true,inc:{rating:true,genre:true,date:true,isNew:true,reread:true,matrix:false,length:false,tags:false}};
   try{ const s=JSON.parse(store.get("wrapup:card-prefs")||"{}"); return {...d,...s,inc:{...d.inc,...(s.inc||{})}}; }catch(e){ return d; } }
 function saveCardPrefs(){ const inc={}; CARD_INC.forEach(([k])=>{ const el=$("#c-inc-"+k); if(el && !el.disabled && !CARD_PER_BOOK[k]) inc[k]=el.checked; });
@@ -2337,7 +2349,9 @@ const W_BOTTOM=WH-WP-48-28;   // lowest point for card content, above the footer
 function wFoot(ctx,th,note,idx,total){
   const fy=WH-WP; ctx.fillStyle=th.rule; ctx.fillRect(WP,fy-48,WW-2*WP,2);
   const handle=$("#s-handle").value.trim(), right=[handle,total>1?`${idx} / ${total}`:""].filter(Boolean).join("     ");
-  ctx.font=`600 26px ${SANS}`; ctx.fillStyle=th.ink; ctx.textAlign="right"; let rw=0; if(right){ ctx.fillText(right,WW-WP,fy); rw=ctx.measureText(right).width+30; } ctx.textAlign="left";
+  ctx.font=`600 26px ${SANS}`; ctx.fillStyle=th.ink; ctx.textAlign="right"; let rw=0; if(right){ ctx.fillText(right,WW-WP,fy); rw=ctx.measureText(right).width+30; }
+  if($("#s-credit").checked){ ctx.font=`400 28px ${SERIF}`; ctx.fillStyle=th.sec; ctx.globalAlpha=.85; ctx.fillText("Shelfprint",WW-WP-rw,fy); rw+=ctx.measureText("Shelfprint").width+30; ctx.globalAlpha=1; }
+  ctx.textAlign="left";
   if(note){ ctx.font=`italic 400 26px ${SERIF}`; ctx.fillStyle=th.sec; ctx.fillText(fitText(ctx,note,WW-2*WP-rw),WP,fy); }
 }
 function coverTile(ctx,b,img,x,y,w,h){
@@ -2521,7 +2535,8 @@ async function drawWrap(){
   if(token!==drawShare.token) return;
   const imgs=await wrapImgs(bs); if(token!==drawShare.token) return;
   cv.width=WW; cv.height=WH; renderOut(cv.getContext("2d"),o,th,imgs,WRAP.cur+1,outs.length);
-  const miss=bs.filter(b=>!imgs.get(b.id)).length; status.textContent=bs.length?(miss?`${plural(miss,"book")} in this image ${miss===1?"shows a title card":"show title cards"}.`:`All ${plural(bs.length,"cover")} in this image embedded.`):"";
+  const sw=bs.filter(b=>imgs.get(b.id)&&swappedCover(b)).length;
+  const miss=bs.filter(b=>!imgs.get(b.id)).length; status.textContent=(sw?swapNote(sw)+" ":"")+(bs.length?(miss?`${plural(miss,"book")} in this image ${miss===1?"shows a title card":"show title cards"}.`:`All ${plural(bs.length,"cover")} in this image embedded.`):"");
   canvasBlob().then(b=>{ if(token===drawShare.token) SHARE_BLOB=b; }).catch(()=>{}); setShareBusy(false);
 }
 function renderWrapPanel(outs){

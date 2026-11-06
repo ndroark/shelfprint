@@ -270,9 +270,9 @@ Month views have a **Share image…** button at the top of the page. In the year
 - **Sizes:** post (4:5), square, or story (9:16)
 - **Look:** Paper (light) or Ink (dark)
 - **Year images:** your top 10, top 20, or all books
-- **Options:** titles under covers, a stats line, rank numbers, and your handle (optional and blank by default)
+- **Options:** titles under covers, a stats line, rank numbers, your handle (optional and blank by default), and the word "Shelfprint" in small type (on by default; one choice shared with book cards)
 
-**Download PNG**, **Copy image**, or on phones, **Share…**. The status line under the preview says how many covers made it in. Some image hosts don't allow their covers to be copied into an image. Those books show title cards, and the optional **Share-image fallback** in Settings can usually fix that.
+**Download PNG**, **Copy image**, or on phones, **Share…**. The status line under the preview says how many covers made it in, and how many use a different image than the one you chose. Some image hosts don't allow their covers to be copied into an image. Those books show title cards, and the optional **Share-image fallback** in Settings can usually fix that.
 
 ### Image cards for one book
 
