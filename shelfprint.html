@@ -461,7 +461,8 @@ body.dragging .dropzone,body.dragging .wrap{outline:3px dashed var(--series-1);o
           <div id="c-words-f"><fieldset><legend>Text to share</legend><div class="seg">
             <label><input type="radio" name="cwords" value="full">As written</label><label><input type="radio" name="cwords" value="excerpt">Edit for card</label><label><input type="radio" name="cwords" value="none">None</label></div></fieldset>
             <div id="c-excerpt-f" hidden><textarea id="c-excerpt" class="handle-in" rows="5" aria-label="Text to share, edited for this card"></textarea>
-              <p class="hint">Shorten, tighten, or rewrite your Freeform thoughts for this card, or paste in something else, such as a passage you want to quote. Your sheet isn’t changed.</p></div>
+              <p class="hint">Shorten, tighten, or rewrite your Freeform thoughts for this card, or paste in something else, such as a passage you want to quote. Your sheet isn’t changed.</p>
+              <p class="hint" id="c-revert-f" hidden><button class="linky" type="button" id="c-revert">Revert to Tracker text</button></p></div>
             <fieldset><legend>Present as</legend><div class="seg">
               <label><input type="radio" name="ckind" value="review">Review</label><label><input type="radio" name="ckind" value="quote">Quotation</label><label><input type="radio" name="ckind" value="mixed">Mixed</label></div></fieldset>
             <p class="hint" id="c-kind-why"></p>
@@ -2037,7 +2038,8 @@ const BC=(()=>{
       const bottom=FOOT-56; ctx.font=`400 62px ${SERIF}`; const tl=wrap(ctx,b.title,W-2*P).slice(0,3), titleH=tl.length*66;
       let note=null; if(o.text){ const wd=runs(o.text,o.kind==="quote"?"quote":o.kind==="mixed"?"mixed":"review"); note=fitTo(ctx,wd,W-2*P-80,story?320:180,50,38,1.25); if(!note) over=true; }
       ctx.font=`400 28px ${SANS}`; const fl=facts.length?wrap(ctx,facts.join("  ·  "),W-2*P):[];
-      const under=48+titleH+52+(o.rating!=null?62:0)+(fl.length?18+fl.length*40:0)+(note?36+height(note.L,note.s,1.25):0);
+      const attrLine=o.kind==="quote"&&note&&(o.attr[0]||o.attr[1]);
+      const under=48+titleH+52+(o.rating!=null?62:0)+(fl.length?18+fl.length*40:0)+(note?36+height(note.L,note.s,1.25):0)+(attrLine?50:0);
       const img=o.img, iw=img?img.naturalWidth||img.width:2, ih=img?img.naturalHeight||img.height:3;
       const boxH=Math.max(200,Math.min(story?980:760,bottom-top-under)), s=Math.min((W-2*P)/iw,boxH/ih), groupH=ih*s+under, y0=top+Math.max(0,(bottom-top-groupH)/2);
       const cb=cover(ctx,b,img,P,y0,W-2*P,ih*s);
@@ -2047,7 +2049,9 @@ const BC=(()=>{
         diamonds(ctx,o.rating,x,y+38,36,th.accent); ctx.fillStyle=th.sec; ctx.fillText(lab,x+dw+14,y+49); y+=62; ctx.textAlign="center"; }
       if(fl.length){ ctx.font=`400 28px ${SANS}`; ctx.fillStyle=th.sec; y+=18; fl.forEach(l=>{ y+=40; ctx.fillText(l,W/2,y-8); }); }
       ctx.textAlign="left";
-      if(note){ y+=36; drawAt(ctx,note.L,P+40,y,note.s,1.25,th.ink,W-2*P-80); }
+      if(note){ y+=36; y=drawAt(ctx,note.L,P+40,y,note.s,1.25,th.ink,W-2*P-80);
+        if(attrLine){ const a=`— ${o.attr[0]}${o.attr[0]&&o.attr[1]?", ":""}`; ctx.font=`400 26px ${SANS}`; const aw=ctx.measureText(a).width; ctx.font=`italic 400 29px ${SERIF}`; const fw=ctx.measureText(o.attr[1]).width, x0=(W-aw-fw)/2;
+          ctx.font=`400 26px ${SANS}`; ctx.fillStyle=th.sec; ctx.fillText(a,x0,y+44); ctx.font=`italic 400 29px ${SERIF}`; ctx.fillText(o.attr[1],x0+aw,y+44); } }
     } else {
       const top2=top+(o.dy||0), cb=cover(ctx,b,o.img,P,top2,300,450), rx=P+352, rw=W-P-rx;
       let ts=64; ctx.font=`400 ${ts}px ${SERIF}`; let tl=wrap(ctx,b.title,rw); while(tl.length>3&&ts>42){ ts-=4; ctx.font=`400 ${ts}px ${SERIF}`; tl=wrap(ctx,b.title,rw); }
@@ -2116,13 +2120,20 @@ function openCard(b){
   $("#c-personal").innerHTML=pers.map(([k,lab])=>`<label class="check"><input type="checkbox" id="c-p-${k}">${lab}: <span class="val">${esc(b[k])}</span></label>`).join("");
   $("#c-inc").querySelectorAll("input,#c-tags input").forEach(i=>i.addEventListener("change",()=>{ if(i.closest("#c-tags")){ i.checked?CARD.tags.add(i.value):CARD.tags.delete(i.value); } else saveCardPrefs(); drawCard(); }));
   $("#c-personal").querySelectorAll("input").forEach(i=>i.addEventListener("change",drawCard));
-  syncCardKind(); syncCardLayout();
+  syncCardKind(); syncCardLayout(); syncCardStandardOnly(); syncCardRevert();
   openModal($("#cardm")); drawCard();
 }
 function syncCardKind(){ const t=cardText(); if(!CARD.kindSet) setRadio("ckind",textKind(t));
   const k=radioVal("ckind"); $("#c-attr-f").hidden=k!=="quote";
-  $("#c-kind-why").textContent=!t?"":k==="mixed"?"Mixed keeps your text as typed. Passages inside quotation marks are set in italics.":k==="quote"?"Shown as a quotation, with a large quotation mark, its author, and the source work. Change them below if you’re quoting someone else, such as another reviewer; leave both blank to leave them off.":"Shown as your own words.";
+  $("#c-kind-why").textContent=!t?"":k==="mixed"?"Mixed keeps your text as typed. Passages inside quotation marks are set in italics.":k==="quote"?"Shown as a quotation, in italics with its author and the source work. Change them below if you’re quoting someone else, such as another reviewer; leave both blank to leave them off.":"Shown as your own words.";
   if(!CARD.kindSet && t) $("#c-kind-why").textContent+=" Picked from the quotation marks in the text"+(textKind(t)==="review"?" (there aren’t any)":"")+"; change it here."; }
+/* Cover feature has no room for the matrix or tags: those options are greyed out there, not removed, and they keep
+   their setting for when the card goes back to Standard. */
+const CARD_STANDARD_ONLY=["matrix","tags"];
+function syncCardStandardOnly(){ const feat=radioVal("clayout")==="feature";
+  CARD_STANDARD_ONLY.forEach(k=>{ const el=$("#c-inc-"+k); if(!el) return; el.disabled=feat; const lab=el.closest("label"); lab.classList.toggle("off",feat);
+    let n=lab.querySelector(".so"); if(feat&&!n){ n=H("span",{class:"val so"}," (Standard layout only)"); lab.appendChild(n); } if(!feat&&n) n.remove(); }); }
+function syncCardRevert(){ if(!CARD) return; const v=$("#c-excerpt").value.trim(); $("#c-revert-f").hidden=radioVal("cwords")!=="excerpt"||v===CARD.b.thoughts.trim(); }
 function syncCardLayout(){ const t=cardText(), n=t?t.split(/\s+/).length:0;
   if(!CARD.layoutSet) setRadio("clayout",n?"standard":"feature");   // any words: Standard (a line or two is set large); none: Cover feature
   $("#c-layout-why").textContent=CARD.layoutSet?"":n?"Standard, because there’s writing to show.":"Cover feature, because there’s no text on this card."; }
@@ -2163,8 +2174,9 @@ async function drawCard(){
     if(i.name==="ckind") CARD.kindSet=true; if(i.name==="clayout") CARD.layoutSet=true;
     if(i.name==="cwords"){ $("#c-excerpt-f").hidden=radioVal("cwords")!=="excerpt"; }
     if(i.name==="csize"||i.name==="clook") saveCardPrefs();
-    syncCardKind(); syncCardLayout(); drawCard(); }));
-  let et; $("#c-excerpt").addEventListener("input",()=>{ CARD_EXCERPTS.set(bookKey(CARD.b),$("#c-excerpt").value); clearTimeout(et); et=setTimeout(()=>{ syncCardKind(); syncCardLayout(); drawCard(); },250); });
+    syncCardKind(); syncCardLayout(); syncCardStandardOnly(); syncCardRevert(); drawCard(); }));
+  let et; $("#c-excerpt").addEventListener("input",()=>{ CARD_EXCERPTS.set(bookKey(CARD.b),$("#c-excerpt").value); syncCardRevert(); clearTimeout(et); et=setTimeout(()=>{ syncCardKind(); syncCardLayout(); drawCard(); },250); });
+  $("#c-revert").addEventListener("click",()=>{ $("#c-excerpt").value=CARD.b.thoughts.trim(); CARD_EXCERPTS.delete(bookKey(CARD.b)); syncCardRevert(); syncCardKind(); syncCardLayout(); syncCardStandardOnly(); drawCard(); $("#c-excerpt").focus(); });
   let at; ["#c-attr-who","#c-attr-from"].forEach(s=>$(s).addEventListener("input",()=>{ clearTimeout(at); at=setTimeout(drawCard,250); }));
   let ht; $("#c-handle").addEventListener("input",()=>{ store.set("wrapup-handle",$("#c-handle").value); const sh=$("#s-handle"); if(sh) sh.value=$("#c-handle").value; clearTimeout(ht); ht=setTimeout(drawCard,250); });
   $("#c-credit").addEventListener("change",()=>{ saveCardPrefs(); drawCard(); });
