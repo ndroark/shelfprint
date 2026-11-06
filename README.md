@@ -230,7 +230,8 @@ The bar at the top switches between the year and each month, with the number of 
   - if you use the matrix: matrix charts, including *Gut vs. rubric*
 - **Month view:** the month's shelf, ranked by your rating, with the same kinds of breakdowns for that month.
 - **Book details:** click any cover to see everything you logged about that book, choose its cover, and pick it for My Year in Books.
-- **Filters:** click a bar, a tag, an author, and so on to show only matching books. **Clear filter**, or your browser's back button, undoes it.
+- **Find a book:** in the year view, type part of a title or author in **Find a book in [year]** to open that book's details. Finding a book doesn't filter the page or change any numbers.
+- **Filters:** click a bar, a tag, an author, and so on to show only matching books. **Clear filter**, or your browser's back button, undoes it. In a month, **Show all of [year]** keeps the filter and opens the year view.
 - **Table:** every view ends with a collapsible table of its books.
 
 If your file covers more than one year, a year picker appears next to the year.
@@ -317,9 +318,9 @@ My Year in Books always covers the whole year. A filter on the page isn't applie
 
 ## Privacy and outside connections
 
-Your reading data never leaves your browser. The page has no server, no analytics, and no account.
+Your reading log is read in your browser and isn't uploaded to Shelfprint. There's no Shelfprint account, no Shelfprint server-side database, and no analytics.
 
-A few optional features reach outside services to fetch images or fonts. Each one is listed under **Privacy & outside connections** on the first screen and in **Settings**, with exactly what it sends. Anything that would send information about your books starts **off**.
+A few optional features reach outside services to fetch images or fonts. Each one is listed under **Privacy & outside connections** on the first screen and in **Settings**, with exactly what it sends. Anything that would send information about your books is **off** until you turn it on.
 
 | Setting | Default | What it sends, and to whom |
 |---|---|---|

@@ -13,7 +13,7 @@
    service starts off. Each reader can change the connections below in the
    page's Settings panel (saved in their own browser) unless lockSettings
    is true, in which case these values are final.
-   Your reading data itself never leaves the browser.
+   Your reading file itself is read in the browser and isn't uploaded to Shelfprint.
    ===================================================================== */
 const SETTINGS = {
   handle: "",               // optional default handle for share images; readers can add their own in the share dialog
@@ -361,6 +361,17 @@ body.dragging .dropzone,body.dragging .wrap{outline:3px dashed var(--series-1);o
   .share-preview canvas{max-height:52vh} .share-status{font-size:11.5px} }
 @media (pointer: coarse){ .tab{padding:9px 12px} .chip{padding:7px 12px;font-size:13px} .btn.small{padding:7px 11px} .seg label{padding:7px 13px}
   .linky{padding:4px 0} .mlabel{padding:4px 0} }
+.finder{position:relative;max-width:380px;margin:0 0 24px}
+.finder-in{font-size:14px;padding:8px 11px}
+.finder-box{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;background:var(--surface-1);border:1px solid var(--border);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:4px;max-height:min(420px,60vh);overflow:auto}
+.finder-list{list-style:none;margin:0;padding:0}
+.finder-opt{display:flex;gap:10px;align-items:center;padding:6px 8px;border-radius:7px;cursor:pointer}
+.finder-opt[aria-selected="true"]{background:var(--surface-2)}
+.finder-cov{width:28px;flex:none}.finder-cov .cover{box-shadow:none}.finder-cov .ph .t,.finder-cov .ph .a{display:none}
+.finder-txt{display:flex;flex-direction:column;min-width:0;font-size:13px}
+.finder-txt b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.finder-txt span{font-size:12px;color:var(--text-secondary)}
+.finder-msg{margin:4px 8px 6px;font-size:12px;color:var(--text-secondary)}.finder-msg:empty{display:none}
 .handle-in{font:inherit;font-size:13px;width:100%;padding:6px 9px;border:1px solid var(--axis);border-radius:6px;background:var(--page);color:var(--text-primary)}
 </style>
 </head>
@@ -443,7 +454,7 @@ body.dragging .dropzone,body.dragging .wrap{outline:3px dashed var(--series-1);o
 <script>
 (function(){
 "use strict";
-const VERSION="0.1.1";   // see CHANGELOG.md
+const VERSION="0.2.0";   // see CHANGELOG.md
 const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const MON=MONTHS.map(m=>m.slice(0,3));
 const $=s=>document.querySelector(s);
@@ -880,7 +891,8 @@ function two(){ const last=main.lastElementChild; if(last && last.firstElementCh
 
 /* ================= render ================= */
 function render(){
-  hideTip(); main.innerHTML="";
+  const findFocused=!!FIND.el && FIND.el.contains(document.activeElement);
+  FIND.redrawing=true; hideTip(); main.innerHTML=""; FIND.redrawing=false;
   renderTabs();
   const scope=ALL.filter(b=>inScope(b,VIEW));
   const finished=applyFilter(scope.filter(b=>b.status==="Finished"));
@@ -941,6 +953,9 @@ function render(){
     if(!isYear){ const y=H("button",{class:"btn small",type:"button"},`Show all of ${esc(YEAR??"the year")}`); y.onclick=()=>go("year"); fb.appendChild(y); }   // keeps the filter
     const c=H("button",{class:"btn small",type:"button"},"Clear filter"); c.onclick=clearFilter; fb.appendChild(c); main.appendChild(fb);
   }
+  if(isYear && YEAR!=null && scope.some(b=>b.status==="Finished"||b.status==="DNF")){
+    main.appendChild(finderEl()); if(findFocused) FIND.el.querySelector("input").focus({preventScroll:true}); else FIND.open=false; drawFind(); }
+  else FIND.open=false;
   renderTiles(finished,dnf,isYear);
   if(isYear) renderYear(finished,dnf,reading); else renderMonth(finished,dnf,reading);
   main.querySelectorAll(".mas").forEach(m=>{ if(![...m.children].some(c=>c.children.length)) m.closest("section")?.remove(); });
@@ -1013,6 +1028,65 @@ function renderTiles(fin,dnf,isYear){
   if(dnf.length) tiles.push({v:dnf.length,l:"set aside (DNF)",n:dnf.map(b=>esc(b.short)).slice(0,3).join(", ")});
   const t=H("div",{class:"tiles"},tiles.map(t=>`<div class="tile"><div class="v">${t.v}</div><div class="l">${t.l}</div><div class="n">${t.raw?t.n:t.n}</div></div>`).join(""));
   main.appendChild(t);
+}
+
+/* ---------- year view: find a book ----------
+   Finds a book by title or author in the selected year and opens its details. It never filters the page, so charts
+   and counts stay as they are. It looks through every finished and DNF book in the year, whatever filter is on.
+   The element is built once and put back after each redraw, so typing and focus survive a render(). */
+const FIND={el:null,q:"",open:false,hi:0,hits:[]}, FIND_MAX=8;
+const fold=s=>String(s||"").normalize("NFD").replace(/\p{M}/gu,"").toLowerCase();   // "élégance" finds "Élégance"
+function findHits(q){
+  const t=fold(q).trim(); if(!t) return [];
+  const out=[];
+  ALL.forEach(b=>{ if(b.yr!==YEAR || (b.status!=="Finished" && b.status!=="DNF")) return;
+    const i=fold(b.title).indexOf(t);
+    if(i>-1) out.push([i===0?0:1,b]); else if((fold(b.author)+" | "+fold(b.authorRaw)).includes(t)) out.push([2,b]); });
+  // titles that start with the text first, then other title matches, then authors; each in reading order
+  return out.sort((x,y)=>x[0]-y[0]||(x[1].month??12)-(y[1].month??12)||x[1].short.localeCompare(y[1].short)).map(x=>x[1]);
+}
+function finderEl(){
+  if(FIND.el) return FIND.el;
+  const wrap=H("div",{class:"finder"});
+  const inp=H("input",{type:"text",class:"handle-in finder-in",role:"combobox","aria-autocomplete":"list","aria-expanded":"false","aria-controls":"finder-list",autocomplete:"off",spellcheck:"false"});
+  const box=H("div",{class:"finder-box",hidden:""}), list=H("ul",{class:"finder-list",id:"finder-list",role:"listbox"}), msg=H("p",{class:"finder-msg","aria-live":"polite"});
+  box.append(list,msg); wrap.append(inp,box); FIND.el=wrap;
+  const shown=()=>FIND.hits.slice(0,FIND_MAX);
+  inp.addEventListener("input",()=>{ FIND.q=inp.value; FIND.hi=0; FIND.open=true; drawFind(); });
+  inp.addEventListener("keydown",e=>{
+    const n=shown().length;
+    if(e.key==="ArrowDown"||e.key==="ArrowUp"){ if(!FIND.q.trim()) return; e.preventDefault();
+      if(!FIND.open){ FIND.open=true; drawFind(); return; }
+      if(n){ FIND.hi=(FIND.hi+(e.key==="ArrowDown"?1:-1)+n)%n; markFind(); } }
+    else if(e.key==="Enter"){ if(FIND.open && n){ e.preventDefault(); chooseFind(shown()[FIND.hi]); } }
+    else if(e.key==="Escape"){ if(FIND.open){ FIND.open=false; drawFind(); } else if(inp.value){ inp.value=""; FIND.q=""; drawFind(); } } });
+  inp.addEventListener("blur",()=>{ if(FIND.redrawing) return; FIND.open=false; drawFind(); });   // a redraw moves the box; it isn't the reader leaving it
+  return wrap;
+}
+function chooseFind(b){ FIND.open=false; drawFind(); openBook(b); }   // closing the book returns focus to the box
+function markFind(){
+  const inp=FIND.el.querySelector("input");
+  FIND.el.querySelectorAll(".finder-opt").forEach((li,i)=>li.setAttribute("aria-selected",String(i===FIND.hi)));
+  const on=FIND.el.querySelector(`#find-${FIND.hi}`); if(on){ inp.setAttribute("aria-activedescendant",on.id); on.scrollIntoView({block:"nearest"}); } else inp.removeAttribute("aria-activedescendant");
+}
+function drawFind(){
+  if(!FIND.el) return;
+  const inp=FIND.el.querySelector("input"), box=FIND.el.querySelector(".finder-box"), list=FIND.el.querySelector(".finder-list"), msg=FIND.el.querySelector(".finder-msg");
+  const label=`Find a book in ${YEAR}`; inp.placeholder=label; inp.setAttribute("aria-label",label+" by title or author");
+  const q=FIND.q.trim();
+  if(!FIND.open || !q){ box.hidden=true; inp.setAttribute("aria-expanded","false"); inp.removeAttribute("aria-activedescendant"); return; }
+  FIND.hits=findHits(q); const shown=FIND.hits.slice(0,FIND_MAX); FIND.hi=Math.min(FIND.hi,Math.max(0,shown.length-1));
+  list.innerHTML="";
+  shown.forEach((b,i)=>{
+    const li=H("li",{role:"option",id:"find-"+i,class:"finder-opt","aria-selected":"false"});
+    const cv=H("span",{class:"finder-cov"}); cv.appendChild(coverEl(b));
+    li.append(cv,H("span",{class:"finder-txt"},`<b>${esc(b.short)}</b><span>${esc([b.author,b.month!=null?MONTHS[b.month]:"",b.status==="DNF"?"DNF":""].filter(Boolean).join(" · "))}</span>`));
+    li.addEventListener("mousedown",e=>e.preventDefault());   // keep focus in the box, so the click lands
+    li.addEventListener("click",()=>chooseFind(b));
+    li.addEventListener("mousemove",()=>{ if(FIND.hi!==i){ FIND.hi=i; markFind(); } });
+    list.appendChild(li); });
+  msg.textContent=!shown.length?`No books in ${YEAR} match “${q}”.`:FIND.hits.length>shown.length?`Showing ${shown.length} of ${FIND.hits.length}. Keep typing to narrow it down.`:"";
+  box.hidden=false; inp.setAttribute("aria-expanded","true"); markFind();
 }
 
 /* ---------- month view ---------- */
@@ -1380,7 +1454,7 @@ function sourceUrl(){
 }
 function renderFooter(){
   const on=v=>v?"on":"off";
-  $("#foot").innerHTML=`<div>${SAMPLE?`Showing <b>sample books</b>. Nothing is saved. `:`${SRC_NAME?`Showing <b>${esc(SRC_NAME)}</b>, saved in this browser only. `:""}Your reading data is read and kept in this browser; it isn't uploaded anywhere.
+  $("#foot").innerHTML=`<div>${SAMPLE?`Showing <b>sample books</b>. Nothing is saved. `:`${SRC_NAME?`Showing <b>${esc(SRC_NAME)}</b>, saved in this browser only. `:""}Your reading data is read and kept in this browser; it isn't uploaded to Shelfprint.
     <button class="linky" type="button" id="forget">Forget the saved data</button>`}</div>
     <div>Outside connections: cover links from your sheet <b>${on(CFG.coverUrls)}</b> · cover lookup (Open Library) <b>${on(CFG.coverLookup)}</b>${CFG.coverLookup?` · Google Books <b>${on(CFG.googleBooks)}</b>`:""} · share-image fallback (images.weserv.nl) <b>${on(CFG.exportProxy)}</b> · web font (Google Fonts) <b>${on(CFG.webFont)}</b>${CFG.dataUrl?" · auto-load from your published sheet <b>on</b>":""}. ${LOCKED?"Set by whoever installed this page.":`<button class="linky" type="button" id="foot-set">Change</button>`}</div>
     <div id="unsaved-line" hidden></div>
