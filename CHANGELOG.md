@@ -4,6 +4,16 @@ What changed in each version of Shelfprint. The version in use appears at the bo
 
 Shelfprint uses [semantic versioning](https://semver.org): the middle number goes up for new features, and the last number for fixes.
 
+## 0.5.0 — 2026-11-06
+
+### Added
+- **Long-form**, a third layout for image cards: a long review becomes a numbered set of up to 10 cards. The first card shows the book; later cards repeat the title with "Continued" and are numbered "2 / 3." Your complete text is kept.
+- Breaks fall between sentences, at the end of a paragraph where they can, and the cards are filled about equally. A passage too long for one card continues onto the next, and the card says so.
+- The type is the largest size from 36 to 46 px that needs no more cards than 36 px would. Every card in a set uses the same size.
+- Matrix scores, tags, and a quotation's credit close the set on the last card. Mixed italics carry across cards.
+- When the text doesn't fit a Standard card, the card switches to Long-form and says why, unless you chose a layout yourself.
+- Preview every card in the set, download them all as a ZIP or one at a time, copy one card, or share the whole set. Files are named so they sort in order: `book-card-title-01-of-03.png`.
+
 ## 0.4.1 — 2026-11-06
 
 ### Added
