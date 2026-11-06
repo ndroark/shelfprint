@@ -14,7 +14,7 @@ Shelfprint uses [semantic versioning](https://semver.org): the middle number goe
 - Choose what to include: rating, sub-genres and genre (sub-genres by default when a book has them), when you read it, the new-author note, reread, matrix scores, format and length, and tags. Matrix scores and tags are for the Standard layout and are greyed out in Cover feature.
 - Source, How I found it, and Recommended by are left off every card until you turn them on, one card at a time, and are never remembered.
 - An optional name or handle, and the word "Shelfprint" in small type, which you can turn off.
-- If a cover can't be copied into the image, use an image from your device, or fetch that one cover through images.weserv.nl, for that card only.
+- If a cover can't be copied into the image, use an image from your device, or fetch that one cover through images.weserv.nl, for that card only. If the card could only use a different cover than the one you chose, such as the one in your sheet's Found cover column, it says so instead of swapping quietly.
 - Covers are shown whole, never cropped, whatever their shape.
 
 ## 0.3.0 — 2026-11-06

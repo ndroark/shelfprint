@@ -441,8 +441,8 @@ body.dragging .dropzone,body.dragging .wrap{outline:3px dashed var(--series-1);o
         </div>
         <div class="share-status" id="card-status" aria-live="polite"></div>
         <div class="card-notice" id="card-blocked" hidden>
-          <p>This cover’s host won’t let it be copied into an image, so the card shows a title card instead.</p>
-          <div class="row"><button class="btn small" type="button" data-cardfile>Use an image from this device</button><button class="btn small" type="button" id="card-proxy">Fetch it through images.weserv.nl</button></div>
+          <p id="card-blocked-msg"></p>
+          <div class="row"><button class="btn small" type="button" data-cardfile>Use an image from this device</button><button class="btn small" type="button" id="card-proxy">Fetch it through images.weserv.nl</button><button class="btn small" type="button" id="card-keep" hidden>Keep this cover</button></div>
           <p class="hint">For this card only. An image from your device isn’t saved or sent anywhere.<span id="card-proxy-note"> The fetch sends only the image’s address to images.weserv.nl.</span></p>
         </div>
         <p class="hint" id="card-own"><button class="linky" type="button" data-cardfile>Use an image from this device for this card</button></p>
@@ -1817,9 +1817,10 @@ function exportImage(b){
   if(exportImgCache.has(b.id)) return exportImgCache.get(b.id);
   const p=(async()=>{ let urls=[]; try{ urls=await (coverCache.get(b.id)||findCover(b)); }catch(e){}
     const cands=[...new Set([b.coverSrc,...urls].filter(Boolean))]; b._hasCover=cands.length>0;
+    b._wantUrl=cands[0]||null; b._gotUrl=null;   // the cover shown on the page, and the one that made it into the image
     for(const u of cands){
-      try{ return await loadCors(bust(u)); }catch(e){}
-      if(CFG.exportProxy){ try{ return await loadCors("https://images.weserv.nl/?url="+encodeURIComponent(u)); }catch(e){} }
+      try{ const i=await loadCors(bust(u)); b._gotUrl=u; return i; }catch(e){}
+      if(CFG.exportProxy){ try{ const i=await loadCors("https://images.weserv.nl/?url="+encodeURIComponent(u)); b._gotUrl=u; return i; }catch(e){} }
     } return null; })();
   exportImgCache.set(b.id,p); return p;
 }
@@ -2112,7 +2113,7 @@ function cardText(){ if(!CARD) return ""; const w=radioVal("cwords"); if(w==="no
 function openCard(b){
   if(!b) return; const p=cardPrefs();
   if(CARD?.url) URL.revokeObjectURL(CARD.url);
-  CARD={b,img:null,proxied:null,kindSet:false,layoutSet:false,tags:new Set(b.tags.slice(0,4)),blob:null,over:false};
+  CARD={b,img:null,proxied:null,keepSwap:false,kindSet:false,layoutSet:false,tags:new Set(b.tags.slice(0,4)),blob:null,over:false};
   setRadio("csize",p.size); setRadio("clook",p.look); $("#c-credit").checked=p.credit;
   { const h=store.get("wrapup-handle"); $("#c-handle").value=h!==null?h:SETTINGS.handle; }
   const has=!!b.thoughts.trim(); $("#c-words-f").hidden=!has; setRadio("cwords",has?"full":"none");
@@ -2151,6 +2152,9 @@ async function drawCard(){
   try{ await Promise.race([Promise.all([document.fonts.load(`400 60px Newsreader`),document.fonts.load(`italic 400 40px Newsreader`)]),new Promise(r=>setTimeout(r,2500))]); }catch(e){}
   const fetched=CARD.img||CARD.proxied?null:await exportImage(b); if(token!==drawCard.token) return;
   const img=CARD.img||CARD.proxied||fetched, blocked=!img && b._hasCover;
+  // a different cover made it into the image than the one shown on the page: say so, never swap quietly
+  const swapped=!!fetched && !CARD.img && !CARD.proxied && !!b._gotUrl && !!b._wantUrl && b._gotUrl!==b._wantUrl;
+  const from=u=>u===b.coverUrl?"your sheet’s Cover URL column":u===b.foundCover?"your sheet’s Found cover column":isGoogleUrl(u)?"Google Books":/openlibrary\.org/.test(u)?"Open Library":"another link for this book";
   const inc=k=>{ const el=$("#c-inc-"+k); return !!el && el.checked && !el.disabled; };
   const facts=[[inc("genre")&&b.genre,inc("sub")&&cardSubs(b).join(", ")].filter(Boolean).join(" · "), inc("isNew")&&newAuthorLabel(b), inc("reread")&&"Reread",
     inc("length")&&[b.format,b.audio?`${fmt1(b.audio)} hours`:b.pages?`${b.pages.toLocaleString()} pages`:""].filter(Boolean).join(", "),
@@ -2163,12 +2167,19 @@ async function drawCard(){
     credit:$("#c-credit").checked, handle:$("#c-handle").value.trim()});
   const tg=$("#c-tags"); if(tg) tg.hidden=!inc("tags");
   CARD.over=res.over;
-  $("#card-blocked").hidden=!blocked; $("#card-own").hidden=blocked;
-  const proxyOk=!CFG.exportProxy && !LOCKED;   // off in Settings and not locked by the host: offer it for this card only $("#card-proxy").hidden=!proxyOk||!!CARD.proxied; $("#card-proxy-note").hidden=!proxyOk;
+  const notice=blocked||(swapped&&!CARD.keepSwap);
+  $("#card-blocked").hidden=!notice; $("#card-own").hidden=notice; $("#card-keep").hidden=!swapped;
+  $("#card-blocked-msg").textContent=blocked?"This cover’s host won’t let it be copied into an image, so the card shows a title card instead."
+    :`Your chosen cover’s host won’t let it be copied into an image, so this card is using the cover from ${from(b._gotUrl)} instead.`;
+  // offer the fetch only when the Share-image fallback is off and the host hasn't locked settings
+  const proxyOk=!CFG.exportProxy && !LOCKED;
+  $("#card-proxy").hidden=!proxyOk||!!CARD.proxied; $("#card-proxy-note").hidden=!proxyOk;
+  $("#card-proxy").textContent=swapped?"Fetch your chosen cover through images.weserv.nl":"Fetch it through images.weserv.nl";
   const notes=[];
   if(res.over) notes.push(radioVal("clayout")==="feature"?"Cover feature only has room for a short note. Choose Standard, or Edit for card to shorten the text."
     :"The text doesn’t fit on this card at a readable size. Choose Edit for card to shorten it, or turn off matrix scores or tags to make room. Text is never cut off to fit, so this card can’t be saved until something changes.");
   if(!res.over && res.smallCover) notes.push("There isn’t much room for the cover at this size. Try Post 4:5 or Story 9:16, turn off some details, or choose Standard.");
+  if(swapped && CARD.keepSwap) notes.push(`Using the cover from ${from(b._gotUrl)}, not the one you chose.`);
   if(CARD.img) notes.push("Using the image from your device, for this card only.");
   else if(!img && !b._hasCover) notes.push("There’s no cover to use for this book, so the card shows a title card.");
   st.textContent=notes.join(" ");
@@ -2192,7 +2203,8 @@ async function drawCard(){
   $("#card-file").addEventListener("change",e=>{ const f=e.target.files[0]; e.target.value=""; if(!f||!CARD) return;
     const url=URL.createObjectURL(f), im=new Image(); im.onload=()=>{ if(CARD.url) URL.revokeObjectURL(CARD.url); CARD.url=url; CARD.img=im; drawCard(); };
     im.onerror=()=>{ URL.revokeObjectURL(url); $("#card-status").textContent="That file couldn’t be opened as an image. Try a JPG, PNG, or WebP."; }; im.src=url; });
-  $("#card-proxy").addEventListener("click",async()=>{ const b=CARD.b, st=$("#card-status"); st.textContent="Fetching the cover through images.weserv.nl…";
+  $("#card-keep").addEventListener("click",()=>{ CARD.keepSwap=true; drawCard(); });
+  $("#card-proxy").addEventListener("click",async()=>{ const b=CARD.b, st=$("#card-status"); st.textContent="Fetching the cover through images.weserv.nl…";   // the chosen cover is tried first
     let urls=[]; try{ urls=await (coverCache.get(b.id)||findCover(b)); }catch(e){}
     for(const u of [...new Set([b.coverSrc,...urls].filter(Boolean))]){ try{ CARD.proxied=await loadCors("https://images.weserv.nl/?url="+encodeURIComponent(u)); break; }catch(e){} }
     if(!CARD.proxied){ st.textContent="That didn’t work either. Use an image from your device instead."; return; }
