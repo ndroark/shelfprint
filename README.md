@@ -229,7 +229,7 @@ The bar at the top switches between the year and each month, with the number of 
   - your currently reading list
   - if you use the matrix: matrix charts, including *Gut vs. rubric*
 - **Month view:** the month's shelf, ranked by your rating, with the same kinds of breakdowns for that month.
-- **Book details:** click any cover to see everything you logged about that book, choose its cover, and pick it for My Year in Books.
+- **Book details:** click any cover to see everything you logged about that book, choose its cover, and pick it for My Year in Books. With a book open, Left and Right move to the previous or next book in the same list. In the year's month-by-month strips, Up and Down move to the first book of the month before or after. In the table, the arrow keys move through the rows.
 - **Find a book:** in the year view, type part of a title or author in **Find a book in [year]** to open that book's details. Finding a book doesn't filter the page or change any numbers.
 - **Filters:** click a bar, a tag, an author, and so on to show only matching books. **Clear filter**, or your browser's back button, undoes it. In a month, **Show all of [year]** keeps the filter and opens the year view.
 - **Table:** every view ends with a collapsible table of its books.

@@ -454,7 +454,7 @@ body.dragging .dropzone,body.dragging .wrap{outline:3px dashed var(--series-1);o
 <script>
 (function(){
 "use strict";
-const VERSION="0.2.0";   // see CHANGELOG.md
+const VERSION="0.3.0";   // see CHANGELOG.md
 const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const MON=MONTHS.map(m=>m.slice(0,3));
 const $=s=>document.querySelector(s);
@@ -804,8 +804,8 @@ function coverEl(b,opts={}){
 function bookBtn(b,opts={}){
   const btn=document.createElement("button"); btn.type="button"; btn.className="book";
   btn.setAttribute("aria-label",`${b.short} by ${b.author}${b.rating!=null?`, rated ${b.rating}`:""}. Open details`);
-  btn.appendChild(coverEl(b,opts));
-  btn.addEventListener("click",()=>openBook(b));
+  btn.dataset.id=b.id; btn.appendChild(coverEl(b,opts));
+  btn.addEventListener("click",()=>{ NAV=navFrom(btn); openBook(b); });
   if(opts.tip) bindTip(btn,`<b>${esc(b.short)}</b><br><span class="m">${esc(b.author)}</span>${b.rating!=null?`<br><span style="color:var(--accent)">${diamonds(b.rating)}</span> ${b.rating}`:""}`);
   return btn;
 }
@@ -1440,7 +1440,7 @@ function renderTable(bs,isYear){
     const rows=[...bs].sort((a,b)=>{ const x=key(a),y=key(b); if(x==null||x==="") return 1; if(y==null||y==="") return -1; return (typeof x==="number"?x-y:String(x).localeCompare(String(y)))*SORT.dir; });
     wrap.innerHTML=`<table><thead><tr>${cols.map(c=>`<th class="${c[3]?"n":""}" data-k="${c[0]}" aria-sort="${SORT.k===c[0]?(SORT.dir>0?"ascending":"descending"):"none"}">${c[1]}${SORT.k===c[0]?(SORT.dir>0?" ↑":" ↓"):""}</th>`).join("")}</tr></thead><tbody>${rows.map(b=>`<tr>${cols.map((c,j)=>{ const v=c[2]?c[2](b):b[c[0]]; return `<td class="${c[3]?"n":""}">${j===0?`<button type="button" data-id="${b.id}">${esc(v)}</button>`:esc(v??"")}</td>`; }).join("")}</tr>`).join("")}</tbody></table>`;
     wrap.querySelectorAll("th").forEach(th=>th.onclick=()=>{ const k=th.dataset.k; SORT= SORT.k===k?{k,dir:-SORT.dir}:{k,dir:(cols.find(c=>c[0]===k)[3]?-1:1)}; draw(); });
-    wrap.querySelectorAll("td button").forEach(x=>x.onclick=()=>openBook(ALL.find(b=>b.id===x.dataset.id)));
+    wrap.querySelectorAll("td button").forEach(x=>x.onclick=()=>{ NAV=navFrom(x); openBook(ALL.find(b=>b.id===x.dataset.id)); });
   };
   draw();
 }
@@ -1477,6 +1477,7 @@ function openModal(m){
   HIST_MODAL=m;
 }
 function hideModal(m,swapping){ if(m.hidden) return; m.hidden=true;
+  if(m.id==="bookm"){ const el=NAV&&navItems(NAV)[NAV.i]; if(el) lastFocus=el; NAV=null; }   // back to the book you arrowed to
   if(!swapping){ document.body.style.overflow=""; if(lastFocus&&document.contains(lastFocus)) lastFocus.focus(); }
   if(typeof updateToast==="function") updateToast(); }
 function closeModal(m){ if(m.hidden) return; hideModal(m); if(HIST_MODAL===m){ HIST_MODAL=null; backQuietly(); } }
@@ -1494,6 +1495,39 @@ addEventListener("keydown",e=>{ if(e.key!=="Tab") return; const m=document.query
   if(!m.contains(document.activeElement)){ e.preventDefault(); first.focus(); }
   else if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
   else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); } });
+/* ---------- arrow keys between books ----------
+   With a book open, Left and Right open the previous or next book in the list it was opened from, in that list's own
+   order (the order its covers read in, and its rank numbers where it shows them), whatever the column count. At the
+   first or last book, nothing happens. The year's month strips are one list per month: Left and Right stay in the
+   month, and Up and Down open the first book of the month above or below. Other galleries are a single list, so Up
+   and Down do nothing there. In the table, all four arrows move through its rows in their current order. A list is
+   remembered by its place on the page, so it's found again after a redraw. */
+const NAV_SEL=[".months",".tbl-wrap",".shelf",".topshelf",".facts-grid",".strip",".pair"];
+let NAV=null;   // {sel, k: which one of those on the page, i: position in it, table}
+function navItems(n){ const g=main.querySelectorAll(n.sel)[n.k]; return g?[...g.querySelectorAll(n.table?"td button[data-id]":"button.book")]:[]; }
+function navFrom(el){
+  for(const sel of NAV_SEL){ const g=el.closest(sel); if(!g) continue;
+    const n={sel,k:[...main.querySelectorAll(sel)].indexOf(g),table:sel===".tbl-wrap"}; n.i=navItems(n).indexOf(el); return n.i<0?null:n; }
+  return null;
+}
+function navStep(key){
+  const items=navItems(NAV), cur=items[NAV.i]; if(!cur) return null;
+  const lists=NAV.sel===".months"   // one list per month strip
+    ? [...main.querySelectorAll(".months")[NAV.k].querySelectorAll(".strip")].map(st=>[...st.querySelectorAll("button.book")])
+    : [items];
+  const li=lists.findIndex(l=>l.includes(cur)), list=lists[li], pos=list.indexOf(cur);
+  const fwd=key==="ArrowRight"||(NAV.table&&key==="ArrowDown"), back=key==="ArrowLeft"||(NAV.table&&key==="ArrowUp");
+  const next=fwd?list[pos+1]:back?list[pos-1]:lists[li+(key==="ArrowDown"?1:-1)]?.[0];   // Up/Down: first book of that month
+  return next?items.indexOf(next):null;
+}
+addEventListener("keydown",e=>{
+  if(!NAV || !/^Arrow(Up|Down|Left|Right)$/.test(e.key) || e.altKey||e.ctrlKey||e.metaKey||e.shiftKey || $("#bookm").hidden) return;
+  if(e.target.closest?.("input,textarea,select,[contenteditable]")) return;   // those controls use the arrow keys themselves
+  e.preventDefault();
+  const j=navStep(e.key); if(j==null) return;
+  const el=navItems(NAV)[j], b=el&&ALL.find(x=>x.id===el.dataset.id); if(!b) return;
+  NAV.i=j; openBook(b); $("#bookm .modal-box").scrollTop=0;
+});
 function openBook(b){
   if(!b) return; hideTip();
   const body=$("#bookm-body");

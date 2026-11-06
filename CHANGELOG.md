@@ -4,6 +4,14 @@ What changed in each version of Shelfprint. The version in use appears at the bo
 
 Shelfprint uses [semantic versioning](https://semver.org): the middle number goes up for new features, and the last number for fixes.
 
+## 0.3.0 — 2026-11-06
+
+### Added
+- **Arrow keys between books.** With a book's details open, Left and Right open the previous or next book in the list you opened it from, in that list's order (its rank numbers, where it shows them). At the first or last book, nothing happens.
+- In the year's month-by-month strips, Left and Right stay within the month, and Up and Down open the first book of the month above or below.
+- In the table, the arrow keys move through the rows in their current sort order.
+- Closing the book returns you to the last book you moved to.
+
 ## 0.2.0 — 2026-11-06
 
 ### Added
