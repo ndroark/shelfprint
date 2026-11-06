@@ -459,9 +459,9 @@ body.dragging .dropzone,body.dragging .wrap{outline:3px dashed var(--series-1);o
         </div>
         <div class="card-panel"><p class="card-sect">Content</p>
           <div id="c-words-f"><fieldset><legend>Your words</legend><div class="seg">
-            <label><input type="radio" name="cwords" value="full">Freeform thoughts</label><label><input type="radio" name="cwords" value="excerpt">Excerpt</label><label><input type="radio" name="cwords" value="none">None</label></div></fieldset>
-            <div id="c-excerpt-f" hidden><textarea id="c-excerpt" class="handle-in" rows="5" aria-label="Excerpt for this card"></textarea>
-              <p class="hint">Changes here are only for this card. Your Freeform thoughts aren’t changed.</p></div>
+            <label><input type="radio" name="cwords" value="full">As written</label><label><input type="radio" name="cwords" value="excerpt">Edit for card</label><label><input type="radio" name="cwords" value="none">None</label></div></fieldset>
+            <div id="c-excerpt-f" hidden><textarea id="c-excerpt" class="handle-in" rows="5" aria-label="Your words, edited for this card"></textarea>
+              <p class="hint">Shorten, tighten, or rewrite your Freeform thoughts for this card. Your sheet isn’t changed.</p></div>
             <fieldset><legend>This text is</legend><div class="seg">
               <label><input type="radio" name="ckind" value="review">Review</label><label><input type="radio" name="ckind" value="quote">Quotation</label><label><input type="radio" name="ckind" value="mixed">Mixed</label></div></fieldset>
             <p class="hint" id="c-kind-why"></p>
@@ -1956,7 +1956,7 @@ const CARD_INC=[   // [key, label, available for this book?]   defaults: see car
   ["isNew",b=>newAuthorLabel(b),b=>b.isNew],["reread","Reread",b=>b.reread],["matrix","Matrix scores",b=>b.hasMatrix],
   ["length","Format and length",b=>!!(b.format||b.pages||b.audio)],["tags","Tags",b=>b.tags.length>0]];
 let CARD=null;   // the open card: {b, img (from this device), proxied, kindSet, layoutSet, tags:Set, blob, over}
-const CARD_EXCERPTS=new Map();   // excerpts typed this visit, by book; never saved
+const CARD_EXCERPTS=new Map();   // "Edit for card" text typed this visit, by book; never saved
 function cardPrefs(){ const d={size:"portrait",look:"light",credit:true,inc:{rating:true,genre:true,date:true,isNew:true,reread:true,matrix:false,length:false,tags:false}};
   try{ const s=JSON.parse(store.get("wrapup:card-prefs")||"{}"); return {...d,...s,inc:{...d.inc,...(s.inc||{})}}; }catch(e){ return d; } }
 function saveCardPrefs(){ const inc={}; CARD_INC.forEach(([k])=>{ const el=$("#c-inc-"+k); if(el && !el.disabled) inc[k]=el.checked; });
@@ -2124,8 +2124,8 @@ function syncCardKind(){ const t=cardText(); if(!CARD.kindSet) setRadio("ckind",
   $("#c-kind-why").textContent=!t?"":k==="mixed"?"Mixed keeps your text as typed. Passages inside quotation marks are set in italics.":k==="quote"?"Shown as a quotation, with a large quotation mark and who wrote it.":"Shown as your own words.";
   if(!CARD.kindSet && t) $("#c-kind-why").textContent+=" Picked from the quotation marks in the text"+(textKind(t)==="review"?" (there aren’t any)":"")+"; change it here."; }
 function syncCardLayout(){ const t=cardText(), n=t?t.split(/\s+/).length:0;
-  if(!CARD.layoutSet) setRadio("clayout",n<=8?"feature":"standard");
-  $("#c-layout-why").textContent=CARD.layoutSet?"":n?(n<=8?"Cover feature, because the note is short.":"Standard, because there’s writing to show."):"Cover feature, because there’s no text on this card."; }
+  if(!CARD.layoutSet) setRadio("clayout",n?"standard":"feature");   // any words: Standard (a line or two is set large); none: Cover feature
+  $("#c-layout-why").textContent=CARD.layoutSet?"":n?"Standard, because there’s writing to show.":"Cover feature, because there’s no text on this card."; }
 async function drawCard(){
   if(!CARD) return; const b=CARD.b, token=drawCard.token=(drawCard.token||0)+1;
   ["#card-dl","#card-copy","#card-native"].forEach(s=>$(s).disabled=true); CARD.blob=null;
@@ -2148,8 +2148,8 @@ async function drawCard(){
   $("#card-blocked").hidden=!blocked; $("#card-own").hidden=blocked;
   const proxyOk=!CFG.exportProxy && !LOCKED;   // off in Settings and not locked by the host: offer it for this card only $("#card-proxy").hidden=!proxyOk||!!CARD.proxied; $("#card-proxy-note").hidden=!proxyOk;
   const notes=[];
-  if(res.over) notes.push(radioVal("clayout")==="feature"?"Cover feature only has room for a short note. Choose Standard, or Excerpt to pick part of your words."
-    :"Your words don’t fit on this card at a readable size. Choose Excerpt to pick part of them, or turn off matrix scores or tags to make room. Your words are never cut off to fit, so this card can’t be saved until something changes.");
+  if(res.over) notes.push(radioVal("clayout")==="feature"?"Cover feature only has room for a short note. Choose Standard, or Edit for card to shorten it."
+    :"Your words don’t fit on this card at a readable size. Choose Edit for card to shorten them, or turn off matrix scores or tags to make room. Your words are never cut off to fit, so this card can’t be saved until something changes.");
   if(CARD.img) notes.push("Using the image from your device, for this card only.");
   else if(!img && !b._hasCover) notes.push("There’s no cover to use for this book, so the card shows a title card.");
   st.textContent=notes.join(" ");
