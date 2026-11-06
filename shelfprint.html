@@ -369,7 +369,9 @@ body.dragging .dropzone,body.dragging .wrap{outline:3px dashed var(--series-1);o
 .c-tags input{position:absolute;opacity:0;pointer-events:none}.c-tags label:has(input:checked){background:var(--surface-2);color:var(--text-primary);border-color:var(--text-secondary)}
 .c-tags label:has(input:focus-visible){outline:2px solid var(--series-1);outline-offset:2px}
 .card-notice{background:color-mix(in srgb,var(--series-2) 16%,var(--page));border-radius:8px;padding:10px 12px;font-size:12.5px;max-width:480px}
-#c-keep-f{font-size:12.5px;line-height:1.45}.card-notice p{margin:0}.card-notice .lead{display:block;font-weight:600;margin-bottom:2px}.card-notice .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+#c-keep-f{font-size:12.5px;line-height:1.45}.card-thumbs{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}.card-thumbs button{background:none;border:0;padding:0;cursor:pointer;font-size:12px;color:var(--text-secondary);text-align:center}
+.card-thumbs img{display:block;width:64px;border-radius:3px;box-shadow:0 1px 4px rgba(0,0,0,.25);margin-bottom:4px;outline:2px solid transparent;outline-offset:2px}.card-thumbs .on img{outline-color:var(--text-primary)}
+.card-notice p{margin:0}.card-notice .lead{display:block;font-weight:600;margin-bottom:2px}.card-notice .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 #card-canvas{max-width:100%;max-height:68vh;width:auto;height:auto;border-radius:4px;box-shadow:0 4px 18px rgba(0,0,0,.2)}
 .short{display:none}
 @media (max-width:760px){ .long{display:none} .short{display:inline} #set-open{padding:5px 8px}
@@ -434,8 +436,10 @@ body.dragging .dropzone,body.dragging .wrap{outline:3px dashed var(--series-1);o
     <div class="modal-head"><h3 id="cardm-h">Create image card</h3><button class="btn" type="button" data-close>Close</button></div>
     <div class="card-grid">
       <div class="share-preview"><canvas id="card-canvas" width="1080" height="1350" aria-label="Preview of the image card"></canvas>
+        <div class="card-thumbs" id="card-thumbs" hidden></div>
         <div class="share-actions">
           <button class="btn primary" type="button" id="card-native" hidden>Share…</button>
+          <button class="btn primary" type="button" id="card-zip" hidden>Download all (ZIP)</button>
           <button class="btn primary" type="button" id="card-dl">Download PNG</button>
           <button class="btn" type="button" id="card-copy">Copy image</button>
         </div>
@@ -450,7 +454,7 @@ body.dragging .dropzone,body.dragging .wrap{outline:3px dashed var(--series-1);o
       </div>
       <div class="card-opts">
         <div class="card-panel"><p class="card-sect">Layout</p>
-          <div class="seg" id="c-layout"><label><input type="radio" name="clayout" value="standard">Standard</label><label><input type="radio" name="clayout" value="feature">Cover feature</label></div>
+          <div class="seg" id="c-layout"><label><input type="radio" name="clayout" value="standard">Standard</label><label><input type="radio" name="clayout" value="feature">Cover feature</label><label><input type="radio" name="clayout" value="long">Long-form</label></div>
           <p class="hint" id="c-layout-why"></p>
           <fieldset><legend>Size</legend><div class="seg">
             <label><input type="radio" name="csize" value="portrait">Post 4:5</label><label><input type="radio" name="csize" value="square">Square</label><label><input type="radio" name="csize" value="story">Story 9:16</label></div></fieldset>
@@ -528,7 +532,7 @@ body.dragging .dropzone,body.dragging .wrap{outline:3px dashed var(--series-1);o
 <script>
 (function(){
 "use strict";
-const VERSION="0.4.1";   // see CHANGELOG.md
+const VERSION="0.5.0";   // see CHANGELOG.md
 const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const MON=MONTHS.map(m=>m.slice(0,3));
 const $=s=>document.querySelector(s);
@@ -2002,7 +2006,7 @@ function textKind(t){ t=t.trim(); const marks=(t.match(/[“”"]/g)||[]).length
 const unquote=t=>t.trim().replace(/^[“"]\s*/,"").replace(/\s*[”"]$/,"");
 
 const BC=(()=>{
-  const W=1080, P=80, MIN_FEATURE_COVER=160;
+  const W=1080, P=80, MIN_FEATURE_COVER=160, MAX_CARDS=10;
   const rr=(ctx,x,y,w,h,r)=>{ ctx.beginPath(); ctx.roundRect(x,y,w,h,r); };
   /* A word wider than its line (a long link, an unbroken string, a script written without spaces) is broken between
      characters, so it wraps inside the card instead of running off it. Graphemes keep accents and emoji whole. */
@@ -2027,11 +2031,11 @@ const BC=(()=>{
     return out; }
   function layout(ctx,words,maxW,size){ const lines=[]; let line=[], x=0; const f=it=>`${it?"italic ":""}400 ${size}px ${SERIF}`;
     for(const w0 of words){ ctx.font=f(w0.it);
-      split(ctx,w0.t,maxW).forEach((t,i)=>{ const w={t,it:w0.it};
+      split(ctx,w0.t,maxW).forEach((t,i)=>{
         if(!i && w0.para){ if(line.length) lines.push(line); lines.push(null); line=[]; x=0; }
         const ww=ctx.measureText(t).width, sp=line.length?ctx.measureText(" ").width:0;
-        if(line.length && (i || x+sp+ww>maxW)){ lines.push(line); line=[]; x=0; }   // the rest of a broken word starts a new line
-        const at=line.length?x+sp:0; line.push({t,it:w.it,x:at}); x=at+ww; }); }
+        if(line.length && (i || w0.glue || x+sp+ww>maxW)){ lines.push(line); line=[]; x=0; }   // the rest of a broken word starts a new line
+        const at=line.length?x+sp:0; line.push({t,it:w0.it,x:at}); x=at+ww; }); }
     if(line.length) lines.push(line); return lines; }
   const height=(L,s,lh)=>L.reduce((a,l)=>a+(l?s*lh:s*lh*.55),0);
   function drawAt(ctx,L,x,y,s,lh,color,center){ ctx.fillStyle=color; let yy=y;
@@ -2053,6 +2057,7 @@ const BC=(()=>{
   function drawAttr(ctx,lines,x,y,color,centerW){ ctx.fillStyle=color;
     lines.forEach((l,i)=>{ const lw=l[l.length-1].x+l[l.length-1].w, ox=centerW?x+(centerW-lw)/2:x; l.forEach(k=>{ ctx.font=k.f; ctx.fillText(k.t,ox+k.x,y+30+i*ALH); }); });
     return y+lines.length*ALH; }
+  const quoteCredit=(ctx,o,maxW)=>o.kind==="quote"&&(o.attr[0]||o.attr[1])?attrLines(ctx,o.attr[0],o.attr[1],maxW):null;
   /* Tags wrap onto up to three rows. Any that still don't fit are named, and the card can't be saved until the reader
      turns some off: a chosen tag never just disappears. */
   function chipRows(ctx,tags,maxW,rowsMax=3){ ctx.font=`400 26px ${SANS}`; const rows=[[]], left=[]; let x=0;
@@ -2077,33 +2082,74 @@ const BC=(()=>{
   function titleLines(ctx,title,maxW,max,min,most){ let s=max; ctx.font=`400 ${s}px ${SERIF}`; let L=wrap(ctx,title,maxW);
     while(L.length>most && s>min){ s-=2; ctx.font=`400 ${s}px ${SERIF}`; L=wrap(ctx,title,maxW); } return {L,s}; }
 
-  function render(cv,o){
-    const H=CARD_H[o.size], th=CARD_THEME[o.look], b=o.b, story=o.size==="story";
+  /* ---------- the pieces every card shares ---------- */
+  // Every piece of text drawn above the footer is measured as it's drawn. Anything past the card's margins or into
+  // the footer makes the card unsaveable: a last check that nothing selected is lost off an edge.
+  function frame(cv,o){
+    const H=CARD_H[o.size], th=CARD_THEME[o.look], story=o.size==="story";
     const T=P+(story?110:0), FOOT=H-P-60-(story?150:0);   // a story keeps clear of the app's own buttons at top and bottom
     cv.width=W; cv.height=H; const ctx=cv.getContext("2d"); ctx.textBaseline="alphabetic"; ctx.textAlign="left";
-    // Every piece of text drawn above the footer is measured as it's drawn. Anything past the card's margins or into
-    // the footer makes the card unsaveable: a last check that nothing selected is lost off an edge.
-    const marks=[], covers=[];
+    const F={ctx,th,H,T,FOOT,story,marks:[],covers:[]};
     ctx.fillText=function(t,x,y){ const m=CanvasRenderingContext2D.prototype.measureText.call(this,t), a=this.textAlign, l=a==="center"?x-m.width/2:a==="right"?x-m.width:x;
-      marks.push({l,r:l+m.width,b:y+(m.actualBoundingBoxDescent||0)}); return CanvasRenderingContext2D.prototype.fillText.apply(this,arguments); };
+      F.marks.push({l,r:l+m.width,b:y+(m.actualBoundingBoxDescent||0)}); return CanvasRenderingContext2D.prototype.fillText.apply(this,arguments); };
     ctx.fillStyle=th.bg; ctx.fillRect(0,0,W,H);
     if(th.glow){ const g=ctx.createRadialGradient(W*.3,H*.22,40,W*.3,H*.22,W*.9); g.addColorStop(0,th.glow); g.addColorStop(1,th.bg); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); }
-    if(o.kicker){ ctx.font=`600 24px ${SANS}`; ctx.fillStyle=th.muted; spaced(ctx,o.kicker.toUpperCase(),P,T+24); }
+    return F; }
+  // footer: the optional credit on the left, the reader's handle (and "2 / 3" in a set) on the right. Returns false when
+  // something drawn above it crossed the margins or reached it.
+  function finish(F,o,part){ const {ctx,th,FOOT}=F; delete ctx.fillText;   // the footer itself isn't checked against the footer
+    const ok=!F.marks.some(m=>m.l<P-16||m.r>W-P+4||m.b>FOOT-6) && !F.covers.some(c=>c.y+c.h>FOOT-6);
+    ctx.fillStyle=th.rule; ctx.fillRect(P,FOOT,W-2*P,2); const fy=FOOT+60;
+    if(o.credit){ ctx.font=`400 31px ${SERIF}`; ctx.fillStyle=th.muted; ctx.fillText("Shelfprint",P,fy); }
+    ctx.textAlign="right"; let rx=W-P; ctx.font=`600 28px ${SANS}`; ctx.fillStyle=th.ink;
+    if(part){ const t=`${part[0]} / ${part[1]}`; ctx.fillText(t,rx,fy); rx-=ctx.measureText(t).width+34; }
+    if(o.handle) ctx.fillText(fitText(ctx,o.handle,rx-P-(o.credit?220:0)),rx,fy);
+    ctx.textAlign="left"; return ok; }
+  function kicker(F,text){ if(!text) return; const {ctx,th,T}=F; ctx.font=`600 24px ${SANS}`; ctx.fillStyle=th.muted; spaced(ctx,text.toUpperCase(),P,T+24); }
+  // the book beside its cover: title, author, rating, facts. Returns the cover and the bottom of the text.
+  function drawTop(F,o,top){ const {ctx,th}=F, b=o.b, cb=cover(ctx,b,o.img,P,top,300,450), rx=P+352, rw=W-P-rx; F.covers.push(cb);
+    const tt=titleLines(ctx,b.title,rw,64,40,3), tlh=tt.s*1.06; ctx.fillStyle=th.ink; ctx.font=`400 ${tt.s}px ${SERIF}`;
+    tt.L.forEach((l,k)=>ctx.fillText(l,rx-2,top+tt.s*.86+k*tlh)); let y=top+tt.s*.86+(tt.L.length-1)*tlh;
+    ctx.font=`400 32px ${SANS}`; ctx.fillStyle=th.sec; y+=50; wrap(ctx,b.author,rw).forEach((l,k)=>{ if(k) y+=40; ctx.fillText(l,rx,y); });
+    if(o.rating!=null){ y+=58; const dw=diamonds(ctx,o.rating,rx,y-11,36,th.accent); ctx.font=`400 28px ${SANS}`; ctx.fillStyle=th.sec; ctx.fillText(`${fmtR(o.rating)}/5`,rx+dw+14,y); }
+    if(o.facts.length){ ctx.font=`400 28px ${SANS}`; ctx.fillStyle=th.sec; y+=24; o.facts.forEach(f=>wrap(ctx,f,rw).forEach(l=>{ y+=40; ctx.fillText(l,rx,y); })); }
+    return {cb,y}; }
+  // matrix and tags: a band above the footer. bandBody() measures it; drawBand() draws it and returns where it starts.
+  function bandBody(ctx,o){ let h=0; if(o.tags.length){ const n=chipRows(ctx,o.tags,W-2*P).rows.length; if(n) h+=n*46+(n-1)*10+26; } if(o.matrix) h+=170; return h; }
+  function drawBand(F,o){ const {ctx,th,FOOT}=F; let band=FOOT-40, lost=[];
+    if(o.tags.length){ const cr=chipRows(ctx,o.tags,W-2*P); lost=cr.left;
+      if(cr.rows.length){ band-=cr.rows.length*46+(cr.rows.length-1)*10; ctx.font=`400 26px ${SANS}`;
+        cr.rows.forEach((row,ri)=>row.forEach(([t,x,w])=>{ const yy=band+ri*56; ctx.fillStyle=th.chip; rr(ctx,P+x,yy,w,46,23); ctx.fill(); ctx.fillStyle=th.chipInk; ctx.fillText(t,P+x+17,yy+32); }));
+        band-=26; } }
+    if(o.matrix){ const rows=o.matrix, gap=rows.length>5?10:16, mw=(W-2*P-gap*(rows.length-1))/rows.length; band-=152;
+      ctx.font=`600 22px ${SANS}`; ctx.fillStyle=th.muted; spaced(ctx,"MY MATRIX",P,band+22,4);
+      if(o.avg!=null){ ctx.textAlign="right"; ctx.font=`600 24px ${SANS}`; ctx.fillStyle=th.ink; ctx.fillText(`average ${fmt1(o.avg)}`,W-P,band+22); ctx.textAlign="left"; }
+      rows.forEach(([lab,v],i)=>{ const x=P+i*(mw+gap), yy=band+44; ctx.fillStyle=th.chip; rr(ctx,x,yy,mw,108,12); ctx.fill();
+        ctx.font=`400 23px ${SANS}`; ctx.fillStyle=th.sec; ctx.fillText(fitText(ctx,lab,mw-24),x+14,yy+34);
+        ctx.font=`400 44px ${SERIF}`; ctx.fillStyle=th.ink; ctx.fillText(fmtR(v),x+14,yy+82);
+        ctx.fillStyle=th.track; rr(ctx,x+14,yy+92,mw-28,6,3); ctx.fill(); ctx.fillStyle=th.accent; rr(ctx,x+14,yy+92,(mw-28)*v/5,6,3); ctx.fill(); });
+      band-=18; }
+    return {top:band,lost}; }
+  const modeOf=o=>o.kind==="quote"?"quote":o.kind==="mixed"?"mixed":"review";
+
+  /* ---------- Standard and Cover feature: one card ---------- */
+  function render(cv,o){
+    const F=frame(cv,o), {ctx,th,T,FOOT,story}=F, b=o.b; kicker(F,o.kicker);
     const why=new Set(); let used=0, bandTop=0, size=0, smallCover=false, lostTags=[];
     const facts=o.facts, top=T+76;
     if(o.layout==="feature"){
       const bottom=FOOT-56, cw=W-2*P;
       const tt=titleLines(ctx,b.title,cw,62,40,3), tlh=tt.s*1.06, titleH=tt.L.length*tlh;
       ctx.font=`400 32px ${SANS}`; const al=wrap(ctx,b.author,cw);
-      let note=null; if(o.text){ const wd=runs(o.text,o.kind==="quote"?"quote":o.kind==="mixed"?"mixed":"review"); note=fitTo(ctx,wd,cw-80,story?320:180,50,38,1.25); if(!note) why.add("text"); }
+      let note=null; if(o.text){ note=fitTo(ctx,runs(o.text,modeOf(o)),cw-80,story?320:180,50,38,1.25); if(!note) why.add("text"); }
       ctx.font=`400 28px ${SANS}`; const fl=facts.length?wrap(ctx,facts.join("  ·  "),cw):[];
-      const isQuote=o.kind==="quote"&&!!note, attr=isQuote&&(o.attr[0]||o.attr[1])?attrLines(ctx,o.attr[0],o.attr[1],cw-80):null;
+      const isQuote=o.kind==="quote"&&!!note, attr=isQuote?quoteCredit(ctx,o,cw-80):null;
       const under=48+titleH+12+al.length*40+(o.rating!=null?62:0)+(fl.length?18+fl.length*40:0)+(note?36+height(note.L,note.s,1.25):0)+(isQuote?70:0)+(attr?14+attr.length*ALH:0);
       const img=o.img, iw=img?img.naturalWidth||img.width:2, ih=img?img.naturalHeight||img.height:3;
       // the cover gets whatever height the rest leaves; if that's too little, the card says so instead of overlapping the footer
       const room=bottom-top-under; if(room<MIN_FEATURE_COVER) why.add("feature");
       const boxH=Math.max(1,Math.min(story?980:760,room)), s=Math.min(cw/iw,boxH/ih), groupH=ih*s+under, y0=top+Math.max(0,(bottom-top-groupH)/2);
-      const cb=cover(ctx,b,img,P,y0,cw,ih*s); covers.push(cb); smallCover=cb.h<300;
+      const cb=cover(ctx,b,img,P,y0,cw,ih*s); F.covers.push(cb); smallCover=cb.h<300;
       let y=cb.y+cb.h+48; ctx.textAlign="center"; ctx.fillStyle=th.ink; ctx.font=`400 ${tt.s}px ${SERIF}`; tt.L.forEach((l,k)=>ctx.fillText(l,W/2,y+tt.s*.84+k*tlh)); y+=titleH+12;
       ctx.font=`400 32px ${SANS}`; ctx.fillStyle=th.sec; al.forEach(l=>{ y+=40; ctx.fillText(l,W/2,y-6); });
       if(o.rating!=null){ ctx.textAlign="left"; const dw=4*36*1.12+36; ctx.font=`400 28px ${SANS}`; const lab=`${fmtR(o.rating)}/5`, tw=ctx.measureText(lab).width, x=(W-(dw+14+tw))/2;
@@ -2115,34 +2161,16 @@ const BC=(()=>{
         y=drawAt(ctx,note.L,P+40,y,note.s,1.25,th.ink,cw-80);
         if(attr) drawAttr(ctx,attr,P+40,y+14,th.sec,cw-80); }
     } else {
-      const top2=top+(o.dy||0), cb=cover(ctx,b,o.img,P,top2,300,450), rx=P+352, rw=W-P-rx; covers.push(cb);
-      const tt=titleLines(ctx,b.title,rw,64,40,3), tlh=tt.s*1.06; ctx.fillStyle=th.ink; ctx.font=`400 ${tt.s}px ${SERIF}`;
-      tt.L.forEach((l,k)=>ctx.fillText(l,rx-2,top2+tt.s*.86+k*tlh)); let y=top2+tt.s*.86+(tt.L.length-1)*tlh;
-      ctx.font=`400 32px ${SANS}`; ctx.fillStyle=th.sec; y+=50; wrap(ctx,b.author,rw).forEach((l,k)=>{ if(k) y+=40; ctx.fillText(l,rx,y); });
-      if(o.rating!=null){ y+=58; const dw=diamonds(ctx,o.rating,rx,y-11,36,th.accent); ctx.font=`400 28px ${SANS}`; ctx.fillStyle=th.sec; ctx.fillText(`${fmtR(o.rating)}/5`,rx+dw+14,y); }
-      if(facts.length){ ctx.font=`400 28px ${SANS}`; ctx.fillStyle=th.sec; y+=24; facts.forEach(f=>wrap(ctx,f,rw).forEach(l=>{ y+=40; ctx.fillText(l,rx,y); })); }
-      // matrix and tags sit in a band above the footer, under the reader's words
-      let band=FOOT-40;
-      if(o.tags.length){ const cr=chipRows(ctx,o.tags,W-2*P); lostTags=cr.left; if(lostTags.length) why.add("tags");
-        band-=cr.rows.length*46+(cr.rows.length-1)*10; ctx.font=`400 26px ${SANS}`;
-        cr.rows.forEach((row,ri)=>row.forEach(([t,x,w])=>{ const yy=band+ri*56; ctx.fillStyle=th.chip; rr(ctx,P+x,yy,w,46,23); ctx.fill(); ctx.fillStyle=th.chipInk; ctx.fillText(t,P+x+17,yy+32); }));
-        band-=26; }
-      if(o.matrix){ const rows=o.matrix, gap=rows.length>5?10:16, mw=(W-2*P-gap*(rows.length-1))/rows.length; band-=152;
-        ctx.font=`600 22px ${SANS}`; ctx.fillStyle=th.muted; spaced(ctx,"MY MATRIX",P,band+22,4);
-        if(o.avg!=null){ ctx.textAlign="right"; ctx.font=`600 24px ${SANS}`; ctx.fillStyle=th.ink; ctx.fillText(`average ${fmt1(o.avg)}`,W-P,band+22); ctx.textAlign="left"; }
-        rows.forEach(([lab,v],i)=>{ const x=P+i*(mw+gap), yy=band+44; ctx.fillStyle=th.chip; rr(ctx,x,yy,mw,108,12); ctx.fill();
-          ctx.font=`400 23px ${SANS}`; ctx.fillStyle=th.sec; ctx.fillText(fitText(ctx,lab,mw-24),x+14,yy+34);
-          ctx.font=`400 44px ${SERIF}`; ctx.fillStyle=th.ink; ctx.fillText(fmtR(v),x+14,yy+82);
-          ctx.fillStyle=th.track; rr(ctx,x+14,yy+92,mw-28,6,3); ctx.fill(); ctx.fillStyle=th.accent; rr(ctx,x+14,yy+92,(mw-28)*v/5,6,3); ctx.fill(); });
-        band-=18; }
-      const wt=Math.max(cb.y+cb.h,y)+64, wb=band-28, w=W-2*P, h=wb-wt;
+      const top2=top+(o.dy||0), {cb,y}=drawTop(F,o,top2);
+      const bd=drawBand(F,o); lostTags=bd.lost; if(lostTags.length) why.add("tags");
+      const wt=Math.max(cb.y+cb.h,y)+64, wb=bd.top-28, w=W-2*P, h=wb-wt;
       used=Math.max(cb.y+cb.h,y); bandTop=wb;
       if(y>wb+28) why.add("bounds");   // the title block itself reaches into the band or footer
       // the second pass keeps the size chosen in the first, so moving the block down can't change the type size
       const fit=(ctx,wd,w,h,max,min,lh)=>o.size2?{L:layout(ctx,wd,w,o.size2),s:o.size2}:fitTo(ctx,wd,w,h,max,min,lh);
       const draw=(...a)=>{ const e=drawAt(...a); used=Math.max(used,e); return e; };
-      if(o.text && h>0){ const mode=o.kind==="quote"?"quote":o.kind==="mixed"?"mixed":"review", wd=runs(o.text,mode);
-        if(o.kind==="quote"){ const ind=84, attr=o.attr[0]||o.attr[1]?attrLines(ctx,o.attr[0],o.attr[1],w-ind):null, ah=attr?14+attr.length*ALH:0;
+      if(o.text && h>0){ const mode=modeOf(o), wd=runs(o.text,mode);
+        if(o.kind==="quote"){ const ind=84, attr=quoteCredit(ctx,o,w-ind), ah=attr?14+attr.length*ALH:0;
           const f=fit(ctx,wd,w-ind,h-ah-20,44,34,1.42);
           if(!f) why.add("text"); else { size=f.s; ctx.font=`400 170px ${SERIF}`; ctx.fillStyle=th.accent; ctx.fillText("“",P-10,wt+112);
             const yy=draw(ctx,f.L,P+ind,wt+8,f.s,1.42,th.ink);
@@ -2152,12 +2180,7 @@ const BC=(()=>{
         else { const f=fit(ctx,wd,w,h,46,34,1.45); if(!f) why.add("text"); else { size=f.s; draw(ctx,f.L,P,wt,f.s,1.45,th.ink); } } }
       else if(o.text) why.add("text");
     }
-    delete ctx.fillText;   // the footer itself isn't checked against the footer
-    if(marks.some(m=>m.l<P-16||m.r>W-P+4||m.b>FOOT-6) || covers.some(c=>c.y+c.h>FOOT-6)) why.add("bounds");
-    // footer: the optional credit on the left, the reader's handle on the right
-    ctx.fillStyle=th.rule; ctx.fillRect(P,FOOT,W-2*P,2); const fy=FOOT+60;
-    if(o.credit){ ctx.font=`400 31px ${SERIF}`; ctx.fillStyle=th.muted; ctx.fillText("Shelfprint",P,fy); }
-    if(o.handle){ ctx.textAlign="right"; ctx.font=`600 28px ${SANS}`; ctx.fillStyle=th.ink; ctx.fillText(fitText(ctx,o.handle,W-2*P-(o.credit?220:0)),W-P,fy); ctx.textAlign="left"; }
+    if(!finish(F,o)) why.add("bounds");
     return {over:why.size>0,why:[...why],lostTags,used,bandTop,size,smallCover};
   }
   // Standard: when a card has room to spare (a short note, or the tall story size), center the block vertically
@@ -2167,14 +2190,78 @@ const BC=(()=>{
     if(r.over||slack<80) return render(cv,o);
     return render(cv,{...o,dy:Math.round(slack/2),size2:r.size||null});
   }
-  return {render:renderCard};
+
+  /* ---------- Long-form: a review across a numbered set of cards ----------
+     The first card is the Standard card's top; later cards repeat the title with "Continued". Matrix scores and tags,
+     and a quotation's credit, close the set on the last card. The text is split only between sentences, at the end of
+     a paragraph when it can be, and the cards are filled about equally. A sentence too long for any card is the one
+     exception: it continues onto the next card between words. The type is the largest size from 36 to 46 px that still
+     needs no more cards than 36 px does, up to 10 cards. */
+  function sentenceUnits(words){ const units=[]; let start=0;
+    const abbr=/^([A-Z]\.|Mr\.|Mrs\.|Ms\.|Dr\.|St\.|vs\.|e\.g\.|i\.e\.)$/;
+    words.forEach((w,i)=>{ const next=words[i+1], end=/[.!?…]["”’)\]]*$/.test(w.t) && !abbr.test(w.t);
+      if(!next || next.para || (end && /^[A-Z“"(\[‘'0-9]/.test(next.t))){ units.push({a:start,b:i+1,para:!!words[start].para||start===0}); start=i+1; } });
+    return units; }
+  function longPlan(o){
+    const probe=document.createElement("canvas"), F=frame(probe,o), {ctx,T,FOOT}=F, b=o.b; delete ctx.fillText;
+    const mode=modeOf(o), ind=o.kind==="quote"?84:0, tw=W-2*P-ind, words0=runs(o.text,mode), lh=1.46;
+    // where text can go on each card
+    const top=drawTop(F,o,T+76), first=(FOOT-68)-(Math.max(top.cb.y+top.cb.h,top.y)+64);
+    ctx.font=`600 24px ${SANS}`; if("letterSpacing" in ctx) ctx.letterSpacing="5px";   // measured the way it's drawn
+    const ck=wrap(ctx,`${b.short.toUpperCase()}  ·  CONTINUED`,W-2*P-40); if("letterSpacing" in ctx) ctx.letterSpacing="0px";
+    const contTop=T+76+(ck.length-1)*34, rest=(FOOT-68)-contTop;
+    const attr=quoteCredit(ctx,o,tw), tail=bandBody(ctx,o)+(attr?14+attr.length*ALH:0);
+    const cap=(k,n)=>(k?rest:first)-(k===n-1?tail:0);
+    function plan(size,maxCards){
+      const words=[]; for(const w of words0){ ctx.font=`${w.it?"italic ":""}400 ${size}px ${SERIF}`; split(ctx,w.t,tw).forEach((t,i)=>words.push(i?{t,it:w.it,glue:true}:{...w,t})); }
+      const units=sentenceUnits(words);
+      // a sentence that can't fit even an empty card is split between words; the pieces are marked as not starting a paragraph
+      const minCap=Math.min(first,rest-tail); const us=[];
+      for(const u of units){ if(hOf2(u)<=minCap){ us.push(u); continue; } let a=u.a;
+        while(a<u.b){ let bEnd=a+1; while(bEnd<u.b && height(layout(ctx,words.slice(a,bEnd+1).map((w,k)=>k?w:{...w,para:false}),tw,size),size,lh)<=minCap) bEnd++;
+          us.push({a,b:bEnd,para:a===u.a&&u.para,cont:a!==u.a}); a=bEnd; } }
+      function hOf2(u){ return height(layout(ctx,words.slice(u.a,u.b).map((w,k)=>k?w:{...w,para:false}),tw,size),size,lh); }
+      const U=us, n=U.length, H2=new Map(), hh=(i,j)=>{ const key=i*4096+j; if(H2.has(key)) return H2.get(key);
+        const ws=words.slice(U[i].a,U[j-1].b).map((w,k)=>k?w:{...w,para:false}); const h=height(layout(ctx,ws,tw,size),size,lh); H2.set(key,h); return h; };
+      for(let total=1; total<=maxCards; total++){ const best=new Map();
+        const go=(i,k)=>{ const key=i*64+k; if(best.has(key)) return best.get(key); let r=null; const c=cap(total-k,total);
+          if(k===1){ const f=hh(i,n)/c; r=f<=1?{cost:(1-f)**2,cuts:[]}:null; }
+          else for(let j=i+1;j<=n-k+1;j++){ const f=hh(i,j)/c; if(f>1) break; const rest=go(j,k-1); if(!rest) continue;
+            const cost=(1-f)**2+rest.cost+(U[j].para?0:.15); if(!r||cost<r.cost) r={cost,cuts:[j,...rest.cuts]}; }
+          best.set(key,r); return r; };
+        const p=go(0,total); if(p){ const cuts=[0,...p.cuts,n], pages=cuts.slice(0,-1).map((c,i)=>({a:U[c].a,b:U[cuts[i+1]-1].b}));
+          pages.mid=p.cuts.some(c=>U[c].cont); pages.words=words; return pages; } }   // mid: a break falls inside a sentence too long for one card
+      return null; }
+    // a quick check before the careful one: the whole text at 36 px on cards of the largest size
+    const allH=height(layout(ctx,words0,tw,36),36,lh); if(allH>first+rest*(MAX_CARDS-1)) return {tooLong:true};
+    const base=plan(36,MAX_CARDS); if(!base) return {tooLong:true};
+    for(let s=46; s>36; s-=2){ const p=plan(s,base.length); if(p && p.length===base.length) return {pages:p,size:s,words:p.words,tw,ind,mode,contTop,ck,attr}; }
+    return {pages:base,size:36,words:base.words,tw,ind,mode,contTop,ck,attr};
+  }
+  function renderLong(o){
+    const plan=longPlan(o); if(plan.tooLong) return {multi:true,canvases:[],over:true,why:["long"],lostTags:[]};
+    const {pages,size,words,tw,ind,contTop,ck,attr}=plan, lh=1.46, n=pages.length, why=new Set(), mid=!!pages.mid; let lostTags=[];
+    const canvases=pages.map((pg,k)=>{ const cv=document.createElement("canvas"), F=frame(cv,o), {ctx,th,T}=F;
+      const ws=words.slice(pg.a,pg.b).map((w,i)=>i?w:{...w,para:false}); let y;
+      if(k===0){ kicker(F,o.kicker); const t=drawTop(F,o,T+76); y=Math.max(t.cb.y+t.cb.h,t.y)+64;
+        if(o.kind==="quote"){ ctx.font=`400 170px ${SERIF}`; ctx.fillStyle=th.accent; ctx.fillText("“",P-10,y+112); } }
+      else { ctx.font=`600 24px ${SANS}`; ck.forEach((l,i)=>{ const at=l.lastIndexOf("·"); ctx.fillStyle=th.ink;
+          if(i===ck.length-1 && at>-1){ const w1=spaced(ctx,l.slice(0,at),P,T+24+i*34); ctx.fillStyle=th.muted; spaced(ctx,l.slice(at),P+w1,T+24+i*34); }
+          else spaced(ctx,l,P,T+24+i*34); }); y=contTop; }
+      const end=drawAt(ctx,layout(ctx,ws,tw,size),P+ind,y+(o.kind==="quote"?8:0),size,lh,th.ink);
+      if(k===n-1){ if(attr) drawAttr(ctx,attr,P+ind,end+14,th.sec); const bd=drawBand(F,o); lostTags=bd.lost; if(lostTags.length) why.add("tags"); }
+      if(!finish(F,o,n>1?[k+1,n]:null)) why.add("bounds");
+      return cv; });
+    return {multi:true,canvases,over:why.size>0,why:[...why],lostTags,size,n,mid};
+  }
+  return {render:(cv,o)=>o.layout==="long"?renderLong(o):renderCard(cv,o)};
 })();
 
 function cardText(){ if(!CARD) return ""; const w=radioVal("cwords"); if(w==="none") return ""; if(w==="excerpt") return $("#c-excerpt").value.trim(); return CARD.b.thoughts.trim(); }
 function openCard(b){
   if(!b) return; const p=cardPrefs();
   if(CARD?.url) URL.revokeObjectURL(CARD.url);
-  CARD={b,img:null,proxied:null,keepSwap:false,kindSet:false,layoutSet:false,tags:new Set(b.tags.slice(0,4)),blob:null,over:false};
+  CARD={b,img:null,proxied:null,keepSwap:false,cur:0,cards:null,blobs:null,kindSet:false,layoutSet:false,tags:new Set(b.tags.slice(0,4)),blob:null,over:false};
   setRadio("csize",p.size); setRadio("clook",p.look); $("#c-credit").checked=p.credit;
   { const h=store.get("wrapup-handle"); $("#c-handle").value=h!==null?h:SETTINGS.handle; }
   const has=!!b.thoughts.trim(); $("#c-words-f").hidden=false; $("#c-asis-l").hidden=!has; $("#c-edit-l").textContent=has?"Edit for card":"Write for card";
@@ -2199,11 +2286,11 @@ function syncCardKind(){ const t=cardText(); if(!CARD.kindSet) setRadio("ckind",
   $("#c-kind-why").textContent=!t?"":k==="mixed"?"Mixed keeps your text as typed. Passages inside quotation marks are set in italics.":k==="quote"?"Shown as a quotation, with a large quotation mark, its author, and the source work. Change them below if you’re quoting someone else, such as another reviewer; leave both blank to leave them off.":"Shown as your own words.";
   if(!CARD.kindSet && t) $("#c-kind-why").textContent+=" Picked from the quotation marks in the text"+(textKind(t)==="review"?" (there aren’t any)":"")+"; change it here."; }
 /* Cover feature has no room for the matrix or tags: those options are greyed out there, not removed, and they keep
-   their setting for when the card goes back to Standard. */
+   their setting for when the card goes back to Standard or Long-form. */
 const CARD_STANDARD_ONLY=["matrix","tags"];
 function syncCardStandardOnly(){ const feat=radioVal("clayout")==="feature";
   CARD_STANDARD_ONLY.forEach(k=>{ const el=$("#c-inc-"+k); if(!el) return; el.disabled=feat; const lab=el.closest("label"); lab.classList.toggle("off",feat);
-    let n=lab.querySelector(".so"); if(feat&&!n){ n=H("span",{class:"val so"}," (Standard layout only)"); lab.appendChild(n); } if(!feat&&n) n.remove(); }); }
+    let n=lab.querySelector(".so"); if(feat&&!n){ n=H("span",{class:"val so"}," (not in Cover feature)"); lab.appendChild(n); } if(!feat&&n) n.remove(); }); }
 function syncCardRevert(){ if(!CARD) return; const v=$("#c-excerpt").value.trim(), orig=CARD.b.thoughts.trim(), editing=radioVal("cwords")==="excerpt";
   $("#c-revert-f").hidden=!editing||!orig||v===orig;
   // text that's only on this card: say how to keep it, the same way covers do
@@ -2212,9 +2299,10 @@ function syncCardRevert(){ if(!CARD) return; const v=$("#c-excerpt").value.trim(
 function syncCardLayout(){ const t=cardText(), n=t?t.split(/\s+/).length:0;
   if(!CARD.layoutSet) setRadio("clayout",n?"standard":"feature");   // any words: Standard (a line or two is set large); none: Cover feature
   $("#c-layout-why").textContent=CARD.layoutSet?"":n?"Standard, because there’s writing to show.":"Cover feature, because there’s no text on this card."; }
+const LONG_WHY="Long-form, because the text doesn’t fit on one card.";
 async function drawCard(){
   if(!CARD) return; const b=CARD.b, token=drawCard.token=(drawCard.token||0)+1;
-  ["#card-dl","#card-copy","#card-native"].forEach(s=>$(s).disabled=true); CARD.blob=null;
+  ["#card-dl","#card-copy","#card-native","#card-zip"].forEach(s=>$(s).disabled=true); CARD.blob=null; CARD.blobs=null;
   const st=$("#card-status"); st.textContent="Making the card…";
   try{ await Promise.race([Promise.all([document.fonts.load(`400 60px Newsreader`),document.fonts.load(`italic 400 40px Newsreader`)]),new Promise(r=>setTimeout(r,2500))]); }catch(e){}
   const fetched=CARD.img||CARD.proxied?null:await exportImage(b); if(token!==drawCard.token) return;
@@ -2228,10 +2316,23 @@ async function drawCard(){
     ...CARD_PERSONAL.filter(([k])=>$("#c-p-"+k)?.checked).map(([k,lab])=>k==="rec"?`Recommended by ${b[k]}`:`${lab}: ${b[k]}`)].filter(Boolean);
   const t=cardText(), kind=radioVal("ckind"), text=kind==="quote"?unquote(t):t;
   const when=cardKickerDate(b), kicker=inc("date")&&when?(b.status==="DNF"?`I set this aside in ${when}`:`I read this in ${when}`):(t&&kind!=="quote"?"My review":"");
-  const res=BC.render($("#card-canvas"),{b,img,size:radioVal("csize"),look:radioVal("clook"),layout:radioVal("clayout"),kicker,facts,
+  const opts={b,img,size:radioVal("csize"),look:radioVal("clook"),layout:radioVal("clayout"),kicker,facts,
     rating:inc("rating")?b.rating:null, matrix:inc("matrix")?DIMS.map(d=>[d.short,b.scores[d.key]]):null, avg:b.avg,
     tags:inc("tags")?b.tags.filter(x=>CARD.tags.has(x)):[], text, kind, attr:[$("#c-attr-who").value.trim(),$("#c-attr-from").value.trim()],
-    credit:$("#c-credit").checked, handle:$("#c-handle").value.trim()});
+    credit:$("#c-credit").checked, handle:$("#c-handle").value.trim()};
+  let res=BC.render($("#card-canvas"),opts);
+  // text too long for one Standard card: switch to Long-form, unless the reader picked the layout
+  if(!res.multi && opts.layout==="standard" && !CARD.layoutSet && text && res.why.includes("text")){
+    setRadio("clayout","long"); $("#c-layout-why").textContent=LONG_WHY; syncCardStandardOnly(); res=BC.render($("#card-canvas"),{...opts,layout:"long"}); }
+  const multi=!!res.multi, n=multi?res.canvases.length:1;
+  if(multi){ CARD.cards=res.canvases; CARD.cur=Math.min(CARD.cur||0,Math.max(0,n-1)); showCardPage(CARD.cur);
+    if(!n){ const cv=$("#card-canvas"), c=cv.getContext("2d"); cv.width=1080; cv.height=CARD_H[opts.size]; c.fillStyle=CARD_THEME[opts.look].bg; c.fillRect(0,0,cv.width,cv.height); } }
+  else CARD.cards=null;
+  const th=$("#card-thumbs"); th.hidden=!(multi&&n>1); th.innerHTML="";
+  if(multi&&n>1) res.canvases.forEach((c,i)=>{ const bt=H("button",{type:"button",class:i===CARD.cur?"on":"","aria-label":`Show card ${i+1} of ${n}`},`<img alt="" src="${c.toDataURL("image/png")}">${i+1} / ${n}`);
+    bt.onclick=()=>{ CARD.cur=i; showCardPage(i); th.querySelectorAll("button").forEach((x,j)=>x.classList.toggle("on",j===i)); if(CARD.blobs) CARD.blob=CARD.blobs[i]; }; th.appendChild(bt); });
+  $("#card-zip").hidden=!(multi&&n>1); $("#card-dl").textContent=multi&&n>1?"Download this card":"Download PNG"; $("#card-copy").textContent=multi&&n>1?"Copy this card":"Copy image";
+  $("#card-native").textContent=multi&&n>1?`Share ${n} images…`:"Share…";
   const tg=$("#c-tags"); if(tg) tg.hidden=!inc("tags");
   CARD.over=res.over;
   const notice=blocked||(swapped&&!CARD.keepSwap);
@@ -2247,21 +2348,26 @@ async function drawCard(){
     document.createTextNode(` Shelfprint is showing ${src?`the available ${src} cover`:"another available cover"} instead. ${showProxy?"You can use it, choose an image from your device, or try loading your custom cover through an image proxy.":"You can use it or choose an image from your device."}`)); }
   const notes=[];
   const feat=radioVal("clayout")==="feature";
-  if(res.why.includes("text")) notes.push(feat?"Cover feature only has room for a short note. Choose Standard, or Edit for card to shorten the text."
-    :"The text doesn’t fit on this card at a readable size. Choose Edit for card to shorten it, or turn off matrix scores or tags to make room.");
+  if(res.why.includes("text")) notes.push(feat?"Cover feature only has room for a short note. Choose Standard or Long-form, or Edit for card to shorten the text."
+    :"The text doesn’t fit on this card at a readable size. Choose Long-form to spread it over several cards, Edit for card to shorten it, or turn off matrix scores or tags to make room.");
+  if(res.why.includes("long")) notes.push(`This text needs more than ${10} cards, even in small type. Choose Edit for card to shorten it.`);
   if(res.why.includes("feature")) notes.push("Cover feature doesn’t have room for all of this at this size. Try Post 4:5 or Story 9:16, turn off some details, shorten the text, or choose Standard.");
   if(res.why.includes("tags")) notes.push(`${res.lostTags.length===1?"This selected tag doesn’t":"These selected tags don’t"} fit: ${res.lostTags.join(", ")}. Turn some tags off to choose which ones appear.`);
   if(res.why.includes("bounds") && !res.why.some(w=>w!=="bounds")) notes.push("Something on this card would run past its edges or into the footer. Try another size, or turn off some details.");
-  if(res.over) notes.push("Nothing is cut off to fit, so this card can’t be saved until something changes.");
+  if(res.over) notes.push(multi?"Nothing is cut off to fit, so these cards can’t be saved until something changes.":"Nothing is cut off to fit, so this card can’t be saved until something changes.");
+  if(multi && !res.over) notes.push(n===1?"It all fits on one card.":`${n} cards in ${res.size} px type. `+(res.mid?"A passage too long for one card continues onto the next; other breaks fall between sentences.":"Each break falls between sentences, at the end of a paragraph where it can.")+(opts.matrix||opts.tags.length?" Matrix scores and tags are on the last card.":""));
   if(!res.over && res.smallCover) notes.push("There isn’t much room for the cover at this size. Try Post 4:5 or Story 9:16, turn off some details, or choose Standard.");
   if(swapped && CARD.keepSwap) notes.push(`Using the ${src?src+" ":""}cover, not your custom cover. Your saved cover preference won’t change.`);
   if(CARD.img) notes.push("Using the image from your device, for this card only.");
   else if(!img && !b._hasCover) notes.push("There’s no cover to use for this book, so the card shows a title card.");
   st.textContent=notes.join(" ");
   if(res.over) return;
-  ["#card-dl","#card-copy","#card-native"].forEach(s=>$(s).disabled=false);
-  $("#card-canvas").toBlob(bl=>{ if(token===drawCard.token) CARD.blob=bl; },"image/png");
+  ["#card-dl","#card-copy","#card-native","#card-zip"].forEach(s=>$(s).disabled=false);
+  if(multi){ Promise.all(res.canvases.map(c=>new Promise(r=>c.toBlob(r,"image/png")))).then(bs=>{ if(token===drawCard.token){ CARD.blobs=bs; CARD.blob=bs[CARD.cur]; } }); }
+  else $("#card-canvas").toBlob(bl=>{ if(token===drawCard.token) CARD.blob=bl; },"image/png");
 }
+// a set's preview shows one card at a time
+function showCardPage(i){ const src=CARD.cards?.[i]; if(!src) return; const cv=$("#card-canvas"); cv.width=src.width; cv.height=src.height; cv.getContext("2d").drawImage(src,0,0); }
 { // dialog wiring
   $("#bookm-card").addEventListener("click",()=>openCard(CUR_BOOK));
   document.querySelectorAll('#cardm input[type=radio]').forEach(i=>i.addEventListener("change",()=>{
@@ -2288,12 +2394,19 @@ async function drawCard(){
     for(const u of [...new Set([b.coverSrc,...urls].filter(Boolean))]){ try{ CARD.proxied=await loadCors("https://images.weserv.nl/?url="+encodeURIComponent(u)); break; }catch(e){} }
     if(!CARD.proxied){ st.textContent="That didn’t work either. Use an image from your device instead."; return; }
     drawCard(); });
-  const name=()=>"book-card-"+CARD.b.short.toLowerCase().replace(/[^\p{L}\p{N}]+/gu,"-").replace(/^-|-$/g,"")+".png";
+  const slug=()=>CARD.b.short.toLowerCase().replace(/[^\p{L}\p{N}]+/gu,"-").replace(/^-|-$/g,"");
+  const setName=i=>`book-card-${slug()}-${pad2(i+1)}-of-${pad2(CARD.cards.length)}.png`;   // sorts in order
+  const name=()=>CARD.cards&&CARD.cards.length>1?setName(CARD.cur):`book-card-${slug()}.png`;
+  const setFiles=()=>CARD.blobs.map((bl,i)=>new File([bl],setName(i),{type:"image/png"}));
+  $("#card-zip").onclick=async()=>{ try{ if(!CARD.blobs) return; const zip=await makeZip(setFiles()), a=document.createElement("a"); a.href=URL.createObjectURL(zip); a.download=`book-cards-${slug()}.zip`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); }
+    catch(e){ $("#card-status").textContent="Couldn’t make the ZIP: "+e.message; } };
   const blob=()=>CARD.blob?Promise.resolve(CARD.blob):new Promise((res,rej)=>$("#card-canvas").toBlob(b=>b?res(b):rej(new Error("empty")),"image/png"));
   $("#card-dl").onclick=async()=>{ try{ const bl=await blob(), a=document.createElement("a"); a.href=URL.createObjectURL(bl); a.download=name(); document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); }catch(e){ $("#card-status").textContent="Couldn’t save the image: "+e.message; } };
   $("#card-copy").onclick=async()=>{ const st=$("#card-status"); try{ await navigator.clipboard.write([new ClipboardItem({"image/png":await blob()})]); st.textContent="Copied. Paste it into your post."; }catch(e){ st.textContent="This browser won’t copy images. Use Download PNG instead."; } };
   if(CAN_SHARE_FILES){ $("#card-native").hidden=false; $("#card-dl").classList.remove("primary"); }
-  $("#card-native").onclick=async()=>{ try{ await navigator.share({files:[new File([await blob()],name(),{type:"image/png"})],title:CARD.b.short}); }catch(e){ if(e.name!=="AbortError") $("#card-status").textContent="Sharing didn’t work here. Use Download PNG instead."; } };
+  $("#card-native").onclick=async()=>{ try{ const files=CARD.cards&&CARD.cards.length>1&&CARD.blobs?setFiles():[new File([await blob()],name(),{type:"image/png"})];
+      if(files.length>1 && navigator.canShare && !navigator.canShare({files})){ $("#card-status").textContent=`This browser can’t share ${files.length} images at once. Use Download all (ZIP).`; return; }
+      await navigator.share({files,title:CARD.b.short}); }catch(e){ if(e.name!=="AbortError") $("#card-status").textContent="Sharing didn’t work here. Use Download PNG instead."; } };
 }
 
 /* ================= Wrapped: a short series of cards about one year =================
