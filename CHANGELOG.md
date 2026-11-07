@@ -7,11 +7,12 @@ Shelfprint uses [semantic versioning](https://semver.org): the middle number goe
 ## 0.5.1 — 2026-11-06
 
 ### Changed
-- **Long-form keeps short text together.** Text that fits whole on the first card is no longer split to make room for matrix scores and tags. It stays together with its credit, and the matrix and tags get a closing card of their own.
-- **A fuller first card.** When text has to split, the first card, the one people see first, is kept as full as the sentences allow instead of holding a single sentence. The type size is now chosen for the most even set, among sizes that need no more cards, rather than always the largest.
-- A sentence continues onto the next card only when no type size from 36 to 46 px keeps it whole.
+- **Long-form divides text more evenly.** Each way of dividing the text is measured as the cards will be drawn, counting the cover and book details on the first card and the credit, matrix scores, and tags on the last, and the most even set is used. A nearly empty continuation card is avoided.
+- **Clause breaks.** If breaking between sentences would leave one card with much less of your text than another, a break can fall inside a sentence, after a semicolon, colon, or dash. A sentence too long for one card also breaks at a clause before it breaks between words.
+- The type stays the largest size that needs no more cards. It's made smaller only to keep a sentence from breaking between words, never just to even out the cards.
 
 ### Fixed
+- A sentence could break between words at a larger type size when a smaller size with the same number of cards kept it whole.
 - At the square size with matrix scores and tags, a Long-form set could collapse into one card that ran past its edges and couldn't be saved.
 
 ## 0.5.0 — 2026-11-06
