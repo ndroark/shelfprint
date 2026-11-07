@@ -4,6 +4,16 @@ What changed in each version of Shelfprint. The version in use appears at the bo
 
 Shelfprint uses [semantic versioning](https://semver.org): the middle number goes up for new features, and the last number for fixes.
 
+## 0.5.1 — 2026-11-06
+
+### Changed
+- **Long-form keeps short text together.** Text that fits whole on the first card is no longer split to make room for matrix scores and tags. It stays together with its credit, and the matrix and tags get a closing card of their own.
+- **A fuller first card.** When text has to split, the first card, the one people see first, is kept as full as the sentences allow instead of holding a single sentence. The type size is now chosen for the most even set, among sizes that need no more cards, rather than always the largest.
+- A sentence continues onto the next card only when no type size from 36 to 46 px keeps it whole.
+
+### Fixed
+- At the square size with matrix scores and tags, a Long-form set could collapse into one card that ran past its edges and couldn't be saved.
+
 ## 0.5.0 — 2026-11-06
 
 ### Added

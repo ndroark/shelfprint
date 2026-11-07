@@ -532,7 +532,7 @@ body.dragging .dropzone,body.dragging .wrap{outline:3px dashed var(--series-1);o
 <script>
 (function(){
 "use strict";
-const VERSION="0.5.0";   // see CHANGELOG.md
+const VERSION="0.5.1";   // see CHANGELOG.md
 const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const MON=MONTHS.map(m=>m.slice(0,3));
 const $=s=>document.querySelector(s);
@@ -2116,7 +2116,7 @@ const BC=(()=>{
     return {cb,y}; }
   // matrix and tags: a band above the footer. bandBody() measures it; drawBand() draws it and returns where it starts.
   function bandBody(ctx,o){ let h=0; if(o.tags.length){ const n=chipRows(ctx,o.tags,W-2*P).rows.length; if(n) h+=n*46+(n-1)*10+26; } if(o.matrix) h+=170; return h; }
-  function drawBand(F,o){ const {ctx,th,FOOT}=F; let band=FOOT-40, lost=[];
+  function drawBand(F,o,bottom){ const {ctx,th,FOOT}=F; let band=bottom??FOOT-40, lost=[];
     if(o.tags.length){ const cr=chipRows(ctx,o.tags,W-2*P); lost=cr.left;
       if(cr.rows.length){ band-=cr.rows.length*46+(cr.rows.length-1)*10; ctx.font=`400 26px ${SANS}`;
         cr.rows.forEach((row,ri)=>row.forEach(([t,x,w])=>{ const yy=band+ri*56; ctx.fillStyle=th.chip; rr(ctx,P+x,yy,w,46,23); ctx.fill(); ctx.fillStyle=th.chipInk; ctx.fillText(t,P+x+17,yy+32); }));
@@ -2193,10 +2193,16 @@ const BC=(()=>{
 
   /* ---------- Long-form: a review across a numbered set of cards ----------
      The first card is the Standard card's top; later cards repeat the title with "Continued". Matrix scores and tags,
-     and a quotation's credit, close the set on the last card. The text is split only between sentences, at the end of
-     a paragraph when it can be, and the cards are filled about equally. A sentence too long for any card is the one
-     exception: it continues onto the next card between words. The type is the largest size from 36 to 46 px that still
-     needs no more cards than 36 px does, up to 10 cards. */
+     and a quotation's credit, close the set on the last card.
+     - Text that fits whole on the first card isn't split to make room for matrix scores and tags: it stays together
+       (with its credit), and the matrix and tags get a closing card of their own.
+     - Otherwise the text is split only between sentences, at the end of a paragraph when it can be. A sentence too long
+       for any card is the one exception: it continues onto the next card between words, and only when no type size
+       from 36 to 46 px keeps it whole.
+     - The cards are filled as evenly as the sentences allow, and the first card counts most: it's the one seen first,
+       so a mostly empty first card costs far more than a short last one.
+     - The type is the size from 36 to 46 px that gives the most even set, among sizes needing no more cards than 36 px
+       does (up to 10 cards); the larger size wins a tie. */
   function sentenceUnits(words){ const units=[]; let start=0;
     const abbr=/^([A-Z]\.|Mr\.|Mrs\.|Ms\.|Dr\.|St\.|vs\.|e\.g\.|i\.e\.)$/;
     words.forEach((w,i)=>{ const next=words[i+1], end=/[.!?…]["”’)\]]*$/.test(w.t) && !abbr.test(w.t);
@@ -2210,13 +2216,16 @@ const BC=(()=>{
     ctx.font=`600 24px ${SANS}`; if("letterSpacing" in ctx) ctx.letterSpacing="5px";   // measured the way it's drawn
     const ck=wrap(ctx,`${b.short.toUpperCase()}  ·  CONTINUED`,W-2*P-40); if("letterSpacing" in ctx) ctx.letterSpacing="0px";
     const contTop=T+76+(ck.length-1)*34, rest=(FOOT-68)-contTop;
-    const attr=quoteCredit(ctx,o,tw), tail=bandBody(ctx,o)+(attr?14+attr.length*ALH:0);
-    const cap=(k,n)=>(k?rest:first)-(k===n-1?tail:0);
-    function plan(size,maxCards){
+    const attr=quoteCredit(ctx,o,tw), attrH=attr?14+attr.length*ALH:0, band=bandBody(ctx,o);
+    // own: the matrix and tags have a closing card of their own, so the last card of text holds only the credit
+    const cap=(k,n,own)=>(k?rest:first)-(k===n-1?attrH+(own?0:band):0);
+    const W0=3, FLOOR=.5, SHORT=4, MIDBREAK=6;   // the first card's empty space counts three times, and under half full costs extra;
+    // a break inside a sentence costs more than any unevenness, so a smaller size that keeps sentences whole wins
+    function plan(size,maxCards,own){
       const words=[]; for(const w of words0){ ctx.font=`${w.it?"italic ":""}400 ${size}px ${SERIF}`; split(ctx,w.t,tw).forEach((t,i)=>words.push(i?{t,it:w.it,glue:true}:{...w,t})); }
       const units=sentenceUnits(words);
       // a sentence that can't fit even an empty card is split between words; the pieces are marked as not starting a paragraph
-      const minCap=Math.min(first,rest-tail); const us=[];
+      const minCap=Math.min(first,rest-attrH-(own?0:band)); const us=[];
       for(const u of units){ if(hOf2(u)<=minCap){ us.push(u); continue; } let a=u.a;
         while(a<u.b){ let bEnd=a+1; while(bEnd<u.b && height(layout(ctx,words.slice(a,bEnd+1).map((w,k)=>k?w:{...w,para:false}),tw,size),size,lh)<=minCap) bEnd++;
           us.push({a,b:bEnd,para:a===u.a&&u.para,cont:a!==u.a}); a=bEnd; } }
@@ -2224,35 +2233,44 @@ const BC=(()=>{
       const U=us, n=U.length, H2=new Map(), hh=(i,j)=>{ const key=i*4096+j; if(H2.has(key)) return H2.get(key);
         const ws=words.slice(U[i].a,U[j-1].b).map((w,k)=>k?w:{...w,para:false}); const h=height(layout(ctx,ws,tw,size),size,lh); H2.set(key,h); return h; };
       for(let total=1; total<=maxCards; total++){ const best=new Map();
-        const go=(i,k)=>{ const key=i*64+k; if(best.has(key)) return best.get(key); let r=null; const c=cap(total-k,total);
-          if(k===1){ const f=hh(i,n)/c; r=f<=1?{cost:(1-f)**2,cuts:[]}:null; }
+        const go=(i,k)=>{ const key=i*64+k; if(best.has(key)) return best.get(key); let r=null; const idx=total-k, c=cap(idx,total,own); if(c<=0){ best.set(key,null); return null; }   // no room for text on this card
+          const costOf=f=>idx?(1-f)**2:W0*(1-f)**2+(total>1&&f<FLOOR?SHORT:0);
+          if(k===1){ const f=hh(i,n)/c; r=f<=1?{cost:costOf(f),cuts:[]}:null; }
           else for(let j=i+1;j<=n-k+1;j++){ const f=hh(i,j)/c; if(f>1) break; const rest=go(j,k-1); if(!rest) continue;
-            const cost=(1-f)**2+rest.cost+(U[j].para?0:.15); if(!r||cost<r.cost) r={cost,cuts:[j,...rest.cuts]}; }
+            const cost=costOf(f)+rest.cost+(U[j].para?0:U[j].cont?MIDBREAK:.15); if(!r||cost<r.cost) r={cost,cuts:[j,...rest.cuts]}; }
           best.set(key,r); return r; };
         const p=go(0,total); if(p){ const cuts=[0,...p.cuts,n], pages=cuts.slice(0,-1).map((c,i)=>({a:U[c].a,b:U[cuts[i+1]-1].b}));
-          pages.mid=p.cuts.some(c=>U[c].cont); pages.words=words; return pages; } }   // mid: a break falls inside a sentence too long for one card
+          pages.mid=p.cuts.some(c=>U[c].cont); pages.words=words; pages.cost=p.cost; return pages; } }   // mid: a break falls inside a sentence too long for one card
       return null; }
     // a quick check before the careful one: the whole text at 36 px on cards of the largest size
     const allH=height(layout(ctx,words0,tw,36),36,lh); if(allH>first+rest*(MAX_CARDS-1)) return {tooLong:true};
+    const out=(p,size,own)=>({pages:p,size,words:p.words,tw,ind,mode,contTop,ck,attr,own});
     const base=plan(36,MAX_CARDS); if(!base) return {tooLong:true};
-    for(let s=46; s>36; s-=2){ const p=plan(s,base.length); if(p && p.length===base.length) return {pages:p,size:s,words:p.words,tw,ind,mode,contTop,ck,attr}; }
-    return {pages:base,size:36,words:base.words,tw,ind,mode,contTop,ck,attr};
+    // text that fits whole on the first card stays there, at the largest size that fits; the matrix and tags follow
+    if(band && base.length>1) for(let s=46; s>=36; s-=2){ const p=plan(s,1,true); if(p) return out(p,s,true); }
+    let best=null, bs=36;   // the most even set; larger sizes are tried first, so they win a tie
+    for(let s=46; s>=36; s-=2){ const p=s===36?base:plan(s,base.length); if(p && p.length===base.length && (!best||p.cost<best.cost-1e-9)){ best=p; bs=s; } }
+    return out(best,bs,false);
   }
   function renderLong(o){
     const plan=longPlan(o); if(plan.tooLong) return {multi:true,canvases:[],over:true,why:["long"],lostTags:[]};
-    const {pages,size,words,tw,ind,contTop,ck,attr}=plan, lh=1.46, n=pages.length, why=new Set(), mid=!!pages.mid; let lostTags=[];
+    const {pages,size,words,tw,ind,contTop,ck,attr,own}=plan, lh=1.46, nt=pages.length, n=nt+(own?1:0), why=new Set(), mid=!!pages.mid; let lostTags=[];
+    const cont=F=>{ const {ctx,th,T}=F; ctx.font=`600 24px ${SANS}`; ck.forEach((l,i)=>{ const at=l.lastIndexOf("·"); ctx.fillStyle=th.ink;
+      if(i===ck.length-1 && at>-1){ const w1=spaced(ctx,l.slice(0,at),P,T+24+i*34); ctx.fillStyle=th.muted; spaced(ctx,l.slice(at),P+w1,T+24+i*34); }
+      else spaced(ctx,l,P,T+24+i*34); }); };
+    const band=F=>{ const h=bandBody(F.ctx,o), bd=drawBand(F,o,own?contTop+Math.round((F.FOOT-40-contTop-h)*.46)+h:undefined); lostTags=bd.lost; if(lostTags.length) why.add("tags"); };
     const canvases=pages.map((pg,k)=>{ const cv=document.createElement("canvas"), F=frame(cv,o), {ctx,th,T}=F;
       const ws=words.slice(pg.a,pg.b).map((w,i)=>i?w:{...w,para:false}); let y;
       if(k===0){ kicker(F,o.kicker); const t=drawTop(F,o,T+76); y=Math.max(t.cb.y+t.cb.h,t.y)+64;
         if(o.kind==="quote"){ ctx.font=`400 170px ${SERIF}`; ctx.fillStyle=th.accent; ctx.fillText("“",P-10,y+112); } }
-      else { ctx.font=`600 24px ${SANS}`; ck.forEach((l,i)=>{ const at=l.lastIndexOf("·"); ctx.fillStyle=th.ink;
-          if(i===ck.length-1 && at>-1){ const w1=spaced(ctx,l.slice(0,at),P,T+24+i*34); ctx.fillStyle=th.muted; spaced(ctx,l.slice(at),P+w1,T+24+i*34); }
-          else spaced(ctx,l,P,T+24+i*34); }); y=contTop; }
+      else { cont(F); y=contTop; }
       const end=drawAt(ctx,layout(ctx,ws,tw,size),P+ind,y+(o.kind==="quote"?8:0),size,lh,th.ink);
-      if(k===n-1){ if(attr) drawAttr(ctx,attr,P+ind,end+14,th.sec); const bd=drawBand(F,o); lostTags=bd.lost; if(lostTags.length) why.add("tags"); }
+      if(k===nt-1){ if(attr) drawAttr(ctx,attr,P+ind,end+14,th.sec); if(!own) band(F); }
       if(!finish(F,o,n>1?[k+1,n]:null)) why.add("bounds");
       return cv; });
-    return {multi:true,canvases,over:why.size>0,why:[...why],lostTags,size,n,mid};
+    // the matrix and tags on a closing card of their own, set a little above the middle of the space
+    if(own){ const cv=document.createElement("canvas"), F=frame(cv,o); cont(F); band(F); if(!finish(F,o,[n,n])) why.add("bounds"); canvases.push(cv); }
+    return {multi:true,canvases,over:why.size>0,why:[...why],lostTags,size,n,mid,own};
   }
   return {render:(cv,o)=>o.layout==="long"?renderLong(o):renderCard(cv,o)};
 })();
@@ -2355,7 +2373,7 @@ async function drawCard(){
   if(res.why.includes("tags")) notes.push(`${res.lostTags.length===1?"This selected tag doesn’t":"These selected tags don’t"} fit: ${res.lostTags.join(", ")}. Turn some tags off to choose which ones appear.`);
   if(res.why.includes("bounds") && !res.why.some(w=>w!=="bounds")) notes.push("Something on this card would run past its edges or into the footer. Try another size, or turn off some details.");
   if(res.over) notes.push(multi?"Nothing is cut off to fit, so these cards can’t be saved until something changes.":"Nothing is cut off to fit, so this card can’t be saved until something changes.");
-  if(multi && !res.over) notes.push(n===1?"It all fits on one card.":`${n} cards in ${res.size} px type. `+(res.mid?"A passage too long for one card continues onto the next; other breaks fall between sentences.":"Each break falls between sentences, at the end of a paragraph where it can.")+(opts.matrix||opts.tags.length?" Matrix scores and tags are on the last card.":""));
+  if(multi && !res.over) notes.push(n===1?"It all fits on one card.":res.own?`${n} cards in ${res.size} px type. The text fits whole on the first card, so it isn’t split; matrix scores and tags have the last card to themselves.`:`${n} cards in ${res.size} px type. `+(res.mid?"A passage too long for one card continues onto the next; other breaks fall between sentences.":"Each break falls between sentences, at the end of a paragraph where it can.")+(opts.matrix||opts.tags.length?" Matrix scores and tags are on the last card.":""));
   if(!res.over && res.smallCover) notes.push("There isn’t much room for the cover at this size. Try Post 4:5 or Story 9:16, turn off some details, or choose Standard.");
   if(swapped && CARD.keepSwap) notes.push(`Using the ${src?src+" ":""}cover, not your custom cover. Your saved cover preference won’t change.`);
   if(CARD.img) notes.push("Using the image from your device, for this card only.");
