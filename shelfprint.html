@@ -13,7 +13,7 @@
    service starts off. Each reader can change the connections below in the
    page's Settings panel (saved in their own browser) unless lockSettings
    is true, in which case these values are final.
-   Your reading file itself is read in the browser and isn't uploaded to Shelfprint.
+   Your reading file itself is read and kept in the browser; there's no Shelfprint server.
    ===================================================================== */
 const SETTINGS = {
   handle: "",               // optional default handle for share images; readers can add their own in the share dialog
@@ -532,7 +532,7 @@ body.dragging .dropzone,body.dragging .wrap{outline:3px dashed var(--series-1);o
 <script>
 (function(){
 "use strict";
-const VERSION="0.5.1";   // see CHANGELOG.md
+const VERSION="1.0.0";   // see CHANGELOG.md
 const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const MON=MONTHS.map(m=>m.slice(0,3));
 const $=s=>document.querySelector(s);
@@ -1532,7 +1532,7 @@ function sourceUrl(){
 }
 function renderFooter(){
   const on=v=>v?"on":"off";
-  $("#foot").innerHTML=`<div>${SAMPLE?`Showing <b>sample books</b>. Nothing is saved. `:`${SRC_NAME?`Showing <b>${esc(SRC_NAME)}</b>, saved in this browser only. `:""}Your reading data is read and kept in this browser; it isn't uploaded to Shelfprint.
+  $("#foot").innerHTML=`<div>${SAMPLE?`Showing <b>sample books</b>. Nothing is saved. `:`${SRC_NAME?`Showing <b>${esc(SRC_NAME)}</b>, saved in this browser only. `:""}Your reading data is read and kept in this browser.
     <button class="linky" type="button" id="forget">Forget the saved data</button>`}</div>
     <div>Outside connections: cover links from your sheet <b>${on(CFG.coverUrls)}</b> · cover lookup (Open Library) <b>${on(CFG.coverLookup)}</b>${CFG.coverLookup?` · Google Books <b>${on(CFG.googleBooks)}</b>`:""} · share-image fallback (images.weserv.nl) <b>${on(CFG.exportProxy)}</b> · web font (Google Fonts) <b>${on(CFG.webFont)}</b>${CFG.dataUrl?" · auto-load from your published sheet <b>on</b>":""}. ${LOCKED?"Set by whoever installed this page.":`<button class="linky" type="button" id="foot-set">Change</button>`}</div>
     <div id="unsaved-line" hidden></div>
@@ -2775,8 +2775,8 @@ function connSummary(){ const o=k=>CFG[k]?"on":"off";
 function welcome(msg){
   SAMPLE=false;
   const tpl=TEMPLATE_URL?`<a href="${esc(TEMPLATE_URL)}" target="_blank" rel="noopener">Shelfprint Tracker template</a>`:`Shelfprint Tracker template <span class="soon">(link coming soon)</span>`;
-  $("#bar").hidden=true; main.innerHTML=`<div class="welcome"><p class="kicker">Shelfprint</p><h1>Make your own shelfprint</h1>
-    <p class="sub">Explore your reading habits with charts and cover galleries. Make monthly wrap-ups and a shareable year in books, all from your own reading log. No account required. Your file is read in this browser and never uploaded.</p>
+  $("#bar").hidden=true; main.innerHTML=`<div class="welcome"><p class="kicker">Shelfprint</p><h1>Track once. Share anywhere.</h1>
+    <p class="sub">Keep your reading in your own spreadsheet. Explore it with charts and cover galleries, then turn it into images to share wherever you like: a card for one book, a monthly wrap-up, or your year in books. No account required. Your file stays in this browser.</p>
     <div class="dropzone"><p>${TOUCH?"Open your reading log (a CSV file)":"Drop your reading log here (a CSV file)"}</p><button class="btn primary" type="button" data-pick>Choose a file…</button>
       <p class="or">or <button class="linky" type="button" id="try-sample">try it with sample books</button></p>${msg?`<p class="err">${esc(msg)}</p>`:""}</div>
     <details class="conn-card"><summary><b>Privacy &amp; outside connections</b><span class="h3sub" id="conn-sum">${connSummary()}</span></summary>
@@ -2784,7 +2784,8 @@ function welcome(msg){
     <div class="wsec"><h3>How it works</h3>
       <ol><li>Make a copy of the ${tpl}, or use any spreadsheet with the same column headers.</li>
       <li>Log your books. Only <b>Title</b> and <b>End date</b> are required. No End date? Use <b>Month read</b> plus <b>Year read</b>.</li>
-      <li>Export the Reading Log tab as a CSV file. In Google Sheets: <b>File → Download → Comma-separated values</b>.</li></ol></div>
+      <li>Export the Reading Log tab as a CSV file. In Google Sheets: <b>File → Download → Comma-separated values</b>.</li>
+      <li>Drop it here, and bookmark this page. Your books stay in this browser, so they’re here next time. To update, load a fresh export.</li></ol></div>
     <div class="wsec"><h3>Pick your own covers</h3>
       <p>Turn on cover lookup to find images automatically. Want a custom image, to match the edition on your shelf or a favorite reissue? Add a <b>Cover URL</b> in your sheet, or try one out first by pasting a cover link on a book's details page. Free, like everything else here.</p></div>
   </div>`;

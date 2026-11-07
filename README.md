@@ -1,8 +1,8 @@
 # Shelfprint
 
-**Make something of your reading.**
+**Track once. Share anywhere.**
 
-Explore your reading habits with charts and cover galleries. Make monthly wrap-ups and a shareable year in books, all from your own reading log. No account required. Your file is read in your browser and never uploaded.
+Keep your reading in your own spreadsheet. Explore it with charts and cover galleries. Then turn it into images to share with the friends and communities you already have: a card for one book, a monthly wrap-up, or your year in books. No account required, and no Shelfprint server: your file stays in your browser.
 
 I spent a year closely cataloging my reading in a spreadsheet, adding new fields and finding new questions I wanted the data to answer. Eventually, the visualizations I wanted exceeded what I could comfortably build in Excel, so I began experimenting with HTML.
 
@@ -11,11 +11,13 @@ I wanted to keep the spreadsheet experience for entering and managing books, wit
 Two pieces work together to make your own shelfprint:
 
 - **Shelfprint Tracker**, a spreadsheet template for Google Sheets, Excel, or LibreOffice Calc, where you log your books.
-- **The Shelfprint page**, a single web page that reads an export of that spreadsheet and turns it into monthly wrap-ups, a full-year dashboard, share images, and **My Year in Books**, a set of year-end images you can download, copy, save, and post.
+- **The Shelfprint page**, a single web page that reads an export of that spreadsheet and turns it into monthly wrap-ups, a full-year dashboard, image cards for single books, share images, and **My Year in Books**, a set of year-end images you can download, copy, save, and post.
 
-Plenty of sites will make a year-end recap from your reading. They decide what goes in it, using rules you can't see, from data they keep. Shelfprint works the other way around. Your log stays in your own spreadsheet. The page reads it in your browser and never uploads it. Every image in My Year in Books comes with a note on precisely what it counted and how, and you choose which images to include, which books to feature, and what order they go in.
+Plenty of sites will make a year-end recap from your reading. They decide what goes in it, using rules you can't see, from data they keep. Shelfprint works the other way around. Your log stays in your own spreadsheet. The page reads it in your browser and keeps it there. Every image in My Year in Books comes with a note on precisely what it counted and how, and you choose which images to include, which books to feature, and what order they go in.
 
 No server, and no Goodreads, Kindle, or Amazon. Use whichever spreadsheet program you like.
+
+**Make something of your reading.**
 
 > **Video tutorial:** *(link coming soon)*
 
@@ -41,10 +43,12 @@ No server, and no Goodreads, Kindle, or Amazon. Use whichever spreadsheet progra
   - ["Check your sheet"](#check-your-sheet)
   - [Covers](#covers)
   - [Share images](#share-images)
+  - [Image cards for one book](#image-cards-for-one-book)
 - [My Year in Books](#my-year-in-books)
 - [Privacy and outside connections](#privacy-and-outside-connections)
 - [What's saved in your browser](#whats-saved-in-your-browser)
 - [Hosting your own copy](#hosting-your-own-copy)
+- [Versions and what stays stable](#versions-and-what-stays-stable)
 - [Troubleshooting](#troubleshooting)
 - [Known limits](#known-limits)
 - [License](#license)
@@ -54,15 +58,20 @@ No server, and no Goodreads, Kindle, or Amazon. Use whichever spreadsheet progra
 
 ## Quick start
 
-1. **Copy or download the template.** Open the [Shelfprint Tracker Google Sheets template](https://docs.google.com/spreadsheets/d/1dd7IoW6CZ1FUxA6jXaDFAfBWa-cRUX_9D34pGI1SGjk/copy) and choose **Make a copy**, or download `Shelfprint_Tracker.xlsx` for Excel or `Shelfprint_Tracker.ods` for LibreOffice Calc from this repository.
+1. **Make a copy of the template.** Open the [Shelfprint Tracker template](https://docs.google.com/spreadsheets/d/1dd7IoW6CZ1FUxA6jXaDFAfBWa-cRUX_9D34pGI1SGjk/copy) in Google Sheets and choose **Make a copy**. It goes into your own Google Drive.
 2. **Log your books** on the **Reading Log** tab. Only **Title** and **End date** are required. No End date? Use **Month read** plus **Year read**. Row 3 is an example; type over it or clear it.
-3. **Export the Reading Log tab as a CSV file.**
-   - Google Sheets: open the Reading Log tab, then **File → Download → Comma-separated values (.csv)**.
-   - Excel: see [Using Excel instead of Google Sheets](#using-excel-instead-of-google-sheets).
-   - LibreOffice Calc: see [Using LibreOffice Calc](#using-libreoffice-calc).
-4. **Open `shelfprint.html`** in a web browser, and drop the CSV onto it or click **Choose a file…**.
+3. **Download the Reading Log as a CSV file.** Open the Reading Log tab, then **File → Download → Comma-separated values (.csv)**.
+4. **Open the Shelfprint page** at **[ndroark.github.io/shelfprint](https://ndroark.github.io/shelfprint/)**, and drop the CSV onto it or click **Choose a file…**.
+5. **Bookmark the page.** It keeps your log in this browser, so your books are there the next time you open it. To update, download a fresh CSV and use **Load new export…** at the top of the page.
 
 Just want to see what it does? On the first screen, click **try it with sample books**. The samples are public-domain classics with an invented reader's ratings and notes. Nothing is saved.
+
+**Other ways to use Shelfprint:**
+
+- **Skip the download each time.** Publish the Reading Log tab as a CSV link, and the page loads your latest data whenever it opens. Anyone with that link can read the whole tab, including columns such as Recommended by. See [Loading your log](#loading-your-log).
+- **Excel or LibreOffice Calc** instead of Google Sheets: download `Shelfprint_Tracker.xlsx` or `Shelfprint_Tracker.ods` from this repository. See [Using Excel instead of Google Sheets](#using-excel-instead-of-google-sheets) and [Using LibreOffice Calc](#using-libreoffice-calc).
+- **Open the page from your own computer.** Download `shelfprint.html` and open it in your browser. It works the same way, though **Copy image** and phone sharing work best from the website.
+- **Host your own copy**, with your own starting settings. See [Hosting your own copy](#hosting-your-own-copy).
 
 ---
 
@@ -211,9 +220,9 @@ The major spreadsheet functions have been checked in LibreOffice Calc, and a CSV
 
 ### Loading your log
 
-Drop a CSV onto the page, or click **Choose a file…**. The file is read in your browser and kept in that browser, so the page shows the same data next time you open it. To update, export again, and use **Load new export…** at the top of the page.
+Drop a CSV onto the page, or click **Choose a file…**. The file is read in your browser and kept in that browser, so the page shows the same data next time you open it. To update, export again, and use **Load new export…** at the top of the page. This is the default, and the most private way: your log goes only where you put it.
 
-**Optional: load straight from a published sheet.** In Google Sheets you can publish the Reading Log tab as a CSV (**File → Share → Publish to web**, then choose the Reading Log tab and CSV) and paste that link into the page's **Settings**. The page then loads your latest data each time it opens. Publishing makes that tab readable by anyone with the link. If the link can't be reached, the page shows the copy saved in your browser with a **Not up to date** notice, rather than presenting old data as current.
+**Optional: load straight from a published sheet.** In Google Sheets you can publish the Reading Log tab as a CSV (**File → Share → Publish to web**, then choose the Reading Log tab and CSV) and paste that link into the page's **Settings**. The page then loads your latest data each time it opens. Publishing makes the whole tab readable by anyone with the link, including personal columns such as Source, How I found it, and Recommended by, so share the link with care. If the link can't be reached, the page shows the copy saved in your browser with a **Not up to date** notice, rather than presenting old data as current.
 
 ### Year and month views
 
@@ -289,8 +298,8 @@ The new-author note reads "First book I've read by this author" only for the ear
 
 Nothing on a card is cut off to fit. Titles print whole, long words, links, and text without spaces wrap, quotation credits wrap, and tags wrap onto up to three rows. If something still doesn't fit at a readable size, the card says what and can't be saved until you change it, for example by choosing **Edit for card**, turning off some details or tags, or trying another size. If a cover's host won't let it into the image, you can use an image from your device or fetch that one cover through images.weserv.nl, for that card only. If the card could only use a different cover than the one you chose (for example, the Open Library cover still in your sheet's Found cover column), it says so and offers the same choices, or you can use the cover it found. Your saved cover choice doesn't change. Sizes, looks, and the choices under **Include** are remembered in this browser.
 
-
 **Long-form.** The first card shows the book, and later cards repeat the title with "Continued" and a number, such as "2 / 3." Breaks fall at the end of a paragraph where they can, otherwise between sentences. If that would leave one card with much less of your text than another, a break can fall inside a sentence instead, after a semicolon, colon, or dash. Only a passage too long for one card continues onto the next between words. Each way of dividing the text is measured as the cards will be drawn, with the cover and book details on the first card and the credit, matrix scores, and tags on the last; the most even set is used. Every card in the set uses the same type size: the largest from 36 to 46 px that needs no more cards than 36 px would, made smaller only to keep a sentence from breaking between words. Your text is never cut, repeated, or changed, and nothing is added to fill a card. Matrix scores, tags, and a quotation's credit are on the last card, with the end of the text. Click a thumbnail to see each card. **Download all (ZIP)** saves the set with names that sort in order, and **Share** sends the whole set.
+
 ---
 
 ## My Year in Books
@@ -335,7 +344,7 @@ My Year in Books always covers the whole year. A filter on the page isn't applie
 
 ## Privacy and outside connections
 
-Your reading log is read in your browser and isn't uploaded to Shelfprint. There's no Shelfprint account, no Shelfprint server-side database, and no analytics.
+Your reading log is read and kept in your browser. Shelfprint has no server, no account, no database, and no analytics, so there's nowhere for your log to be sent.
 
 A few optional features reach outside services to fetch images or fonts. Each one is listed under **Privacy & outside connections** on the first screen and in **Settings**, with exactly what it sends. Anything that would send information about your books is **off** until you turn it on.
 
@@ -359,9 +368,14 @@ All of these live in your browser's local storage, on that device only. Nothing 
 - Your Settings choices
 - Covers you picked for individual books, and remembered cover-lookup results
 - Your share-image handle
+- Image card choices: size, look, what to include, and whether the "Shelfprint" credit shows. Personal details are never remembered.
 - My Year in Books choices for each year: image order, images switched off, top picks, and genre shelves
 
-To keep a picked cover permanently, copy its link into your sheet's Cover URL column. To keep looked-up covers, use **Copy found covers**.
+Your sheet is the permanent record. To keep a picked cover for good, copy its link into your sheet's Cover URL column. To keep looked-up covers, use **Copy found covers**.
+
+**Saved choices follow the book's Record ID, or its title and author.** A picked cover, a top pick, or a place on a shelf is tied to the book's **Record ID** when the row has one, and otherwise to its title and author. If you change a title or author in your sheet, or add a Record ID to a row later, the page no longer matches those choices to that book. For a picked cover, it offers to carry the old choice over; picks and shelves need choosing again. If you expect to edit titles, give rows a Record ID when you log them, and don't change it.
+
+**Safari can clear saved data.** Safari, on iPhone, iPad, and Mac, may delete what a site has saved, including the copy of your log and all of the choices above, if you use Safari for seven days without opening the page. Your sheet isn't affected: load your CSV again to bring your books back. Choices that live only in the browser, such as picks and picked covers, would need making again, so keep cover choices in your sheet's Cover URL column.
 
 ---
 
@@ -396,6 +410,20 @@ Readers can change these in **Settings**, saved in their own browser, unless `lo
 
 ---
 
+## Versions and what stays stable
+
+Shelfprint uses [semantic versioning](https://semver.org). The version in use appears at the bottom of the page, and [CHANGELOG.md](CHANGELOG.md) lists what changed in each one.
+
+From 1.0 on, three things stay stable through every 1.x version:
+
+- **Your sheet.** Every Reading Log column the page reads by name keeps being read under that name. New columns are optional, and if a column is ever renamed, its old name keeps working too. A sheet that works with 1.0 works with every 1.x version.
+- **What's saved in your browser.** Picked covers, top picks, genre shelves, My Year in Books choices, image card choices, Settings, and the saved copy of your log carry forward to each new 1.x version.
+- **The `SETTINGS` block**, for anyone hosting their own copy. Existing settings keep their names and meanings.
+
+How the pages and images look can keep improving within 1.x: layouts, card designs, wording, and new features. A change that would break one of the three promises above would be version 2.0, and the changelog would say what to do.
+
+---
+
 ## Troubleshooting
 
 **A book isn't showing up in its year.** Look at **Check your sheet** at the top of the page, or the **Checks** tab. A Finished or DNF book needs an End date, or a Month read plus a four-digit Year read.
@@ -418,7 +446,7 @@ Readers can change these in **Settings**, saved in their own browser, unless `lo
 
 - The template supports about **998 books** per sheet (Reading Log rows 3–1000).
 - My Year in Books images are **4:5** only. The single share image also offers square and story sizes.
-- Picks, genre shelves, picked covers, and other choices are saved **per browser**. They don't move between devices.
+- Picks, genre shelves, picked covers, and other choices are saved **per browser**. They don't move between devices, and Safari may clear them after seven days without a visit. See [What's saved in your browser](#whats-saved-in-your-browser).
 - The Excel template needs **Excel 2019 or Microsoft 365**. A separately supplied `.ods` version is available for LibreOffice Calc; its major functions and CSV export/import workflow have been tested, but not every feature and edge case.
 - Cover lookup depends on Open Library's (and optionally Google Books') catalog. New, indie, and self-published books are the most likely to need a Cover URL.
 
