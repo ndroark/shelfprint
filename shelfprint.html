@@ -34,8 +34,9 @@ const SETTINGS = {
 };
 // Link to the Google Sheets template (the "Make a copy" link). Shown on the welcome screen.
 const TEMPLATE_URL = "https://docs.google.com/spreadsheets/d/1dd7IoW6CZ1FUxA6jXaDFAfBWa-cRUX_9D34pGI1SGjk/copy";
-// Link to the project's source and instructions (e.g. a GitHub repository). Shown in the page footer.
-// Left blank on GitHub Pages, the page works out the repository from its own address.
+// Link to the project's source and instructions (e.g. a GitHub repository). Shown on the welcome screen and in the
+// footer. Left blank, the page works out the repository from its own address on GitHub Pages, and otherwise links to
+// Shelfprint's own repository.
 const SOURCE_URL = "";
 </script>
 <style>
@@ -1526,7 +1527,7 @@ function renderTable(bs,isYear){
 /* ---------- footer ---------- */
 function sourceUrl(){
   if(SOURCE_URL) return SOURCE_URL;
-  const m=location.hostname.match(/^([a-z0-9-]+)\.github\.io$/i); if(!m) return "";
+  const m=location.hostname.match(/^([a-z0-9-]+)\.github\.io$/i); if(!m) return "https://github.com/ndroark/shelfprint";
   const repo=location.pathname.split("/").filter(Boolean)[0];
   return `https://github.com/${m[1]}/${repo&&!/\.html?$/i.test(repo)?repo:m[1]+".github.io"}`;
 }
@@ -1537,7 +1538,7 @@ function renderFooter(){
     <div>Outside connections: cover links from your sheet <b>${on(CFG.coverUrls)}</b> · cover lookup (Open Library) <b>${on(CFG.coverLookup)}</b>${CFG.coverLookup?` · Google Books <b>${on(CFG.googleBooks)}</b>`:""} · share-image fallback (images.weserv.nl) <b>${on(CFG.exportProxy)}</b> · web font (Google Fonts) <b>${on(CFG.webFont)}</b>${CFG.dataUrl?" · auto-load from your published sheet <b>on</b>":""}. ${LOCKED?"Set by whoever installed this page.":`<button class="linky" type="button" id="foot-set">Change</button>`}</div>
     <div id="unsaved-line" hidden></div>
     ${CFG.coverLookup?`<div>Looked-up covers come from ${OL_LINK}${CFG.googleBooks?` and ${GB_LINK}`:""}.</div>`:""}
-    <div class="foot-brand"><b>Shelfprint</b> ${VERSION} · Make something of your reading${TEMPLATE_URL?` · <a href="${esc(TEMPLATE_URL)}" target="_blank" rel="noopener">Get the tracker template</a>`:""}${sourceUrl()?` · <a href="${esc(sourceUrl())}" target="_blank" rel="noopener">About and source</a>`:""}</div>`;
+    <div class="foot-brand"><b>Shelfprint</b> ${VERSION} · Make something of your reading${TEMPLATE_URL?` · <a href="${esc(TEMPLATE_URL)}" target="_blank" rel="noopener">Get the tracker template</a>`:""}${sourceUrl()?` · <a href="${esc(sourceUrl())}" target="_blank" rel="noopener">Guide and source</a>`:""}</div>`;
   $("#foot-set")?.addEventListener("click",openSettings);
   if(typeof updateUnsavedLine==="function") updateUnsavedLine();
   if($("#forget")) $("#forget").onclick=()=>{ store.del("wrapup:data"); store.del("wrapup:name"); location.hash=""; location.reload(); };
@@ -2785,7 +2786,8 @@ function welcome(msg){
       <ol><li>Make a copy of the ${tpl}, or use any spreadsheet with the same column headers.</li>
       <li>Log your books. Only <b>Title</b> and <b>End date</b> are required. No End date? Use <b>Month read</b> plus <b>Year read</b>.</li>
       <li>Export the Reading Log tab as a CSV file. In Google Sheets: <b>File → Download → Comma-separated values</b>.</li>
-      <li>Drop it here, and bookmark this page. Your books stay in this browser, so they’re here next time. To update, load a fresh export.</li></ol></div>
+      <li>Drop it here, and bookmark this page. Your books stay in this browser, so they’re here next time. To update, load a fresh export.</li></ol>
+      <p>The full guide, the Excel and LibreOffice templates, and the source code are <a href="${esc(sourceUrl())}" target="_blank" rel="noopener">on GitHub</a>.</p></div>
     <div class="wsec"><h3>Pick your own covers</h3>
       <p>Turn on cover lookup to find images automatically. Want a custom image, to match the edition on your shelf or a favorite reissue? Add a <b>Cover URL</b> in your sheet, or try one out first by pasting a cover link on a book's details page. Free, like everything else here.</p></div>
   </div>`;

@@ -403,7 +403,7 @@ const SETTINGS = {
 };
 
 const TEMPLATE_URL = "…";   // the "Make a copy" link shown on the welcome screen
-const SOURCE_URL = "";      // "About and source" link in the footer; on GitHub Pages it fills itself in
+const SOURCE_URL = "";      // "Guide and source" link on the welcome screen and in the footer; fills itself in
 ```
 
 Readers can change these in **Settings**, saved in their own browser, unless `lockSettings` is `true`. That's useful when you set the page up for someone else, such as a library or a classroom, and want the connections fixed.

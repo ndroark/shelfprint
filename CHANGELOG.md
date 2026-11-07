@@ -10,6 +10,7 @@ Shelfprint's first stable version. From here, your sheet's columns, what's saved
 
 ### Changed
 - The welcome screen and README lead with **Track once. Share anywhere.**
+- The welcome screen links to the guide, the Excel and LibreOffice templates, and the source code on GitHub. The footer's link is now **Guide and source**, and a copy of the page opened from your own computer links to Shelfprint's repository too.
 - The welcome screen, footer, and README say your file stays in your browser, replacing "never uploaded" and "isn't uploaded to Shelfprint." Optional connections are still listed with exactly what they send.
 - The README's Quick start uses the Shelfprint website and Google Sheets, with Excel, LibreOffice, a downloaded copy of the page, and publishing your sheet as alternatives.
 - The README explains how saved choices are matched to books, and that Safari may clear saved data after seven days without a visit.
