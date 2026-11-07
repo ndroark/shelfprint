@@ -532,7 +532,7 @@ body.dragging .dropzone,body.dragging .wrap{outline:3px dashed var(--series-1);o
 <script>
 (function(){
 "use strict";
-const VERSION="0.5.0";   // see CHANGELOG.md
+const VERSION="0.5.1";   // see CHANGELOG.md
 const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const MON=MONTHS.map(m=>m.slice(0,3));
 const $=s=>document.querySelector(s);
@@ -2116,7 +2116,7 @@ const BC=(()=>{
     return {cb,y}; }
   // matrix and tags: a band above the footer. bandBody() measures it; drawBand() draws it and returns where it starts.
   function bandBody(ctx,o){ let h=0; if(o.tags.length){ const n=chipRows(ctx,o.tags,W-2*P).rows.length; if(n) h+=n*46+(n-1)*10+26; } if(o.matrix) h+=170; return h; }
-  function drawBand(F,o){ const {ctx,th,FOOT}=F; let band=FOOT-40, lost=[];
+  function drawBand(F,o,bottom){ const {ctx,th,FOOT}=F; let band=bottom??FOOT-40, lost=[];
     if(o.tags.length){ const cr=chipRows(ctx,o.tags,W-2*P); lost=cr.left;
       if(cr.rows.length){ band-=cr.rows.length*46+(cr.rows.length-1)*10; ctx.font=`400 26px ${SANS}`;
         cr.rows.forEach((row,ri)=>row.forEach(([t,x,w])=>{ const yy=band+ri*56; ctx.fillStyle=th.chip; rr(ctx,P+x,yy,w,46,23); ctx.fill(); ctx.fillStyle=th.chipInk; ctx.fillText(t,P+x+17,yy+32); }));
@@ -2193,15 +2193,30 @@ const BC=(()=>{
 
   /* ---------- Long-form: a review across a numbered set of cards ----------
      The first card is the Standard card's top; later cards repeat the title with "Continued". Matrix scores and tags,
-     and a quotation's credit, close the set on the last card. The text is split only between sentences, at the end of
-     a paragraph when it can be, and the cards are filled about equally. A sentence too long for any card is the one
-     exception: it continues onto the next card between words. The type is the largest size from 36 to 46 px that still
-     needs no more cards than 36 px does, up to 10 cards. */
+     and a quotation's credit, close the set on the last card, with the end of the text.
+     - Breaks fall at paragraph boundaries, then sentence boundaries, then, inside a sentence, after a semicolon, colon
+       or dash. A clause break is used only when sentence breaks would leave one card with well under the text of
+       another (under 60%), or inside a sentence too long for any card. Only a clause too long for any card continues
+       onto the next card between words.
+     - Every way of dividing the text at those boundaries is tried, measured with the same layout the cards are drawn
+       with: the cover and book details on the first card, the credit, matrix and tags on the last, the footer on all.
+       A division where anything wouldn't fit is rejected.
+     - Of the rest, the one chosen fills the cards most evenly, counting everything on each card, not just the text.
+       A paragraph break is preferred to a sentence break, and a nearly empty continuation card costs extra. When a
+       clause break is considered, each card's share of the text counts too, so the text itself is evened out.
+     - The type is the largest size from 36 to 46 px that needs no more cards than 36 px does (up to 10). A smaller size
+       is used only to keep a sentence whole that would otherwise break between words, never to even out the cards.
+     The reader's text is never cut, repeated or changed, and nothing is added to fill a card. */
   function sentenceUnits(words){ const units=[]; let start=0;
     const abbr=/^([A-Z]\.|Mr\.|Mrs\.|Ms\.|Dr\.|St\.|vs\.|e\.g\.|i\.e\.)$/;
     words.forEach((w,i)=>{ const next=words[i+1], end=/[.!?…]["”’)\]]*$/.test(w.t) && !abbr.test(w.t);
       if(!next || next.para || (end && /^[A-Z“"(\[‘'0-9]/.test(next.t))){ units.push({a:start,b:i+1,para:!!words[start].para||start===0}); start=i+1; } });
     return units; }
+  // inside a sentence, a break can fall after a semicolon, a colon, or a dash (spaced, or ending a word)
+  const clauseEnd=t=>/[;:]["”’)\]]*$/.test(t) || /^[-–—]$/.test(t) || /[—–]$/.test(t);
+  function clauseUnits(words,u){ const out=[]; let a=u.a;
+    for(let i=u.a;i<u.b-1;i++) if(clauseEnd(words[i].t)){ out.push({a,b:i+1,para:a===u.a&&u.para,clause:a!==u.a}); a=i+1; }
+    out.push({a,b:u.b,para:a===u.a&&u.para,clause:a!==u.a}); return out; }
   function longPlan(o){
     const probe=document.createElement("canvas"), F=frame(probe,o), {ctx,T,FOOT}=F, b=o.b; delete ctx.fillText;
     const mode=modeOf(o), ind=o.kind==="quote"?84:0, tw=W-2*P-ind, words0=runs(o.text,mode), lh=1.46;
@@ -2210,49 +2225,65 @@ const BC=(()=>{
     ctx.font=`600 24px ${SANS}`; if("letterSpacing" in ctx) ctx.letterSpacing="5px";   // measured the way it's drawn
     const ck=wrap(ctx,`${b.short.toUpperCase()}  ·  CONTINUED`,W-2*P-40); if("letterSpacing" in ctx) ctx.letterSpacing="0px";
     const contTop=T+76+(ck.length-1)*34, rest=(FOOT-68)-contTop;
-    const attr=quoteCredit(ctx,o,tw), tail=bandBody(ctx,o)+(attr?14+attr.length*ALH:0);
-    const cap=(k,n)=>(k?rest:first)-(k===n-1?tail:0);
-    function plan(size,maxCards){
+    const attr=quoteCredit(ctx,o,tw), attrH=attr?14+attr.length*ALH:0, band=bandBody(ctx,o), tail=attrH+band;
+    // text room on card k of n, and what else is on it: the book on the first card, the credit, matrix and tags on the last
+    const first0=(FOOT-68)-(T+76);   // the first card's whole space below the kicker, cover included
+    const cap=(k,n)=>(k?rest:first)-(k===n-1?tail:0), fixed=(k,n)=>(k?0:first0-first)+(k===n-1?tail:0), area=k=>k?rest:first0;
+    const SENT=.15, CLAUSE=.3, MIDBREAK=6, NEAR_EMPTY=.35, EMPTY_COST=2, TEXTW=2, UNEVEN=.6;
+    // clauses: may break at a semicolon, colon or dash anywhere; otherwise only inside a sentence too long for one card
+    function plan(size,maxCards,clauses){
       const words=[]; for(const w of words0){ ctx.font=`${w.it?"italic ":""}400 ${size}px ${SERIF}`; split(ctx,w.t,tw).forEach((t,i)=>words.push(i?{t,it:w.it,glue:true}:{...w,t})); }
       const units=sentenceUnits(words);
-      // a sentence that can't fit even an empty card is split between words; the pieces are marked as not starting a paragraph
+      // a sentence that can't fit even an empty card is split at its clauses, then between words if it must be
       const minCap=Math.min(first,rest-tail); const us=[];
-      for(const u of units){ if(hOf2(u)<=minCap){ us.push(u); continue; } let a=u.a;
-        while(a<u.b){ let bEnd=a+1; while(bEnd<u.b && height(layout(ctx,words.slice(a,bEnd+1).map((w,k)=>k?w:{...w,para:false}),tw,size),size,lh)<=minCap) bEnd++;
-          us.push({a,b:bEnd,para:a===u.a&&u.para,cont:a!==u.a}); a=bEnd; } }
+      for(const u0 of units){ const pieces=clauses||hOf2(u0)>minCap?clauseUnits(words,u0):[u0];
+        for(const u of pieces){ if(hOf2(u)<=minCap){ us.push(u); continue; } let a=u.a;
+          while(a<u.b){ let bEnd=a+1; while(bEnd<u.b && height(layout(ctx,words.slice(a,bEnd+1).map((w,k)=>k?w:{...w,para:false}),tw,size),size,lh)<=minCap) bEnd++;
+            us.push({a,b:bEnd,para:a===u.a&&u.para,clause:a===u.a&&u.clause,cont:a!==u.a}); a=bEnd; } } }
       function hOf2(u){ return height(layout(ctx,words.slice(u.a,u.b).map((w,k)=>k?w:{...w,para:false}),tw,size),size,lh); }
       const U=us, n=U.length, H2=new Map(), hh=(i,j)=>{ const key=i*4096+j; if(H2.has(key)) return H2.get(key);
         const ws=words.slice(U[i].a,U[j-1].b).map((w,k)=>k?w:{...w,para:false}); const h=height(layout(ctx,ws,tw,size),size,lh); H2.set(key,h); return h; };
+      const Htot=hh(0,n);   // the whole text's height, for each card's share of it
       for(let total=1; total<=maxCards; total++){ const best=new Map();
-        const go=(i,k)=>{ const key=i*64+k; if(best.has(key)) return best.get(key); let r=null; const c=cap(total-k,total);
-          if(k===1){ const f=hh(i,n)/c; r=f<=1?{cost:(1-f)**2,cuts:[]}:null; }
-          else for(let j=i+1;j<=n-k+1;j++){ const f=hh(i,j)/c; if(f>1) break; const rest=go(j,k-1); if(!rest) continue;
-            const cost=(1-f)**2+rest.cost+(U[j].para?0:.15); if(!r||cost<r.cost) r={cost,cuts:[j,...rest.cuts]}; }
+        const go=(i,k)=>{ const key=i*64+k; if(best.has(key)) return best.get(key); let r=null; const idx=total-k, c=cap(idx,total); if(c<=0){ best.set(key,null); return null; }   // no room for text on this card
+          // occupied share of the card, counting the cover, credit, matrix and tags as well as the text
+          const costOf=h=>{ const occ=(fixed(idx,total)+h)/area(idx); return (1-occ)**2+(idx&&occ<NEAR_EMPTY?EMPTY_COST:0)+(clauses?TEXTW*(h/Htot*total-1)**2:0); };
+          if(k===1){ const h=hh(i,n); r=h<=c?{cost:costOf(h),cuts:[]}:null; }
+          else for(let j=i+1;j<=n-k+1;j++){ const h=hh(i,j); if(h>c) break; const rest=go(j,k-1); if(!rest) continue;
+            const cost=costOf(h)+rest.cost+(U[j].para?0:U[j].cont?MIDBREAK:U[j].clause?CLAUSE:SENT); if(!r||cost<r.cost) r={cost,cuts:[j,...rest.cuts]}; }
           best.set(key,r); return r; };
         const p=go(0,total); if(p){ const cuts=[0,...p.cuts,n], pages=cuts.slice(0,-1).map((c,i)=>({a:U[c].a,b:U[cuts[i+1]-1].b}));
-          pages.mid=p.cuts.some(c=>U[c].cont); pages.words=words; return pages; } }   // mid: a break falls inside a sentence too long for one card
+          pages.mid=p.cuts.some(c=>U[c].cont); pages.clause=p.cuts.some(c=>U[c].clause); pages.words=words; pages.cost=p.cost;
+          const th=cuts.slice(0,-1).map((c,i)=>hh(c,cuts[i+1])); pages.even=Math.min(...th)/Math.max(...th); return pages; } }   // mid: a break falls inside a sentence too long for one card
       return null; }
     // a quick check before the careful one: the whole text at 36 px on cards of the largest size
     const allH=height(layout(ctx,words0,tw,36),36,lh); if(allH>first+rest*(MAX_CARDS-1)) return {tooLong:true};
+    const out=(p,size)=>({pages:p,size,words:p.words,tw,ind,mode,contTop,ck,attr});
     const base=plan(36,MAX_CARDS); if(!base) return {tooLong:true};
-    for(let s=46; s>36; s-=2){ const p=plan(s,base.length); if(p && p.length===base.length) return {pages:p,size:s,words:p.words,tw,ind,mode,contTop,ck,attr}; }
-    return {pages:base,size:36,words:base.words,tw,ind,mode,contTop,ck,attr};
+    // the largest size with that many cards; a smaller one only if it keeps a sentence whole that the larger one breaks
+    let pick=null, ps=36;
+    for(let s=46; s>=36; s-=2){ const p=s===36?base:plan(s,base.length); if(!p || p.length!==base.length) continue;
+      if(!pick){ pick=p; ps=s; if(!p.mid) break; } else if(!p.mid){ pick=p; ps=s; break; } }
+    // when sentence breaks leave one card with well under the text of another, a clause break may even it out
+    if(pick.length>1 && pick.even<UNEVEN){ const p=plan(ps,pick.length,true); if(p && p.length<=pick.length && p.even>pick.even+.05) pick=p; }
+    return out(pick,ps);
   }
   function renderLong(o){
     const plan=longPlan(o); if(plan.tooLong) return {multi:true,canvases:[],over:true,why:["long"],lostTags:[]};
-    const {pages,size,words,tw,ind,contTop,ck,attr}=plan, lh=1.46, n=pages.length, why=new Set(), mid=!!pages.mid; let lostTags=[];
+    const {pages,size,words,tw,ind,contTop,ck,attr}=plan, lh=1.46, n=pages.length, why=new Set(), mid=!!pages.mid, clause=!!pages.clause; let lostTags=[];
+    const cont=F=>{ const {ctx,th,T}=F; ctx.font=`600 24px ${SANS}`; ck.forEach((l,i)=>{ const at=l.lastIndexOf("·"); ctx.fillStyle=th.ink;
+      if(i===ck.length-1 && at>-1){ const w1=spaced(ctx,l.slice(0,at),P,T+24+i*34); ctx.fillStyle=th.muted; spaced(ctx,l.slice(at),P+w1,T+24+i*34); }
+      else spaced(ctx,l,P,T+24+i*34); }); };
     const canvases=pages.map((pg,k)=>{ const cv=document.createElement("canvas"), F=frame(cv,o), {ctx,th,T}=F;
       const ws=words.slice(pg.a,pg.b).map((w,i)=>i?w:{...w,para:false}); let y;
       if(k===0){ kicker(F,o.kicker); const t=drawTop(F,o,T+76); y=Math.max(t.cb.y+t.cb.h,t.y)+64;
         if(o.kind==="quote"){ ctx.font=`400 170px ${SERIF}`; ctx.fillStyle=th.accent; ctx.fillText("“",P-10,y+112); } }
-      else { ctx.font=`600 24px ${SANS}`; ck.forEach((l,i)=>{ const at=l.lastIndexOf("·"); ctx.fillStyle=th.ink;
-          if(i===ck.length-1 && at>-1){ const w1=spaced(ctx,l.slice(0,at),P,T+24+i*34); ctx.fillStyle=th.muted; spaced(ctx,l.slice(at),P+w1,T+24+i*34); }
-          else spaced(ctx,l,P,T+24+i*34); }); y=contTop; }
+      else { cont(F); y=contTop; }
       const end=drawAt(ctx,layout(ctx,ws,tw,size),P+ind,y+(o.kind==="quote"?8:0),size,lh,th.ink);
       if(k===n-1){ if(attr) drawAttr(ctx,attr,P+ind,end+14,th.sec); const bd=drawBand(F,o); lostTags=bd.lost; if(lostTags.length) why.add("tags"); }
       if(!finish(F,o,n>1?[k+1,n]:null)) why.add("bounds");
       return cv; });
-    return {multi:true,canvases,over:why.size>0,why:[...why],lostTags,size,n,mid};
+    return {multi:true,canvases,over:why.size>0,why:[...why],lostTags,size,n,mid,clause};
   }
   return {render:(cv,o)=>o.layout==="long"?renderLong(o):renderCard(cv,o)};
 })();
@@ -2355,7 +2386,7 @@ async function drawCard(){
   if(res.why.includes("tags")) notes.push(`${res.lostTags.length===1?"This selected tag doesn’t":"These selected tags don’t"} fit: ${res.lostTags.join(", ")}. Turn some tags off to choose which ones appear.`);
   if(res.why.includes("bounds") && !res.why.some(w=>w!=="bounds")) notes.push("Something on this card would run past its edges or into the footer. Try another size, or turn off some details.");
   if(res.over) notes.push(multi?"Nothing is cut off to fit, so these cards can’t be saved until something changes.":"Nothing is cut off to fit, so this card can’t be saved until something changes.");
-  if(multi && !res.over) notes.push(n===1?"It all fits on one card.":`${n} cards in ${res.size} px type. `+(res.mid?"A passage too long for one card continues onto the next; other breaks fall between sentences.":"Each break falls between sentences, at the end of a paragraph where it can.")+(opts.matrix||opts.tags.length?" Matrix scores and tags are on the last card.":""));
+  if(multi && !res.over) notes.push(n===1?"It all fits on one card.":`${n} cards in ${res.size} px type. `+(res.mid?"A passage too long for one card continues onto the next; other breaks fall between sentences.":res.clause?"To share the text more evenly between cards, a break falls inside a sentence, at a semicolon, colon, or dash. Other breaks fall between sentences.":"Each break falls between sentences, at the end of a paragraph where it can.")+(opts.matrix||opts.tags.length?" Matrix scores and tags are on the last card.":""));
   if(!res.over && res.smallCover) notes.push("There isn’t much room for the cover at this size. Try Post 4:5 or Story 9:16, turn off some details, or choose Standard.");
   if(swapped && CARD.keepSwap) notes.push(`Using the ${src?src+" ":""}cover, not your custom cover. Your saved cover preference won’t change.`);
   if(CARD.img) notes.push("Using the image from your device, for this card only.");
