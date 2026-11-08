@@ -4,9 +4,9 @@
 
 Keep your reading in your own spreadsheet. Explore it with charts and cover galleries. Then turn it into images to share with the friends and communities you already have: a card for one book, a monthly wrap-up, or your year in books. No account required, and no Shelfprint server: your file stays in your browser.
 
-[![Watch the Shelfprint introduction on YouTube](docs/shelfprint-intro-thumbnail.jpg)](https://www.youtube.com/watch?v=Nkw-VlY7GYw)
+[![Watch the 1½-minute Shelfprint introduction on YouTube](docs/shelfprint-intro-thumbnail.jpg)](https://www.youtube.com/watch?v=Nkw-VlY7GYw)
 
-*[Watch the introduction on YouTube.](https://www.youtube.com/watch?v=Nkw-VlY7GYw)*
+*[Watch the introduction on YouTube](https://www.youtube.com/watch?v=Nkw-VlY7GYw) (1:34).*
 
 I spent a year closely cataloging my reading in a spreadsheet, adding new fields and finding new questions I wanted the data to answer. Eventually, the visualizations I wanted exceeded what I could comfortably build in Excel, so I began experimenting with HTML.
 
