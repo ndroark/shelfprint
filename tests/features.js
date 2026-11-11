@@ -25,6 +25,23 @@ const ROWS = [
   book("Scroll Down", "Park, Min", "2025-05-03", "2025-05-04", "", "", "Young adult", "Webtoons", "Ebook", 150),
   book("Plain Prose", "Hale, Ann", "2025-05-05", "2025-05-15", "", "", "Adult", "Prose", "Print", 280)];
 const MIXED = csv([HEAD, ...ROWS]);
+const EDGES = csv([HEAD,
+  book("Drawn Life", "Bell, Ali", "2025-01-01", "2025-01-02", "", "", "", "Graphic memoir", "Print", 200),
+  book("Drawn Facts", "Bell, Ali", "2025-01-03", "2025-01-04", "", "", "", "Graphic non-fiction", "Print", 150),
+  book("Drawn Story", "Bell, Ali", "2025-01-05", "2025-01-06", "", "", "", "Graphic novel", "Print", 180),
+  book("Drawn Life 2", "Bell, Ali", "2025-02-01", "2025-02-02", "", "", "", "Graphic memoirs", "Print", 200),
+  book("Drawn Life 3", "Bell, Ali", "2025-02-03", "2025-02-04", "", "", "", "graphic memoir", "Print", 210),
+  book("Gap Saga 1", "Sato, Ren", "2025-03-01", "2025-03-02", "Gap Saga", 1, "", "Mangas", "Print", 190),
+  book("Gap Saga 3", "Sato, Ren", "2025-03-03", "2025-03-04", "Gap Saga", 3, "", "Manga", "Print", 190),
+  book("Other 1", "Kim, Jae", "2025-03-05", "2025-03-06", "", "", "", "Manhwas", "Print", 190),
+  book("Roads 1", "Hale, Ann", "2025-03-07", "2025-03-20", "Roads", 1, "", "Prose", "Print", 300),
+  book("Gap Saga 5", "Sato, Ren", "2025-04-01", "2025-04-02", "Gap Saga", 5, "", "Manga", "Print", 190),
+  book("Roads 3", "Hale, Ann", "2025-05-01", "2025-05-12", "Roads", 3, "", "Prose", "Print", 320),
+  book("No Form Given", "Hale, Ann", "2025-05-13", "2025-05-20", "", "", "", "", "Print", 250),
+  book("Stapled Thing", "Roe, Sam", "2025-05-21", "2025-05-22", "", "", "", "Zine", "Print", 30),
+  book("Gap Saga 6", "Sato, Ren", "2025-06-01", "2025-06-02", "Gap Saga", 6, "", "Manga", "Print", 190),
+  book("Extra 1", "Sato, Ren", "2025-06-03", "2025-06-04", "", "", "", "Comics", "Print", 100),
+  book("Extra 2", "Sato, Ren", "2025-06-05", "2025-06-06", "", "", "", "Webtoon", "Print", 100)]);
 // the same kind of log from a reader who doesn't record Form or Audience
 const NO_FORM = csv([HEAD, ...ROWS.slice(0, 6)].map(r => r.filter((_, i) => i !== 9 && i !== 10)));
 
@@ -79,7 +96,8 @@ const check = (what, ok, got) => { console.log(`${ok ? "  ok  " : "  FAIL"}  ${w
   check("a month with a graphic novel and manhwa says “manga and comics”", t && t.v === "2" && t.n === "1 graphic novel · 1 manhwa", show(await tiles(p)));
   await month(p, "2025-apr");
   check("a month of nothing but manga has no separate tile", !(await tiles(p)).some(x => /manga|comics/.test(x.l)), show(await tiles(p)));
-  check("and its pages note is unchanged", (await tile(p, "pages read")).n === "across 2 books in print or ebook", show(await tile(p, "pages read")));
+  check("but books finished says they were all manga", (await tiles(p))[0].n === "all manga · 0 rated 4.5 or higher", show((await tiles(p))[0]));
+  check("and so does its pages note", (await tile(p, "pages read")).n === "across 2 books in print or ebook · all in manga", show(await tile(p, "pages read")));
   await month(p, "2025-may");
   t = await tile(p, "comics and graphic novels");
   check("“Comic books” and “Webtoons” are recognized", t && t.v === "2" && t.n === "1 comic · 1 webtoon", show(await tiles(p)));
@@ -90,6 +108,31 @@ const check = (what, ok, got) => { console.log(`${ok ? "  ok  " : "  FAIL"}  ${w
   await p.waitForTimeout(300);
   const dl = await p.$eval("#bookm-body", e => e.innerText);
   check("a book's details show its Form and Audience", /Form\s+(Prose|manga)/i.test(dl) && /Audience\s+(Adult|Seinen)/.test(dl), dl.slice(0, 300));
+  await p.context().close();
+
+  console.log("\nNames, gaps, and blanks");
+  p = await open(EDGES);
+  await month(p, "2025-jan");
+  t = await tile(p, "comics and graphic novels");
+  check("a graphic memoir and graphic non-fiction keep their own names", t && t.n === "1 graphic memoir · 1 graphic nonfiction · 1 graphic novel", show(await tiles(p)));
+  await month(p, "2025-feb");
+  check("a month of only graphic memoirs says so, without an extra tile", (await tiles(p))[0].n.startsWith("all graphic memoirs") && !(await tile(p, "graphic memoirs")), show(await tiles(p)));
+  check("its pages note names them too", /· all in graphic memoirs$/.test((await tile(p, "pages read")).n), show(await tile(p, "pages read")));
+  await month(p, "2025-mar");
+  t = await tile(p, "manga and comics");
+  check("“Mangas” and “Manhwas” are recognized", t && t.n === "2 manga · 1 manhwa", show(await tiles(p)));
+  await month(p, "2025-apr");
+  check("a month with one manga volume and nothing else says “manga”", (await tiles(p))[0].n.startsWith("manga"), show((await tiles(p))[0]));
+  await month(p, "2025-may");
+  check("a prose-only month has no manga tiles or notes", !/manga|comics|graphic/i.test(show(await tiles(p))), show(await tiles(p)));
+  await month(p, "2025-year");
+  const gaps = await p.$$eval("#main ul.list li", ls => ls.map(l => l.innerText.replace(/\s+/g, " ")));
+  check("skipped volumes are shown as gaps, not a range", gaps.some(s => /^Gap Saga · Ren Sato vols\. 1, 3, 5–6 /.test(s)), show(gaps));
+  check("a prose series with a gap is listed the same way", gaps.some(s => /^Roads · Ann Hale books 1, 3 /.test(s)), show(gaps));
+  const formCard = await p.$$eval("#main .card", cs => cs.filter(c => c.querySelector("h3")?.textContent === "Form").map(c => c.innerText.replace(/\s+/g, " "))[0]);
+  check("a book with no Form is “not recorded”, not counted as prose", /Prose 2\b/.test(formCard) && /1 not recorded\./.test(formCard), formCard);
+  t = await tile(p, "manga and comics");
+  check("an unrecognized Form (a zine) isn't counted as manga or comics", t.v === "12" && !/zine/i.test(t.n) && (await tiles(p))[0].v === "16", show(t));
   await p.context().close();
 
   console.log("\nA log that doesn't record Form or Audience");

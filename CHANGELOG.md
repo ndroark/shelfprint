@@ -9,7 +9,7 @@ Shelfprint uses [semantic versioning](https://semver.org): the middle number goe
 Manga and comics get more attention on the page. If your log has none, or doesn't use the Form column, nothing changes for you.
 
 ### Added
-- **A tile for manga and comics** in a month's or year's headline numbers, with a count for each form. It appears only when the books in view include some, and is named for what you read: "manga," "graphic novels," or "manga and comics" for a mix.
+- **A tile for manga and comics** in a month's or year's headline numbers, with a count for each form. It appears only when the books in view include some, and is named for what you read: "manga," "graphic memoirs," or "manga and comics" for a mix. When every book in a month is the same one form, the books finished tile says so ("all manga") in place of a second tile.
 - **Pages read** and **days per book** keep their totals for all books, and their notes now add the figure for manga and comics.
 - **Form and Audience charts.** The page now charts both columns when your books have more than one value in them. Click a bar to filter. Until now these two columns were read but not shown.
 - A book's details show its **Form** and **Audience**. Click either to filter.
@@ -18,6 +18,7 @@ Manga and comics get more attention on the page. If your log has none, or doesn'
 
 ### Changed
 - A series of manga or comics is counted in volumes ("vols. 1–5") in the year's Series list.
+- The Series list joins numbers with a dash only when they follow one another. A series where you read books 1, 3, and 5 now reads "books 1, 3, 5" where it used to read "books 1–5."
 
 ## 1.0.1 — 2026-11-11
 

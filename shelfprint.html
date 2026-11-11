@@ -2770,14 +2770,17 @@ body.dragging .wrap {
      Books told in pictures, going by the Form column. They are counted with every other book: the page only adds
      detail about them (a tile, a note on pages and pace, "vol." in a series) and only when the books in view
      include some. A reader who has none never sees any of it. Readers can type their own forms, so the match
-     ignores capitals and a plural s. */
+     ignores capitals and a plural s, and each form keeps the name the reader gave it: a graphic memoir is not
+     called a graphic novel. */
   // prettier-ignore
   const COMICS_FORMS=[   // [what the Form column says, the family it belongs to, one, several]
-    [/^manga$/i,"manga","manga","manga"],
-    [/^manhwa$/i,"manga","manhwa","manhwa"],
-    [/^manhua$/i,"manga","manhua","manhua"],
+    [/^mangas?$/i,"manga","manga","manga"],
+    [/^manhwas?$/i,"manga","manhwa","manhwa"],
+    [/^manhuas?$/i,"manga","manhua","manhua"],
     [/^web ?toons?$/i,"comics","webtoon","webtoons"],
-    [/^graphic (novels?|memoirs?|non-?fiction)$/i,"comics","graphic novel","graphic novels"],
+    [/^graphic novels?$/i,"comics","graphic novel","graphic novels"],
+    [/^graphic memoirs?$/i,"comics","graphic memoir","graphic memoirs"],
+    [/^graphic non-?fiction$/i,"comics","graphic nonfiction","graphic nonfiction"],
     [/^(web ?)?comics?( books?)?$/i,"comics","comic","comics"]
   ];
   const comicsForm = form => COMICS_FORMS.find(([re]) => re.test(form)) || null;
@@ -3878,14 +3881,20 @@ body.dragging .wrap {
     const tiles = [];
     const rated = fin.filter(b => b.rating != null),
       avg = mean(rated.map(b => b.rating));
+    const comics = comicsSummary(fin),
+      allOneForm = !!comics && comics.one && comics.books.length === n;
     tiles.push({
       v: n,
       l: n === 1 ? "book finished" : "books finished",
-      n: rated.length ? `${fin.filter(b => b.rating >= 4.5).length} rated 4.5 or higher` : ""
+      n: [
+        allOneForm ? (n === 1 ? comics.books[0].comics[2] : `all ${comics.name}`) : "",
+        rated.length ? `${fin.filter(b => b.rating >= 4.5).length} rated 4.5 or higher` : ""
+      ]
+        .filter(Boolean)
+        .join(" · ")
     });
-    // manga and comics get a tile of their own, unless every book here is the same one form (the first tile says it)
-    const comics = comicsSummary(fin);
-    if (comics && !(comics.one && comics.books.length === n))
+    // manga and comics get a tile of their own, unless every book here is the same one form (the first tile says so)
+    if (comics && !allOneForm)
       tiles.push({
         v: comics.books.length,
         l: comics.one && comics.books.length === 1 ? comics.books[0].comics[2] : comics.name,
@@ -3905,14 +3914,17 @@ body.dragging .wrap {
       });
     const pr = fin.filter(b => b.kind !== "audio" && b.pages),
       pages = pr.reduce((a, b) => a + b.pages, 0),
-      comicsPages = pr.filter(b => b.comics).reduce((a, b) => a + b.pages, 0);
+      prComics = comicsSummary(pr), // the manga and comics among them, named for what they are
+      comicsPages = prComics ? prComics.books.reduce((a, b) => a + b.pages, 0) : 0;
     if (pr.length)
       tiles.push({
         v: pages.toLocaleString(),
         l: "pages read",
         n:
           `across ${plural(pr.length, "book")} in print or ebook` +
-          (comicsPages && comicsPages < pages ? ` · ${comicsPages.toLocaleString()} in ${comics.name}` : "")
+          (comicsPages
+            ? ` · ${comicsPages < pages ? comicsPages.toLocaleString() : "all"} in ${prComics.name}`
+            : "")
       });
     if (avg != null)
       tiles.push({
@@ -5248,6 +5260,17 @@ body.dragging .wrap {
     });
     svgNode("line", { x1: 0, x2: W, y1: padT + plotH, y2: padT + plotH, stroke: "var(--axis)" }, svg);
   }
+  // Sorted numbers as text, with a dash only across numbers that follow one another: 1–3, 5, 7–8. A gap is shown
+  // as a gap, so the list never claims a volume that wasn't read.
+  function numberRuns(nums) {
+    const runs = [];
+    nums.forEach(n => {
+      const last = runs[runs.length - 1];
+      if (last && n - last[1] === 1) last[1] = n;
+      else runs.push([n, n]);
+    });
+    return runs.map(([a, b]) => (a === b ? a : `${a}–${b}`)).join(", ");
+  }
   function renderSeries(fin) {
     const g = countBy(fin, b => b.series);
     if (!g.length) return;
@@ -5256,10 +5279,7 @@ body.dragging .wrap {
     const ul = htmlNode("ul", { class: "list" });
     c.appendChild(ul);
     g.forEach(([name, bs]) => {
-      const nums = bs
-        .map(b => b.seriesNum)
-        .filter(n => n != null)
-        .sort((a, b) => a - b);
+      const nums = [...new Set(bs.map(b => b.seriesNum).filter(n => n != null))].sort((a, b) => a - b);
       const vols = bs.every(b => b.comics); // manga and comics come in volumes
       const li = htmlNode("li");
       const bt = htmlNode("button", { type: "button", class: "linky" }, esc(name));
@@ -5270,7 +5290,7 @@ body.dragging .wrap {
       li.appendChild(left);
       li.insertAdjacentHTML(
         "beforeend",
-        `<span>${nums.length ? (nums.length > 1 ? `${vols ? "vols." : "books"} ${nums[0]}–${nums[nums.length - 1]}` : `${vols ? "vol." : "book"} ${nums[0]}`) : plural(bs.length, vols ? "volume" : "book")} · ${ratingLabel(bs) ?? "not rated"}</span>`
+        `<span>${nums.length ? `${nums.length > 1 ? (vols ? "vols." : "books") : vols ? "vol." : "book"} ${numberRuns(nums)}` : plural(bs.length, vols ? "volume" : "book")} · ${ratingLabel(bs) ?? "not rated"}</span>`
       );
       ul.appendChild(li);
     });

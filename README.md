@@ -253,16 +253,16 @@ If your file covers more than one year, a year picker appears next to the year.
 
 ### Manga and comics
 
-Books whose **Form** is Manga, Manhwa, Manhua, Webtoon, Graphic novel, or Comics count like every other book: in books finished, pages read, ratings, and everything else. When a month or year includes some, the page adds detail about them, and takes nothing out of the totals:
+Books whose **Form** is Manga, Manhwa, Manhua, Webtoon, Graphic novel, Graphic memoir, Graphic nonfiction, or Comics count like every other book: in books finished, pages read, ratings, and everything else. When a month or year includes some, the page adds detail about them, and takes nothing out of the totals:
 
 - **A tile of their own** in the headline numbers, such as "12 manga and comics," with a count for each form. The tile uses the name that fits what you read: "manga" when that's all there is, "graphic novels" likewise, and "manga and comics" for a mix.
 - **Pages read** stays the full total, and its note adds how many of those pages were manga and comics.
 - **Days per book** stays the median for all books, and its note adds the median for manga and comics beside the median for other books.
-- **Series** made up of manga or comics are counted in volumes ("vols. 1–5").
+- **Series** made up of manga or comics are counted in volumes ("vols. 1–5"). For any series, a dash joins only numbers that follow one another, so volumes 1, 3, and 5 read "vols. 1, 3, 5" and never suggest you read the ones between.
 
-A month or year without any looks exactly as it did before, and so does a log that doesn't use the Form column. A month of nothing but one form (all manga, say) doesn't get the extra tile, since "books finished" already says it.
+A month or year without any looks exactly as it did before, and so does a log that doesn't use the Form column. A month of nothing but one form (all manga, say) doesn't get the extra tile. Instead, the books finished tile says "all manga," and the pages note says "all in manga."
 
-Capital letters and a final s don't matter ("graphic novels" works), and "Graphic memoir," "Graphic nonfiction," "Comic book," and "Webcomic" are recognized too. If you copied the template before version 1.1, add **Webtoon** and **Manhua** to the Form list on your Lists tab if you want them in the dropdown.
+Capital letters and a final s don't matter ("graphic novels" and "mangas" both work), and "Comic book" and "Webcomic" are recognized too. Each form keeps its own name: a graphic memoir is counted as a graphic memoir, not as a graphic novel. A book with no Form, or a Form the page doesn't know, is never assumed to be prose or comics. It shows under its own name, or as "not recorded," in the Form chart. If you copied the template before version 1.1, add **Webtoon** and **Manhua** to the Form list on your Lists tab if you want them in the dropdown.
 
 Verse and short stories aren't part of this. They show in the Form chart like any other form.
 
