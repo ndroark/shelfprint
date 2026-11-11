@@ -2217,7 +2217,7 @@ body.dragging .wrap {
 
    FORMAT
      Formatted with Prettier (print width 110). Tables marked "prettier-ignore" are laid out by hand. */
-  const VERSION = "1.0.1"; // see CHANGELOG.md
+  const VERSION = "1.1.0"; // see CHANGELOG.md
   const MONTHS = [
     "January",
     "February",
@@ -2670,6 +2670,7 @@ body.dragging .wrap {
         pubYear: num(cell("pubYear")),
         audience: cell("audience"),
         form: cell("form"),
+        comics: comicsForm(cell("form")), // set when the book is manga, a graphic novel, or another kind of comics
         format: fmt,
         kind: formatKind(fmt),
         pages: num(cell("pages")),
@@ -2764,6 +2765,42 @@ body.dragging .wrap {
     translated: "In translation"
   }; // the same, on an image
   const KIND_LABEL = { audio: "Audiobook", print: "Print", ebook: "Ebook" };
+
+  /* ---------- manga and comics ----------
+     Books told in pictures, going by the Form column. They are counted with every other book: the page only adds
+     detail about them (a tile, a note on pages and pace, "vol." in a series) and only when the books in view
+     include some. A reader who has none never sees any of it. Readers can type their own forms, so the match
+     ignores capitals and a plural s. */
+  // prettier-ignore
+  const COMICS_FORMS=[   // [what the Form column says, the family it belongs to, one, several]
+    [/^manga$/i,"manga","manga","manga"],
+    [/^manhwa$/i,"manga","manhwa","manhwa"],
+    [/^manhua$/i,"manga","manhua","manhua"],
+    [/^web ?toons?$/i,"comics","webtoon","webtoons"],
+    [/^graphic (novels?|memoirs?|non-?fiction)$/i,"comics","graphic novel","graphic novels"],
+    [/^(web ?)?comics?( books?)?$/i,"comics","comic","comics"]
+  ];
+  const comicsForm = form => COMICS_FORMS.find(([re]) => re.test(form)) || null;
+  // What to call a set of them: the one form when they share it ("manga", "graphic novels"), otherwise the pair.
+  function comicsSummary(bs) {
+    const books = bs.filter(b => b.comics);
+    if (!books.length) return null;
+    const groups = countBy(books, b => b.comics[3]).map(([several, g]) => ({
+      n: g.length,
+      text: `${g.length} ${g.length === 1 ? g[0].comics[2] : several}`
+    }));
+    const one = groups.length === 1,
+      anyManga = books.some(b => b.comics[1] === "manga");
+    return {
+      books,
+      one,
+      name: one ? books[0].comics[3] : anyManga ? "manga and comics" : "comics and graphic novels",
+      count: one
+        ? groups[0].text
+        : `${books.length} ${anyManga ? "manga and comics" : "comics and graphic novels"}`,
+      breakdown: groups.map(g => g.text).join(" · ")
+    };
+  }
   const KIND_ORDER = ["audio", "print", "ebook", ""];
   const KIND_COLOR = {
     audio: "var(--series-1)",
@@ -3846,6 +3883,14 @@ body.dragging .wrap {
       l: n === 1 ? "book finished" : "books finished",
       n: rated.length ? `${fin.filter(b => b.rating >= 4.5).length} rated 4.5 or higher` : ""
     });
+    // manga and comics get a tile of their own, unless every book here is the same one form (the first tile says it)
+    const comics = comicsSummary(fin);
+    if (comics && !(comics.one && comics.books.length === n))
+      tiles.push({
+        v: comics.books.length,
+        l: comics.one && comics.books.length === 1 ? comics.books[0].comics[2] : comics.name,
+        n: comics.one ? `of ${plural(n, "book")} finished` : comics.breakdown
+      });
     const aud = fin.filter(b => b.audio),
       hrs = aud.reduce((a, b) => a + b.audio, 0),
       lhrs = aud.reduce((a, b) => a + b.listenHrs, 0);
@@ -3859,12 +3904,15 @@ body.dragging .wrap {
             : `${plural(aud.length, "audiobook")}`
       });
     const pr = fin.filter(b => b.kind !== "audio" && b.pages),
-      pages = pr.reduce((a, b) => a + b.pages, 0);
+      pages = pr.reduce((a, b) => a + b.pages, 0),
+      comicsPages = pr.filter(b => b.comics).reduce((a, b) => a + b.pages, 0);
     if (pr.length)
       tiles.push({
         v: pages.toLocaleString(),
         l: "pages read",
-        n: `across ${plural(pr.length, "book")} in print or ebook`
+        n:
+          `across ${plural(pr.length, "book")} in print or ebook` +
+          (comicsPages && comicsPages < pages ? ` · ${comicsPages.toLocaleString()} in ${comics.name}` : "")
       });
     if (avg != null)
       tiles.push({
@@ -3895,12 +3943,19 @@ body.dragging .wrap {
             (best > -1 ? ` · best-rated: ${MONTHS[best]}, avg ${fmt1(ratedM[best])}` : "")
         });
     }
-    const dd = fin.filter(b => b.days != null).map(b => b.days);
+    const timed = fin.filter(b => b.days != null),
+      dd = timed.map(b => b.days),
+      ddComics = timed.filter(b => b.comics).map(b => b.days),
+      ddOther = timed.filter(b => !b.comics).map(b => b.days);
     if (dd.length >= 3)
       tiles.push({
         v: fmt1(median(dd)),
         l: "days per book (median)",
-        n: `fastest ${Math.min(...dd)}, slowest ${Math.max(...dd)}`
+        n:
+          `fastest ${Math.min(...dd)}, slowest ${Math.max(...dd)}` +
+          (ddComics.length >= 2 && ddOther.length >= 2
+            ? `<br>${comics.name}: ${fmt1(median(ddComics))} · other books: ${fmt1(median(ddOther))}`
+            : "")
       });
     if (dnf.length)
       tiles.push({
@@ -4653,14 +4708,12 @@ body.dragging .wrap {
       el.appendChild(bars);
       barChart(
         bars,
-        multi
-          .slice(0, 10)
-          .map(([a, bs]) => ({
-            label: a,
-            value: bs.length,
-            filter: ["author", a],
-            tip: `<b>${esc(a)}</b><br>${titlesTip(bs)}`
-          })),
+        multi.slice(0, 10).map(([a, bs]) => ({
+          label: a,
+          value: bs.length,
+          filter: ["author", a],
+          tip: `<b>${esc(a)}</b><br>${titlesTip(bs)}`
+        })),
         { labelW: 160, aria: "Authors with more than one book" }
       );
     }
@@ -4704,7 +4757,14 @@ body.dragging .wrap {
     ].filter(([k]) => fin.some(b => b[k]));
     const hasPersp = fin.some(b => b.persp.length);
     const fmts = countBy(fin, b => b.kind);
-    if (!blocks.length && fmts.length < 2 && !hasPersp) return;
+    // Form and Audience each get a chart once the books in view have more than one value to compare
+    const mixes = [
+      ["form", "Form", "Prose, verse, manga, and so on. ", "var(--series-4)"],
+      ["audience", "Audience", "Who they were published for. ", "var(--series-5)"]
+    ]
+      .map(([k, ...rest]) => [k, countBy(fin, b => b[k]), ...rest])
+      .filter(([, g]) => g.length > 1);
+    if (!blocks.length && fmts.length < 2 && !hasPersp && !mixes.length) return;
     const row = twoColumn();
     const fc = card(row, "Format", "How you read them");
     const fel = htmlNode("div");
@@ -4722,6 +4782,27 @@ body.dragging .wrap {
         })),
       { labelW: 110, aria: "Books by format" }
     );
+    mixes.forEach(([k, g, title, sub, color]) => {
+      const c = card(row, title, sub + tapHint("bar", "filter"));
+      const el = htmlNode("div");
+      c.appendChild(el);
+      barChart(
+        el,
+        g.slice(0, 10).map(([v, bs]) => ({
+          label: v,
+          value: bs.length,
+          color,
+          filter: [k, v],
+          tip: `<b>${esc(v)}</b><br>${titlesTip(bs)}`
+        })),
+        { labelW: 130, aria: `Books by ${title.toLowerCase()}` }
+      );
+      const none = fin.filter(b => !b[k]).length;
+      if (none)
+        c.appendChild(
+          htmlNode("p", { class: "empty-note", style: "margin:8px 0 0" }, `${none} not recorded.`)
+        );
+    });
     if (hasPersp) {
       const pc = card(row, "Narrative perspective", "How they were told. " + tapHint("bar", "filter"));
       const pel = htmlNode("div");
@@ -5179,6 +5260,7 @@ body.dragging .wrap {
         .map(b => b.seriesNum)
         .filter(n => n != null)
         .sort((a, b) => a - b);
+      const vols = bs.every(b => b.comics); // manga and comics come in volumes
       const li = htmlNode("li");
       const bt = htmlNode("button", { type: "button", class: "linky" }, esc(name));
       bt.onclick = () => setFilter("series", name);
@@ -5188,7 +5270,7 @@ body.dragging .wrap {
       li.appendChild(left);
       li.insertAdjacentHTML(
         "beforeend",
-        `<span>${nums.length ? (nums.length > 1 ? `books ${nums[0]}–${nums[nums.length - 1]}` : `book ${nums[0]}`) : plural(bs.length, "book")} · ${ratingLabel(bs) ?? "not rated"}</span>`
+        `<span>${nums.length ? (nums.length > 1 ? `${vols ? "vols." : "books"} ${nums[0]}–${nums[nums.length - 1]}` : `${vols ? "vol." : "book"} ${nums[0]}`) : plural(bs.length, vols ? "volume" : "book")} · ${ratingLabel(bs) ?? "not rated"}</span>`
       );
       ul.appendChild(li);
     });
@@ -5585,6 +5667,13 @@ body.dragging .wrap {
       ["Original language", !b.translator && b.translated ? esc(b.origLang) : ""],
       ["Original title", !b.translator && b.origTitle ? `<i>${esc(b.origTitle)}</i>` : ""],
       ["Illustrator", esc(b.illustrator)],
+      ...[
+        ["Form", "form"],
+        ["Audience", "audience"]
+      ].map(([label, k]) => [
+        label,
+        b[k] ? `<button class="linky" data-f="${k}" data-v="${esc(b[k])}">${esc(b[k])}</button>` : ""
+      ]),
       [
         "Publisher",
         b.publisher

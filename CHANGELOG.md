@@ -4,6 +4,21 @@ What changed in each version of Shelfprint. The version in use appears at the bo
 
 Shelfprint uses [semantic versioning](https://semver.org): the middle number goes up for new features, and the last number for fixes.
 
+## 1.1.0 — 2026-11-11
+
+Manga and comics get more attention on the page. If your log has none, or doesn't use the Form column, nothing changes for you.
+
+### Added
+- **A tile for manga and comics** in a month's or year's headline numbers, with a count for each form. It appears only when the books in view include some, and is named for what you read: "manga," "graphic novels," or "manga and comics" for a mix.
+- **Pages read** and **days per book** keep their totals for all books, and their notes now add the figure for manga and comics.
+- **Form and Audience charts.** The page now charts both columns when your books have more than one value in them. Click a bar to filter. Until now these two columns were read but not shown.
+- A book's details show its **Form** and **Audience**. Click either to filter.
+- **Webtoon** and **Manhua** are in the template's Form list. If you copied the template earlier, you can add them on your Lists tab.
+- `tests/`: checks for people changing the page's code.
+
+### Changed
+- A series of manga or comics is counted in volumes ("vols. 1–5") in the year's Series list.
+
 ## 1.0.1 — 2026-11-11
 
 Nothing changes in how the page looks or works. Your sheet, your saved choices, and the `SETTINGS` block are untouched.
