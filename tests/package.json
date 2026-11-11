@@ -1,0 +1,14 @@
+{
+  "name": "shelfprint-tests",
+  "private": true,
+  "description": "Checks for shelfprint.html. Nothing here is needed to use Shelfprint.",
+  "scripts": {
+    "format": "node format.js",
+    "features": "node features.js",
+    "compare": "node compare.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.0",
+    "prettier": "3.9.10"
+  }
+}

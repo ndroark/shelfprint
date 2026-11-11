@@ -42,6 +42,7 @@ No server, and no Goodreads, Kindle, or Amazon. Use whichever spreadsheet progra
 - [The page](#the-page)
   - [Loading your log](#loading-your-log)
   - [Year and month views](#year-and-month-views)
+  - [Manga and comics](#manga-and-comics)
   - ["Check your sheet"](#check-your-sheet)
   - [Covers](#covers)
   - [Share images](#share-images)
@@ -89,6 +90,7 @@ Just want to see what it does? On the first screen, click **try it with sample b
 | `README.md` | This file. |
 | `CHANGELOG.md` | What changed in each version. |
 | `LICENSE` | The MIT License. |
+| `tests/` | Checks for people changing the page's code. Not needed to use Shelfprint. See [tests/README.md](tests/README.md). |
 
 ---
 
@@ -156,6 +158,7 @@ A few columns worth knowing about:
 - **Author:** "Last, First" or "First Last" both work. Separate co-authors with a semicolon.
 - **Rating and matrix scores:** any number from 0.5 to 5, in whatever steps you like (3.75 is fine).
 - **Audio length:** hours:minutes, such as `10:30`. **Listening speed:** a decimal such as `1.5`; blank means 1×. The page reports both total audio length and actual listening time.
+- **Form:** how the book is told: Prose, Verse, Short stories, Graphic novel, Manga, Manhwa, Manhua, Webtoon, or Comics. Add your own on the Lists tab. See [Manga and comics](#manga-and-comics) for what the page does with it. **Audience:** who the book was published for, such as Adult, Young adult, Shonen, or Josei.
 - **Tags and Sub-genre(s):** comma-separated, all in one cell. Reuse the same wording each time ("Grief", not "Grieving") so they count together. The Checks tab catches tags that differ only by capital letters or a final s.
 - **How I found it / Recommended by:** fill themselves in from the TBR tab when the title matches there. Type over them for books that weren't on your TBR.
 - **Cover URL:** a link to a cover image you chose. It always wins over looked-up covers.
@@ -234,6 +237,7 @@ The bar at the top switches between the year and each month, with the number of 
   - books finished each month
   - your top-rated books
   - genre, format, and rating breakdowns
+  - form and audience breakdowns, when your books have more than one of either
   - who you read
   - series progress
   - books you set aside (DNF)
@@ -246,6 +250,21 @@ The bar at the top switches between the year and each month, with the number of 
 - **Table:** every view ends with a collapsible table of its books.
 
 If your file covers more than one year, a year picker appears next to the year.
+
+### Manga and comics
+
+Books whose **Form** is Manga, Manhwa, Manhua, Webtoon, Graphic novel, Graphic memoir, Graphic nonfiction, or Comics count like every other book: in books finished, pages read, ratings, and everything else. When a month or year includes some, the page adds detail about them, and takes nothing out of the totals:
+
+- **A tile of their own** in the headline numbers, such as "12 manga and comics," with a count for each form. The tile uses the name that fits what you read: "manga" when that's all there is, "graphic novels" likewise, and "manga and comics" for a mix.
+- **Pages read** stays the full total, and its note adds how many of those pages were manga and comics.
+- **Days per book** stays the median for all books, and its note adds the median for manga and comics beside the median for other books.
+- **Series** made up of manga or comics are counted in volumes ("vols. 1–5"). For any series, a dash joins only numbers that follow one another, so volumes 1, 3, and 5 read "vols. 1, 3, 5" and never suggest you read the ones between.
+
+A month or year without any looks exactly as it did before, and so does a log that doesn't use the Form column. A month of nothing but one form (all manga, say) doesn't get the extra tile. Instead, the books finished tile says "all manga," and the pages note says "all in manga."
+
+Capital letters and a final s don't matter ("graphic novels" and "mangas" both work), and "Comic book" and "Webcomic" are recognized too. Each form keeps its own name: a graphic memoir is counted as a graphic memoir, not as a graphic novel. A book with no Form, or a Form the page doesn't know, is never assumed to be prose or comics. It shows under its own name, or as "not recorded," in the Form chart. If you copied the template before version 1.1, add **Webtoon** and **Manhua** to the Form list on your Lists tab if you want them in the dropdown.
+
+Verse and short stories aren't part of this. They show in the Form chart like any other form.
 
 ### "Check your sheet"
 
