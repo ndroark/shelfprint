@@ -260,6 +260,12 @@ Books whose **Form** is Manga, Manhwa, Manhua, Webtoon, Graphic novel, Graphic m
 - **Days per book** stays the median for all books, and its note adds the median for manga and comics beside the median for other books.
 - **Series** made up of manga or comics are counted in volumes ("vols. 1–5"). For any series, a dash joins only numbers that follow one another, so volumes 1, 3, and 5 read "vols. 1, 3, 5" and never suggest you read the ones between.
 
+In images, they count in the same way, and get a few additions of their own:
+
+- **Share images** offer an **Include manga and comics** checkbox (named for what's there, such as "Include 2 manga") when some of the books are. It starts ticked. Untick it to leave them off that image: its stats line and other counts then cover only the books shown. Your page and your sheet don't change, and the checkbox is ticked again the next time you open the dialog. A month of nothing but manga and comics has no checkbox, since leaving them off would leave nothing.
+- **Genre shelves** in My Year in Books can include **Form** values, such as Manga, alongside genres and sub-genres. They're listed in a group of their own, headed Form. Nothing is added for you: a manga shelf exists only if you make one.
+- **Book cards** can show **Art by** under the author, from the **Illustrator / artist** column, when it names someone other than the author. Names match however they're written, so "Sato, Ren" and "Ren Sato" are one person. It's one of the **Include** choices, on to start with and remembered like the others.
+
 A month or year without any looks exactly as it did before, and so does a log that doesn't use the Form column. A month of nothing but one form (all manga, say) doesn't get the extra tile. Instead, the books finished tile says "all manga," and the pages note says "all in manga."
 
 Capital letters and a final s don't matter ("graphic novels" and "mangas" both work), and "Comic book" and "Webcomic" are recognized too. Each form keeps its own name: a graphic memoir is counted as a graphic memoir, not as a graphic novel. A book with no Form, or a Form the page doesn't know, is never assumed to be prose or comics. It shows under its own name, or as "not recorded," in the Form chart. If you copied the template before version 1.1, add **Webtoon** and **Manhua** to the Form list on your Lists tab if you want them in the dropdown.
@@ -301,6 +307,7 @@ Month views have a **Share image…** button at the top of the page. In the year
 - **Look:** Paper (light) or Ink (dark)
 - **Year images:** your top 10, top 20, or all books
 - **Options:** titles under covers, a stats line, rank numbers, your handle (optional and blank by default), and the word "Shelfprint" in small type (on by default; one choice shared with book cards)
+- **Include manga and comics:** only when some of the books are manga or comics. See [Manga and comics](#manga-and-comics).
 
 **Download PNG**, **Copy image**, or on phones, **Share…**. The status line under the preview says how many covers made it in, and how many use a different image than the one you chose. Some image hosts don't allow their covers to be copied into an image. Those books show title cards, and the optional **Share-image fallback** in Settings can usually fix that.
 
@@ -311,7 +318,7 @@ Open any book and click **Create image card** to make an image about that book. 
 - **Layout:** **Standard** (cover, title, and your words), **Cover feature** (a large cover, for books with no writing on the card), or **Long-form** (a numbered set of up to 10 cards for a long review). Cards with words start as Standard, and switch to Long-form when the text doesn't fit on one card; cards without words start as Cover feature. You can always switch.
 - **Text to share:** **As written** (your Freeform thoughts), **Edit for card**, or **None**. **Edit for card** lets you shorten, tighten, or rewrite the text for that card, at any length and in either layout, or paste in a passage to quote; your sheet isn't changed. **Revert to Tracker text** puts back what's in your sheet. For a book with no Freeform thoughts, the choice is **Write for card**. Either way, the card reminds you that the text is only on that card, with a **Copy text** button so you can paste it into your sheet to keep it. A line or two, like a quick one-line take, shows in large type.
 - **Present as:** **Review**, **Quotation**, or **Mixed**. The page starts from your quotation marks: text that's all in quotation marks is shown as a quotation, with a large quotation mark, the **Quotation author**, and the **Source work**. Those start as the book's author and title; change them if you're quoting someone else, such as another reviewer, or leave them blank. A quoted passage inside your own words is Mixed, which sets just the quoted part in italics. You can change it either way.
-- **Include:** rating, sub-genres and genre, when you read it, the new-author note, reread, matrix scores, format and length, and tags (you pick which). Only what the book has is offered. Matrix scores and tags don't fit in Cover feature, so they're greyed out there and come back when you switch. In Long-form they're on the last card. Sub-genres and Genre each show their values. A book with sub-genres starts with just those checked; one without starts with Genre. Check both to show both, such as "Fiction · Historical fiction, Sapphic romance."
+- **Include:** art by (for manga and comics; see [Manga and comics](#manga-and-comics)), rating, sub-genres and genre, when you read it, the new-author note, reread, matrix scores, format and length, and tags (you pick which). Only what the book has is offered. Matrix scores and tags don't fit in Cover feature, so they're greyed out there and come back when you switch. In Long-form they're on the last card. Sub-genres and Genre each show their values. A book with sub-genres starts with just those checked; one without starts with Genre. Check both to show both, such as "Fiction · Historical fiction, Sapphic romance."
 - **Personal details:** Source, How I found it, and Recommended by can name people or places, so they're left off every card until you turn them on, one card at a time. They're never remembered.
 - **Footer:** your name or handle, if you want one, and the word "Shelfprint" in small type, which you can turn off.
 
@@ -343,7 +350,7 @@ In the year view, click **Create My Year in Books** to make a set of images abou
 - **With picks,** the image shows the books you picked, in the order you picked them. Ratings play no part.
 - **To pick books** (up to 10), use the checklist for that image in the My Year in Books panel, or **Include in my top picks** in any book's details.
 
-**Genre shelves.** Click **Add a shelf…**, and tick one or more **Genre** or **Sub-genre(s)** values. A book goes on the shelf if it matches any of them, so "Romantasy" and "Romantic fantasy" can share one shelf. You can give the shelf its own name. Each shelf follows the same rules as the top image, with its own separate picks.
+**Genre shelves.** Click **Add a shelf…**, and tick one or more **Genre** or **Sub-genre(s)** values. When the year includes manga or comics, **Form** values are offered too, in a group of their own. A book goes on the shelf if it matches any of them, so "Romantasy" and "Romantic fantasy" can share one shelf, and so can "Fantasy" and "Manga." You can give the shelf its own name. Each shelf follows the same rules as the top image, with its own separate picks.
 
 **You can see how every image was made.** Open **What … is based on** under the list of images to see:
 

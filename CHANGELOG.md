@@ -4,6 +4,15 @@ What changed in each version of Shelfprint. The version in use appears at the bo
 
 Shelfprint uses [semantic versioning](https://semver.org): the middle number goes up for new features, and the last number for fixes.
 
+## 1.2.0 — 2026-11-11
+
+Manga and comics in the images. They still count in every total, rating, and cover gallery. If your log has none, or doesn't use the Form column, nothing changes for you.
+
+### Added
+- **Include manga and comics** in the share image dialog, when some of the books in the month (or the year's one image) are manga or comics. It's named for what's there, such as "Include 2 manga," and starts ticked. Untick it to leave them off that image: the stats line and other counts on the image then cover only the books shown, and the dialog says how many were left off. Your page and your sheet don't change.
+- **Form values in genre shelves.** In My Year in Books, a shelf can now include Form values, such as Manga, alongside Genre and Sub-genre values. They're offered when the year has manga or comics, in a group of their own headed Form. Shelves you've already made work as before.
+- **Art by** on book cards for manga and comics, under the author, from the Illustrator / artist column. It's left off when the artist is the author, however the names are written ("Sato, Ren" and "Ren Sato" match). It's one of the Include choices, on to start with and remembered like the others.
+
 ## 1.1.0 — 2026-11-11
 
 Manga and comics get more attention on the page. If your log has none, or doesn't use the Form column, nothing changes for you.
