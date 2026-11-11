@@ -4,6 +4,14 @@ What changed in each version of Shelfprint. The version in use appears at the bo
 
 Shelfprint uses [semantic versioning](https://semver.org): the middle number goes up for new features, and the last number for fixes.
 
+## 1.0.1 — 2026-11-11
+
+Nothing changes in how the page looks or works. Your sheet, your saved choices, and the `SETTINGS` block are untouched.
+
+### Changed
+- **The page's code is reorganized to be easier to read and change.** It's laid out one statement per line, opens with a contents list, and gives its parts descriptive names. The three kinds of image (the month or year image, My Year in Books, and book cards) now share one set of code for sizes, type, covers, and saving, copying, and sharing, so a fix to one reaches all three.
+- Code that no longer did anything was removed.
+
 ## 1.0.0 — 2026-11-06
 
 Shelfprint's first stable version. From here, your sheet's columns, what's saved in your browser, and the `SETTINGS` block stay stable through every 1.x version. See [Versions and what stays stable](README.md#versions-and-what-stays-stable).
