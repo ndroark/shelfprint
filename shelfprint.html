@@ -1649,6 +1649,15 @@ body.dragging .wrap {
 .w-pick-list label:last-child {
   border-bottom: 0;
 }
+.w-pick-list .w-pick-group {
+  margin: 0;
+  padding: 8px 8px 4px;
+  border-bottom: 1px solid var(--grid);
+  background: var(--surface-2);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
 .w-pick-list span:nth-of-type(1) {
   flex: 1;
   min-width: 0;
@@ -2217,7 +2226,7 @@ body.dragging .wrap {
 
    FORMAT
      Formatted with Prettier (print width 110). Tables marked "prettier-ignore" are laid out by hand. */
-  const VERSION = "1.1.0"; // see CHANGELOG.md
+  const VERSION = "1.2.0"; // see CHANGELOG.md
   const MONTHS = [
     "January",
     "February",
@@ -6425,6 +6434,18 @@ body.dragging .wrap {
     $("#s-filter-f").hidden = !personal;
     $("#s-filter").checked = false;
     if (personal) $("#s-filter-l").innerHTML = `Show “${filterText(FILTER)}” on the image`;
+    /* Manga and comics: a choice only when some of the books are, and not all of them (leaving them all out would
+     leave nothing). On every time the dialog opens, never remembered; it changes this image, not the page. The
+     checkbox is made here rather than kept hidden in the dialog, so a reader without any sees the dialog as before. */
+    const comics = comicsSummary(SHARE.books);
+    SHARE.comics = comics && comics.books.length < SHARE.books.length ? comics : null;
+    $("#s-comics-f")?.remove();
+    if (SHARE.comics) {
+      const l = htmlNode("label", { class: "check", id: "s-comics-f" });
+      l.innerHTML = `<input type="checkbox" id="s-comics" checked>Include ${esc(SHARE.comics.count)}`;
+      $("#s-titles").closest("label").before(l);
+      $("#s-comics").addEventListener("change", drawShare);
+    }
     const r = document.querySelector(
       `input[name="smode"][value="${mode === "wrapped" && VIEW === "year" ? "wrapped" : "single"}"]`
     );
@@ -6483,7 +6504,9 @@ body.dragging .wrap {
       showStats = $("#s-stats").checked,
       showRanks = $("#s-ranks").checked;
     const lim = VIEW === "year" ? +radioVal("scount") : 0;
-    const all = SHARE.books,
+    // everything on the image, its counts included, is about the books shown on it
+    const leftOut = SHARE.comics && !$("#s-comics").checked ? SHARE.comics : null;
+    const all = leftOut ? SHARE.books.filter(b => !b.comics) : SHARE.books,
       books = lim ? all.slice(0, lim) : all;
     const [W, Hh] = IMAGE_SIZES[fmt];
     const cv = $("#share-canvas");
@@ -6666,6 +6689,8 @@ body.dragging .wrap {
     const noUrl = books.filter((b, i) => !imgs[i] && !b._hasCover).length,
       blocked = missing - noUrl;
     const notes = [];
+    if (leftOut)
+      notes.push(`${leftOut.count} ${leftOut.books.length === 1 ? "is" : "are"} left off this image.`);
     if (showTitles && !titles) notes.push("Titles are left off above 30 books.");
     if (showStats && FILTER && PERSONAL_KINDS.has(FILTER.kind) && !$("#s-filter").checked)
       notes.push("The filter isn't named on the image, because it may name a person.");
@@ -6806,9 +6831,24 @@ body.dragging .wrap {
     ["found", "How I found it"],
     ["rec", "Recommended by"]
   ];
+  /* "Art by" for manga and comics, from Illustrator / artist, written the way Author is ("Last, First" or "First Last",
+   several separated by semicolons). Left off when the artists are the same people as the authors. Names are compared
+   by their words in any order, ignoring case and punctuation, so "Sato, Ren", "Ren Sato", and "SATO Ren" all match. */
+  const personKeys = s =>
+    String(s || "")
+      .split(/\s*;\s*/)
+      .map(x => normalize(displayAuthor(x)).split(" ").sort().join(" "))
+      .filter(Boolean);
+  function artBy(b) {
+    if (!b.comics || !b.illustrator.trim()) return "";
+    const art = new Set(personKeys(b.illustrator)),
+      by = new Set(personKeys(b.authorRaw));
+    const same = art.size === by.size && [...art].every(k => by.has(k));
+    return same ? "" : displayAuthor(b.illustrator);
+  }
   // prettier-ignore
   const CARD_INC=[   // [key, label, available for this book?]   defaults: see cardPrefs()
-  ["rating","Rating",b=>b.rating!=null],["sub",b=>["Sub-genres",cardSubs(b).join(", ")],b=>cardSubs(b).length>0],["genre",b=>["Genre",b.genre],b=>!!b.genre],["date","When I read it",b=>cardKickerDate(b)!=null,"no date in your sheet"],
+  ["art",b=>["Art by",artBy(b)],b=>!!artBy(b)],["rating","Rating",b=>b.rating!=null],["sub",b=>["Sub-genres",cardSubs(b).join(", ")],b=>cardSubs(b).length>0],["genre",b=>["Genre",b.genre],b=>!!b.genre],["date","When I read it",b=>cardKickerDate(b)!=null,"no date in your sheet"],
   ["isNew",b=>newAuthorLabel(b),b=>b.isNew],["reread","Reread",b=>b.reread],["matrix","Matrix scores",b=>b.hasMatrix],
   ["length","Format and length",b=>!!(b.format||b.pages||b.audio)],["tags","Tags",b=>b.tags.length>0]];
   // Sub-genres without any that just repeat the Genre, so a card never says "Fiction · Fiction"
@@ -6844,6 +6884,9 @@ body.dragging .wrap {
     const s = store.json(KEYS.cardPrefs, {});
     return { ...d, ...s, inc: { ...d.inc, ...(s.inc || {}) } };
   }
+  /* Include options added later, with their defaults. They're kept out of cardPrefs() so a reader's saved choices
+   stay as they were until they tick or untick one: "Art by" appears only on manga and comics cards. */
+  const CARD_INC_LATER = { art: true };
   function saveCardPrefs() {
     const inc = {};
     CARD_INC.forEach(([k]) => {
@@ -7257,10 +7300,12 @@ body.dragging .wrap {
       ctx.font = `400 32px ${SANS}`;
       ctx.fillStyle = th.sec;
       y += 50;
-      wrap(ctx, b.author, rw).forEach((l, k) => {
-        if (k) y += 40;
-        ctx.fillText(l, rx, y);
-      });
+      (opts.byline || [b.author])
+        .flatMap(t => wrap(ctx, t, rw))
+        .forEach((l, k) => {
+          if (k) y += 40;
+          ctx.fillText(l, rx, y);
+        });
       if (opts.rating != null) {
         y += 58;
         const dw = diamonds(ctx, opts.rating, rx, y - 11, 36, th.accent);
@@ -7375,7 +7420,7 @@ body.dragging .wrap {
           tlh = titleFit.s * 1.06,
           titleH = titleFit.L.length * tlh;
         ctx.font = `400 32px ${SANS}`;
-        const authorLines = wrap(ctx, b.author, cw);
+        const authorLines = (opts.byline || [b.author]).flatMap(t => wrap(ctx, t, cw));
         let note = null;
         if (opts.text) {
           note = fitTo(ctx, runs(opts.text, modeOf(opts)), cw - 80, story ? 320 : 180, 50, 38, 1.25);
@@ -7869,7 +7914,7 @@ body.dragging .wrap {
       .map(([k, lab, av, why]) => {
         const ok = av(b),
           l = typeof lab === "function" ? lab(b) : lab,
-          on = CARD_PER_BOOK[k] ? CARD_PER_BOOK[k](b) : p.inc[k];
+          on = CARD_PER_BOOK[k] ? CARD_PER_BOOK[k](b) : (p.inc[k] ?? CARD_INC_LATER[k]);
         const text = Array.isArray(l) ? `${esc(l[0])}: <span class="val">${esc(l[1])}</span>` : esc(l);
         return (
           `<label class="check${ok ? "" : " off"}"><input type="checkbox" id="c-inc-${k}"${ok && on ? " checked" : ""}${ok ? "" : " disabled"}>${text}${ok ? "" : ` <span class="val">(${why})</span>`}</label>` +
@@ -8028,6 +8073,7 @@ body.dragging .wrap {
       layout: radioVal("clayout"),
       kicker,
       facts,
+      byline: [b.author, ...(inc("art") ? [`Art by ${artBy(b)}`] : [])], // the author, and the artist when chosen
       rating: inc("rating") ? b.rating : null,
       matrix: inc("matrix") ? DIMS.map(d => [d.short, b.scores[d.key]]) : null,
       avg: b.avg,
@@ -8363,7 +8409,8 @@ body.dragging .wrap {
   function pickedKeys(y, shelf) {
     return store.json(picksKey(y, shelf), []);
   }
-  /* Genre shelves: a card for one or more Genre or Sub-genre values, chosen by the reader. Stored per year. */
+  /* Genre shelves: a card for one or more Genre, Sub-genre, or Form values, chosen by the reader. Stored per year, as
+   {id, name, values: [{f, v}]}, where f is "genre", "sub", or "form" (shelves saved before 1.2.0 have no "form"). */
   const shelfKey = y => KEYS.shelvesPrefix + y;
   function getShelves(y) {
     return store.json(shelfKey(y), []);
@@ -8373,14 +8420,26 @@ body.dragging .wrap {
     sh.values.some(v =>
       v.f === "genre"
         ? (b.genre || "").toLowerCase() === v.v.toLowerCase()
-        : subsOf(b).some(x => x.toLowerCase() === v.v.toLowerCase())
+        : v.f === "form"
+          ? (b.form || "").toLowerCase() === v.v.toLowerCase()
+          : subsOf(b).some(x => x.toLowerCase() === v.v.toLowerCase())
     );
   const shelfName = sh => (sh.name || "").trim() || sh.values.map(v => v.v).join(" / ");
-  function shelfOptions(fin) {
-    const o = [];
+  const SHELF_FIELD = { genre: "Genre", sub: "Sub-genre", form: "Form" };
+  // Genre and Sub-genre values, most books first; then, when asked for, Form values in a group of their own
+  function shelfOptions(fin, forms) {
+    const o = [],
+      byCount = (a, b) => b.n - a.n || a.v.localeCompare(b.v);
     countBy(fin, b => b.genre).forEach(([v, bs]) => o.push({ f: "genre", v, n: bs.length }));
     countBy(fin, subsOf).forEach(([v, bs]) => o.push({ f: "sub", v, n: bs.length }));
-    return o.sort((a, b) => b.n - a.n || a.v.localeCompare(b.v));
+    o.sort(byCount);
+    if (forms)
+      o.push(
+        ...countBy(fin, b => b.form)
+          .map(([v, bs]) => ({ f: "form", v, n: bs.length }))
+          .sort(byCount)
+      );
+    return o;
   }
   function pickToggle(b) {
     if (b.status !== "Finished" || b.yr == null) return "";
@@ -8720,10 +8779,11 @@ body.dragging .wrap {
         rated = bs.filter(b => b.rating != null),
         per = 30;
       const gv = sh.values.filter(v => v.f === "genre").map(v => v.v),
-        sv = sh.values.filter(v => v.f === "sub").map(v => v.v);
+        sv = sh.values.filter(v => v.f === "sub").map(v => v.v),
+        fv = sh.values.filter(v => v.f === "form").map(v => v.v);
       const rule =
         (sh.name ? `"${sh.name}" is the name you gave this shelf. ` : "") +
-        `Books whose ${[gv.length ? `Genre is ${listOr(gv)}` : "", sv.length ? `Sub-genre(s) include ${listOr(sv)}` : ""].filter(Boolean).join(", or whose ")}: ${plural(bs.length, "book")} in ${y}.`;
+        `Books whose ${[gv.length ? `Genre is ${listOr(gv)}` : "", sv.length ? `Sub-genre(s) include ${listOr(sv)}` : "", fv.length ? `Form is ${listOr(fv)}` : ""].filter(Boolean).join(", or whose ")}: ${plural(bs.length, "book")} in ${y}.`;
       let pick,
         heading,
         sub,
@@ -9265,24 +9325,28 @@ body.dragging .wrap {
       })
       .join("")}</div></div>`;
   }
-  /* Genre shelves: list, add, edit, remove. A shelf is any mix of Genre and Sub-genre values. */
+  /* Genre shelves: list, add, edit, remove. A shelf is any mix of Genre and Sub-genre values, and Form values too
+   when the year has manga or comics (or the shelf being edited already uses a Form). Form values are listed in a
+   group of their own, so they aren't mistaken for genres. A reader without manga or comics sees the editor as before. */
   function renderShelfEditor() {
     const box = $("#w-shelves"),
       y = MYB.y,
       shelves = getShelves(y),
       fin = ALL_BOOKS.filter(b => b.yr === y && b.status === "Finished"),
-      ed = MYB.edit;
-    let h = `<p class="legend-like">Genre shelves</p><p class="h3sub">An image for the books in one or more genres or sub-genres: your picks for it, or its highest-rated books.</p>`;
+      ed = MYB.edit,
+      forms = fin.some(b => b.comics) || shelves.some(sh => sh.values.some(v => v.f === "form"));
+    let h = `<p class="legend-like">Genre shelves</p><p class="h3sub">${forms ? "An image for the books in one or more genres, sub-genres, or forms (such as manga): your picks for it, or its highest-rated books." : "An image for the books in one or more genres or sub-genres: your picks for it, or its highest-rated books."}</p>`;
     h += shelves.length
       ? `<ul class="w-shelf-list">${shelves.map(sh => `<li><span>${esc(shelfName(sh))} <span class="why">${plural(fin.filter(b => inShelf(b, sh)).length, "book")}</span></span><button class="btn small" type="button" data-edit="${esc(sh.id)}">Edit</button><button class="btn small" type="button" data-del="${esc(sh.id)}">Remove</button></li>`).join("")}</ul>`
       : "";
     if (ed) {
       const sel = new Set(ed.sel),
-        opts = shelfOptions(fin);
+        opts = shelfOptions(fin, forms);
       h += `<div class="w-edit"><p class="h3sub">Tick one or more. A book goes on the shelf if it matches any of them.</p><div class="w-pick-list">${opts
-        .map(o => {
-          const k = o.f + "|" + o.v;
-          return `<label><input type="checkbox" value="${esc(k)}"${sel.has(k) ? " checked" : ""}><span>${esc(o.v)} <span class="why" style="display:inline">· ${o.f === "genre" ? "Genre" : "Sub-genre"}</span></span><span class="r">${o.n}</span></label>`;
+        .map((o, i) => {
+          const k = o.f + "|" + o.v,
+            group = o.f === "form" && opts[i - 1]?.f !== "form" ? `<p class="w-pick-group">Form</p>` : "";
+          return `${group}<label><input type="checkbox" value="${esc(k)}"${sel.has(k) ? " checked" : ""}><span>${esc(o.v)} <span class="why" style="display:inline">· ${SHELF_FIELD[o.f]}</span></span><span class="r">${o.n}</span></label>`;
         })
         .join("")}</div>
       <p class="w-edit-name">${sel.size ? `Shelf: <b>${esc([...sel].map(k => k.split("|").slice(1).join("|")).join(" / "))}</b>, ${plural(fin.filter(b => inShelf(b, { values: [...sel].map(k => ({ f: k.split("|")[0], v: k.split("|").slice(1).join("|") })) })).length, "book")}` : "Nothing ticked yet."}</p>

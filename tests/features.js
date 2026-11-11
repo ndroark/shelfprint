@@ -143,6 +143,133 @@ const check = (what, ok, got) => { console.log(`${ok ? "  ok  " : "  FAIL"}  ${w
   check("the pages note is the usual one", (await tile(p, "pages read"))?.n === "across 6 books in print or ebook", show(await tile(p, "pages read")));
   await p.context().close();
 
+  // ---------- images (1.2.0) ----------
+  const shareReady = async p => { await p.waitForTimeout(150); await p.waitForFunction(() => !document.querySelector("#share-dl").disabled, null, { timeout: 15000 }); await p.waitForTimeout(100); };
+  const shareCanvas = p => p.$eval("#share-canvas", c => c.toDataURL("image/png"));
+  const openMonthShare = async p => { await p.click("#share-open"); await shareReady(p); };
+  const closeShare = async p => { await p.click("#share [data-close]"); await p.waitForTimeout(250); };
+  const comicsBox = p => p.evaluate(() => { const l = document.querySelector("#s-comics-f"); return l ? { text: l.textContent, on: l.querySelector("input").checked, shown: !l.closest("[hidden]") } : null; });
+  const shareStatus = p => p.$eval("#share-status", e => e.textContent);
+
+  console.log("\nThe month image, with manga and comics");
+  p = await open(MIXED);
+  await month(p, "2025-jan");
+  await openMonthShare(p);
+  let box = await comicsBox(p);
+  check("a month with manga offers “Include 2 manga”, ticked", box && box.text === "Include 2 manga" && box.on && box.shown, show(box));
+  const withManga = await shareCanvas(p);
+  await p.$eval("#s-comics", i => i.click()); await shareReady(p);
+  check("unticking it changes the image", (await shareCanvas(p)) !== withManga, "same image");
+  check("and the dialog says what was left off", /^2 manga are left off this image\./.test(await shareStatus(p)), await shareStatus(p));
+  const withoutManga = await shareCanvas(p);
+  await closeShare(p);
+  check("the page itself still counts every book", (await tiles(p))[0].v === "4", show((await tiles(p))[0]));
+  await openMonthShare(p);
+  box = await comicsBox(p);
+  check("the choice resets to ticked when the dialog opens again", box && box.on, show(box));
+  await closeShare(p);
+  await month(p, "2025-apr");
+  await openMonthShare(p);
+  check("a month that is all manga has no checkbox (leaving them out would leave nothing)", !(await comicsBox(p)), show(await comicsBox(p)));
+  await closeShare(p);
+  await month(p, "2025-may");
+  await openMonthShare(p);
+  box = await comicsBox(p);
+  check("a mix with no manga says “comics and graphic novels”", box && box.text === "Include 2 comics and graphic novels", show(box));
+  await p.$eval("#s-comics", i => i.click()); await shareReady(p);
+  check("and its note names them the same way", /^2 comics and graphic novels are left off/.test(await shareStatus(p)), await shareStatus(p));
+  await closeShare(p);
+  await month(p, "2025-year");
+  await p.click("#wrap-open"); await shareReady(p);
+  await p.$eval('input[name=smode][value=single]', i => i.click()); await shareReady(p);
+  box = await comicsBox(p);
+  check("the year's one image offers it too", box && box.text === "Include 9 manga and comics" && box.shown, show(box));
+  await p.$eval('input[name=smode][value=wrapped]', i => i.click()); await shareReady(p);
+  check("My Year in Books (a set of images) doesn't show it", !(await comicsBox(p)).shown, show(await comicsBox(p)));
+  await closeShare(p);
+  await p.context().close();
+  // the image with manga left off is the image of a log that never had them: its stats line counts only what's shown
+  p = await open(csv([HEAD, ...ROWS.filter(r => !/^Moon Courier [12]$/.test(r[0]))]));
+  await month(p, "2025-jan");
+  await openMonthShare(p);
+  check("with manga left off, the image is exactly that of the same month without them, stats line and all", (await shareCanvas(p)) === withoutManga, "the images differ");
+  check("a month with no manga or comics has no checkbox", !(await comicsBox(p)), show(await comicsBox(p)));
+  await p.context().close();
+  p = await open(NO_FORM);
+  await month(p, "2025-jan");
+  await openMonthShare(p);
+  check("a log without Form has no checkbox", !(await comicsBox(p)), show(await comicsBox(p)));
+  await p.context().close();
+
+  console.log("\nGenre shelves with Form values");
+  const shelfPanel = p => p.$eval("#w-shelves", e => e.innerText);
+  p = await open(MIXED);
+  await p.evaluate(() => localStorage.setItem("wrapup:shelves:2025", JSON.stringify([{ id: "old1", values: [{ f: "genre", v: "Fiction" }], name: "" }])));
+  await month(p, "2025-year");
+  await p.click("#wrap-open"); await shareReady(p);
+  check("a shelf saved before 1.2.0 still works", /Fiction\s*14 books/.test(await shelfPanel(p)), await shelfPanel(p));
+  check("the editor's description mentions forms", /genres, sub-genres, or forms \(such as manga\)/.test(await shelfPanel(p)), await shelfPanel(p));
+  await p.click("#w-add-shelf"); await p.waitForTimeout(150);
+  const rows = await p.$$eval(".w-edit .w-pick-list > *", es => es.map(e => e.innerText.replace(/\s+/g, " ").trim()));
+  const fi = rows.indexOf("Form");
+  check("Form values are listed in a group headed “Form”, after the genres", fi > 0 && /· Genre/.test(rows[0]) && rows.slice(fi + 1).every(r => /· Form/.test(r)) && rows.slice(0, fi).every(r => !/· Form/.test(r)), show(rows));
+  check("each Form value is labelled as a Form, with its count", rows.includes("Manga · Form 4") && rows.includes("Prose · Form 4"), show(rows));
+  await p.$eval('.w-edit .w-pick-list input[value="form|Manga"]', i => i.click()); await p.waitForTimeout(150);
+  await p.click("#w-ed-save"); await shareReady(p);
+  check("a Form shelf matches the form whatever its capitals (“manga” too)", /Manga\s*5 books/.test(await shelfPanel(p)), await shelfPanel(p));
+  const basis = await p.$eval("#w-basis", e => e.textContent);
+  check("its image says how it was made: “Books whose Form is Manga”", /Books whose Form is Manga: 5 books in 2025\./.test(basis), basis.slice(0, 300));
+  const saved = await p.evaluate(() => JSON.parse(localStorage.getItem("wrapup:shelves:2025")));
+  check("the reader's categories aren't changed, and no shelf is made for them", saved.length === 2 && saved[0].id === "old1" && saved[1].values.length === 1 && saved[1].values[0].f === "form", show(saved));
+  await p.context().close();
+  p = await open(NO_FORM);
+  await month(p, "2025-year");
+  await p.click("#wrap-open"); await shareReady(p);
+  await p.click("#w-add-shelf"); await p.waitForTimeout(150);
+  const plain = await shelfPanel(p);
+  check("a log without Form shows the shelf editor as before", /one or more genres or sub-genres:/.test(plain) && !/Form/.test(plain), plain);
+  await p.context().close();
+
+  console.log("\nBook cards: “Art by”");
+  const artBook = (t, a, form, art) => [t, a, "Finished", "2025-06-01", "2025-06-02", "Fiction", 4, "", "", "", form, "Print", 200, art];
+  const ART = csv([HEAD,
+    artBook("Two Hands", "Sato, Ren", "Manga", "Kim, Jae"),
+    artBook("One Hand", "Sato, Ren", "Manga", "Ren Sato"),
+    artBook("Same Order", "Sato, Ren", "Manga", "SATO Ren"),
+    artBook("Pair Work", "Lind, Mo; Roe, Sam", "Graphic novel", "Roe, Sam"),
+    artBook("Pictures Too", "Hale, Ann", "Prose", "Bell, Ali"),
+    artBook("Second Hands", "Sato, Ren", "Manga", "Jae Kim")]);
+  const cardReady = async p => { await p.waitForTimeout(300); await p.waitForFunction(() => document.querySelector("#card-status").textContent !== "Making the card…", null, { timeout: 30000 }); await p.waitForTimeout(150); };
+  const openBookCard = async (p, title) => {
+    await p.evaluate(() => document.querySelector("#cardm:not([hidden]) [data-close]")?.click());
+    await p.evaluate(() => document.querySelector("#bookm:not([hidden]) [data-close]")?.click());
+    await p.waitForTimeout(200);
+    await p.click(".finder-in"); await p.fill(".finder-in", ""); await p.keyboard.type(title); await p.waitForTimeout(300); await p.keyboard.press("Enter"); await p.waitForTimeout(300);
+    await p.click("#bookm-card"); await cardReady(p);
+  };
+  const artOpt = p => p.evaluate(() => { const i = document.querySelector("#c-inc-art"); return i ? { text: i.closest("label").textContent, on: i.checked } : null; });
+  p = await open(ART);
+  await openBookCard(p, "Two Hands");
+  let a = await artOpt(p);
+  check("a manga with a different artist offers “Art by: Jae Kim”, ticked", a && a.text === "Art by: Jae Kim" && a.on, show(a));
+  const withArt = await p.$eval("#card-canvas", c => c.toDataURL());
+  await p.$eval("#c-inc-art", i => i.click()); await cardReady(p);
+  check("unticking it changes the card", (await p.$eval("#card-canvas", c => c.toDataURL())) !== withArt, "same card");
+  await openBookCard(p, "Second Hands");
+  a = await artOpt(p);
+  check("the choice is remembered for the next card, like the other Include options", a && !a.on, show(a));
+  await p.$eval("#c-inc-art", i => i.click()); await cardReady(p);
+  await openBookCard(p, "One Hand");
+  check("no “Art by” when the artist is the author (“Ren Sato” and “Sato, Ren”)", !(await artOpt(p)), show(await artOpt(p)));
+  await openBookCard(p, "Same Order");
+  check("names match in either order and any capitals (“SATO Ren”)", !(await artOpt(p)), show(await artOpt(p)));
+  await openBookCard(p, "Pair Work");
+  a = await artOpt(p);
+  check("when one of two authors drew it, “Art by” names them", a && a.text === "Art by: Sam Roe", show(a));
+  await openBookCard(p, "Pictures Too");
+  check("a prose book with an illustrator has no “Art by” (manga and comics only)", !(await artOpt(p)), show(await artOpt(p)));
+  await p.context().close();
+
   console.log("\nThe sample books");
   p = await (await browser.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
   await p.route(/^https?:\/\//, r => r.abort());
