@@ -117,21 +117,17 @@ h2 { font-size: clamp(30px, 4vw, 40px); line-height: 1.1; margin: 0 0 12px; }
 .intro { color: var(--text-secondary); max-width: 40em; margin: 0 0 36px; }
 h3 { font-size: 24px; line-height: 1.2; margin: 0 0 8px; }
 
-.make { display: grid; gap: 56px; }
-.item {
-  display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-  gap: 40px; align-items: center;
-}
-.item:nth-child(even) .text { order: 2; }
+.make { display: grid; gap: 64px; }
+.item { display: grid; gap: 20px; }
+.item .text { max-width: 40em; }
 .item p { margin: 0; color: var(--text-secondary); }
 .shot {
   margin: 0; background: #0d0d0d; border: 1px solid var(--border);
   border-radius: 10px; overflow: hidden;
 }
 .shot a { display: block; }
-.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.item.wide { grid-template-columns: 1fr; gap: 20px; }
-.item.wide .text { order: 0; max-width: 40em; }
+.row { display: flex; gap: 16px; align-items: flex-start; }
+.row .shot { min-width: 0; }
 
 .steps { list-style: none; margin: 0 0 36px; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
 .steps li { border-top: 2px solid var(--text-primary); padding-top: 14px; }
@@ -167,10 +163,9 @@ footer p { margin: 0 0 4px; }
   body { font-size: 16px; }
   .hero { grid-template-columns: 1fr; gap: 36px; padding: 20px 0 48px; }
   .lead { font-size: 18px; }
-  .item, .steps, .cols, .links { grid-template-columns: 1fr; }
-  .item { gap: 18px; }
-  .item:nth-child(even) .text { order: 0; }
-  .pair { grid-template-columns: 1fr; }
+  .steps, .cols, .links { grid-template-columns: 1fr; }
+  .row { flex-direction: column; }
+  .row .shot { flex: none !important; width: 100%; }
   section { padding: 48px 0; }
   .make { gap: 44px; }
   .top nav a.hide-s { display: none; }
@@ -206,7 +201,7 @@ footer p { margin: 0 0 4px; }
     <p class="fine">Free and open source. No account required.</p>
   </div>
   <figure>
-    <img src="site/card-book.jpg" width="588" height="734" alt="An image card for the novel Tipping the Velvet by Sarah Waters, showing the cover, a five out of five rating, sub-genres, a quotation from the book, four tags, and a small Shelfprint credit beside the reader's handle.">
+    <img src="site/card-book.jpg" width="900" height="1125" alt="An image card for the novel Tipping the Velvet by Sarah Waters, headed I read this in January 2026, showing the cover, a five out of five rating, sub-genres, a quotation from the book, four tags, and a small Shelfprint credit.">
     <figcaption>An image card for one book, ready to post.</figcaption>
   </figure>
 </div>
@@ -221,9 +216,14 @@ footer p { margin: 0 0 4px; }
         <h3>Image cards for one book</h3>
         <p>Your rating, your tags, and your own words: a quotation, a one-line take, or a review of any length. Choose what goes on the card, in post, square, or story size, with a light or dark look.</p>
       </div>
-      <figure class="shot">
-        <a href="site/card-dialog.jpg"><img src="site/card-dialog.jpg" width="1100" height="1060" loading="lazy" alt="The Create image card window, with a preview of a book card on the left and choices for layout, size, look, text, and which details to include on the right."></a>
-      </figure>
+      <div class="row">
+        <figure class="shot" style="flex: 0.8">
+          <a href="site/card-quip.jpg"><img src="site/card-quip.jpg" width="800" height="1000" loading="lazy" alt="An image card for The Idiot by Elif Batuman: a large cover, a five out of five rating, the sub-genre Literary fiction, and a one-line take in the reader's own words."></a>
+        </figure>
+        <figure class="shot" style="flex: 1.038">
+          <a href="site/card-dialog.jpg"><img src="site/card-dialog.jpg" width="1100" height="1060" loading="lazy" alt="The Create image card window, with a preview of a book card on the left and choices for layout, size, look, text, and which details to include on the right."></a>
+        </figure>
+      </div>
     </div>
 
     <div class="item">
@@ -231,9 +231,14 @@ footer p { margin: 0 0 4px; }
         <h3>Monthly wrap-ups</h3>
         <p>Every month gets its own page: the books you finished, your ratings, hours and pages, and the themes that ran through them. One button turns the month into a single image to share.</p>
       </div>
-      <figure class="shot">
-        <a href="site/month.jpg"><img src="site/month.jpg" width="1160" height="1080" loading="lazy" alt="The month view for October 2026: thirteen books finished, with counts for audio hours, pages, and average rating above a shelf of book covers ranked by rating."></a>
-      </figure>
+      <div class="row">
+        <figure class="shot" style="flex: 1">
+          <a href="site/month-image.jpg"><img src="site/month-image.jpg" width="900" height="900" loading="lazy" alt="A share image titled My month in books, July 2026: ten book covers with ratings, a line of totals for books, audio hours, pages, and average rating, and the thread of the month."></a>
+        </figure>
+        <figure class="shot" style="flex: 1.074">
+          <a href="site/month.jpg"><img src="site/month.jpg" width="1160" height="1080" loading="lazy" alt="The month view for October 2026: thirteen books finished, with counts for audio hours, pages, and average rating above a shelf of book covers ranked by rating."></a>
+        </figure>
+      </div>
     </div>
 
     <div class="item">
@@ -241,21 +246,32 @@ footer p { margin: 0 0 4px; }
         <h3>My Year in Books</h3>
         <p>A set of year-end image cards, sized for a carousel. You choose which cards to include, which books to feature, and the order. Each card comes with a note on exactly what it counted and how.</p>
       </div>
-      <figure class="shot">
-        <a href="site/year.jpg"><img src="site/year.jpg" width="1280" height="720" loading="lazy" alt="The year view for 2026: 121 books finished, with tiles for audio hours, pages read, average rating, and new-to-you authors, a Create My Year in Books button, and a top shelf of the year's highest-rated covers."></a>
-      </figure>
+      <div class="row">
+        <figure class="shot" style="flex: 1">
+          <a href="site/year-top-picks.jpg"><img src="site/year-top-picks.jpg" width="800" height="1000" loading="lazy" alt="A My Year in Books card titled My top picks, showing seven book covers chosen from the 123 books finished in 2026."></a>
+        </figure>
+        <figure class="shot" style="flex: 1">
+          <a href="site/year-genres.jpg"><img src="site/year-genres.jpg" width="800" height="1000" loading="lazy" alt="A My Year in Books card titled Genres, sub-genres, and tags, with bars for the top three genres and counts for the most common sub-genres and tags."></a>
+        </figure>
+        <figure class="shot" style="flex: 1">
+          <a href="site/year-shelf.jpg"><img src="site/year-shelf.jpg" width="800" height="1000" loading="lazy" alt="A My Year in Books card titled The whole shelf, continued, showing a grid of sixty book covers."></a>
+        </figure>
+      </div>
     </div>
 
-    <div class="item wide">
+    <div class="item">
       <div class="text">
         <h3>Charts and cover galleries</h3>
         <p>Ratings, genres, formats, authors, and every cover from your year, month by month. Shelfprint is as much for looking back on your reading as for sharing it.</p>
       </div>
-      <div class="pair">
-        <figure class="shot">
+      <figure class="shot">
+        <a href="site/year.jpg"><img src="site/year.jpg" width="1280" height="720" loading="lazy" alt="The year view for 2026: 121 books finished, with tiles for audio hours, pages read, average rating, and new-to-you authors, a Create My Year in Books button, and a top shelf of the year's highest-rated covers."></a>
+      </figure>
+      <div class="row">
+        <figure class="shot" style="flex: 1">
           <a href="site/gallery.jpg"><img src="site/gallery.jpg" width="1160" height="919" loading="lazy" alt="The whole year as a cover gallery, with a row of book covers for each month from January to June."></a>
         </figure>
-        <figure class="shot">
+        <figure class="shot" style="flex: 1">
           <a href="site/charts.jpg"><img src="site/charts.jpg" width="1160" height="919" loading="lazy" alt="Bar charts of the year's reading: author gender, new-to-you authors, books in translation, genre mix, format, and narrative perspective."></a>
         </figure>
       </div>
@@ -324,7 +340,7 @@ footer p { margin: 0 0 4px; }
     <li><a href="https://github.com/ndroark/shelfprint#readme">The guide</a><br><span>Every column, view, card, and setting, explained.</span></li>
     <li><a href="https://github.com/ndroark/shelfprint">Source on GitHub</a><br><span>The page, the templates, and the tests.</span></li>
     <li><a href="https://github.com/ndroark/shelfprint/blob/main/CHANGELOG.md">Changelog</a><br><span>What changed in each version.</span></li>
-    <li><a href="https://www.youtube.com/watch?v=Nkw-VlY7GYw">Introduction on YouTube</a><br><span>The same 1:34 video, on YouTube.</span></li>
+    <li><a href="https://www.youtube.com/channel/UCqhhL1j9R_6iXlc99ZSwI6w">Shelfprint on YouTube</a><br><span>The introduction, and any videos that follow.</span></li>
   </ul>
 </section>
 
