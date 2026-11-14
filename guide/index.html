@@ -302,6 +302,7 @@ footer { border-top: 1px solid var(--border); padding: 32px 0 56px; color: var(-
 </tr>
 </tbody></table></div>
 <p>Gray (calculated) columns fill themselves in. Don&#39;t type in them.</p>
+<p>To remove a book from the Reading Log or TBR, clear its row or delete the row. Either is fine.</p>
 <h3 id="reading-log-columns">Reading Log columns</h3>
 <p>The <strong>Fields</strong> tab describes every column in detail. In order:</p>
 <div class="table"><table>
@@ -387,7 +388,7 @@ footer { border-top: 1px solid var(--border); padding: 32px 0 56px; color: var(-
 </ul>
 </li>
 </ul>
-<p>A count of <strong>0</strong> means the check passed. <strong>Check failed</strong> means a helper formula broke, usually because the hidden <code>_ChecksData</code> tab was edited. The check never shows a reassuring 0 when it couldn&#39;t run.</p>
+<p>A count of <strong>0</strong> means the check passed. <strong>Check failed</strong> means a helper formula broke, and the check never shows a reassuring 0 when it couldn&#39;t run. In a copy of the template from before version 1.2.1, deleting a row from the Reading Log or TBR does this. Otherwise, the hidden <code>_ChecksData</code> tab was probably edited. See <a href="#troubleshooting">Troubleshooting</a> for the fix.</p>
 <h3 id="capacity">Capacity</h3>
 <p>The Reading Log supports rows <strong>3 to 1000</strong>, which is about 998 books. The TBR supports rows 4 to 1001. Dropdowns, validation, and every check cover those full ranges.</p>
 <p>You can keep several years in one sheet. At 100–150 books a year, that&#39;s six years or more. Each book&#39;s year comes from its own dates, so years never mix. In testing, a sheet with all 998 rows filled recalculated in well under a second after a normal edit. Rows beyond 1000 get no dropdowns or checks.</p>
@@ -653,7 +654,15 @@ const SOURCE_URL = &quot;&quot;;      // &quot;Guide and source&quot; link on th
 <p><strong>Lots of books &quot;aren&#39;t in any year&quot; after updating.</strong> Earlier versions guessed a year for books with only a Month read. The current version doesn&#39;t. Fill in <strong>Year read</strong> for those rows. The Checks tab lists them under <em>Month read with no year</em>.</p>
 <p><strong>Covers are missing from the share image but show on the page.</strong> Some image hosts don&#39;t allow their images to be copied into a picture. Turn on <strong>Share-image fallback</strong> in Settings, or use a cover link from another host. Those books show title cards in the meantime.</p>
 <p><strong>&quot;Sharing didn&#39;t work here.&quot;</strong> Sharing needs a browser that supports it, and works best when the page is opened from a website (https) rather than a saved file. Use <strong>Download this image</strong>, <strong>Download all (ZIP)</strong>, or <strong>Download PNG</strong> instead.</p>
-<p><strong>A Checks count says &quot;Check failed.&quot;</strong> A helper formula returned an error, usually because the hidden <code>_ChecksData</code> tab was changed. Copy that tab from a fresh copy of the template.</p>
+<p><strong>A Checks count says &quot;Check failed.&quot;</strong> A helper formula returned an error. Your books aren&#39;t affected, and the page&#39;s own <strong>Check your sheet</strong> report still works.</p>
+<p>If your copy of the template is from before version 1.2.1, the usual cause is a row deleted from the Reading Log or TBR. (Clearing a row never caused it.) The Series tab&#39;s Read this year column may show errors too. If you only just deleted the row, undo it. Otherwise, repair your sheet from a fresh copy of the template:</p>
+<ol>
+<li>In both spreadsheets, show the hidden <code>_ChecksData</code> tab.</li>
+<li>Copy every cell of the fresh <code>_ChecksData</code> tab, and paste it at cell A1 of yours.</li>
+<li>Copy three calculated columns the same way, from row 3 down: <strong>Read this year</strong> and <strong>Next access</strong> on the Series tab, and <strong>Found cover</strong> on the Reading Log. Paste each at row 3 of the same column in your sheet.</li>
+</ol>
+<p>After that, deleting rows is safe. These steps assume you haven&#39;t added, removed, or moved columns on the Reading Log or TBR. If you have, the pasted formulas would read the wrong columns: move your books into a fresh copy of the template instead.</p>
+<p>In a newer copy, the hidden <code>_ChecksData</code> tab was probably changed. Paste it over from a fresh copy, as in steps 1 and 2.</p>
 <p><strong><code>#NAME?</code> in Excel.</strong> Your Excel version is older than 2019. Use Microsoft 365, Excel 2019 or later, Google Sheets, or LibreOffice.</p>
 <p><strong>Matrix Average is blank.</strong> Every matrix score in the row must be filled in.</p>
 <hr>
