@@ -89,6 +89,8 @@ Just want to see what it does? On the first screen, click **try it with sample b
 | `index.html` | The front page at [shelfprint.org](https://shelfprint.org): what Shelfprint is, with links to the page and the templates. |
 | `app/index.html` | Sends visitors from [shelfprint.org/app](https://shelfprint.org/app) to `shelfprint.html`. |
 | `site/` | Images and the typeface file for the front page. |
+| `guide/index.html` | This guide as a web page, at [shelfprint.org/guide](https://shelfprint.org/guide/). It's built from this file by `tests/guide.js`; don't edit it by hand. |
+| `sitemap.xml`, `robots.txt` | Tell search engines which pages shelfprint.org has. |
 | `CNAME` | Tells GitHub Pages that this copy is served at shelfprint.org. |
 | `README.md` | This file. |
 | `CHANGELOG.md` | What changed in each version. |
@@ -419,7 +421,7 @@ Your sheet is the permanent record. To keep a picked cover for good, copy its li
 
 **Copy image** and phone sharing work most reliably when the page is served over https rather than opened as a local file.
 
-**If you copy the whole repository** to host it, `shelfprint.html` is the only file you need. `index.html`, `app/`, `site/`, and `CNAME` belong to shelfprint.org: remove `CNAME`, or GitHub Pages will try to serve your copy at that address, and replace `index.html` with a page of your own or a link to `shelfprint.html`.
+**If you copy the whole repository** to host it, `shelfprint.html` is the only file you need. `index.html`, `app/`, `site/`, `guide/`, `sitemap.xml`, `robots.txt`, and `CNAME` belong to shelfprint.org: remove `CNAME`, or GitHub Pages will try to serve your copy at that address, and replace `index.html` with a page of your own or a link to `shelfprint.html`.
 
 **Defaults for your copy.** The `SETTINGS` block at the top of the file sets the starting choices:
 

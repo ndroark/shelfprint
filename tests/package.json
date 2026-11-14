@@ -5,9 +5,12 @@
   "scripts": {
     "format": "node format.js",
     "features": "node features.js",
-    "compare": "node compare.js"
+    "compare": "node compare.js",
+    "guide": "node guide.js"
   },
   "devDependencies": {
+    "marked": "^14.1.4",
+    "marked-gfm-heading-id": "^4.1.4",
     "playwright": "^1.56.0",
     "prettier": "3.9.10"
   }
