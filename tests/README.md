@@ -26,6 +26,10 @@ npx playwright install chromium
 
 **`node format.js`** formats the page's script and stylesheet with Prettier, and leaves the HTML markup and the `SETTINGS` block alone. Run it before you commit.
 
+## The guide page
+
+**`node guide.js`** rebuilds `guide/index.html`, the guide at shelfprint.org/guide, from `README.md`. Run it whenever the README changes, and commit both files. **`node guide.js --check`** changes nothing and fails if the two are out of step.
+
 ## What these don't cover
 
 They run in Chromium only. Safari, Firefox, and sharing from a real phone need checking by hand.

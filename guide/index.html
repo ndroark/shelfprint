@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shelfprint guide: the spreadsheet, the page, and My Year in Books</title>
+<meta name="description" content="How to use Shelfprint: the Shelfprint Tracker spreadsheet and its columns, loading your reading log, monthly wrap-ups, image cards, My Year in Books, privacy settings, and hosting your own copy.">
+<link rel="canonical" href="https://shelfprint.org/guide/">
+<link rel="icon" type="image/x-icon" href="../favicon.ico">
+<link rel="icon" type="image/png" sizes="192x192" href="../favicon.png">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Shelfprint">
+<meta property="og:title" content="Shelfprint guide">
+<meta property="og:description" content="The Shelfprint Tracker spreadsheet, the Shelfprint page, image cards, monthly wrap-ups, and My Year in Books, explained.">
+<meta property="og:url" content="https://shelfprint.org/guide/">
+<meta property="og:image" content="https://shelfprint.org/site/social-preview.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" href="../site/newsreader-latin.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face {
+  font-family: "Newsreader";
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url("../site/newsreader-latin.woff2") format("woff2");
+}
+:root {
+  color-scheme: light dark;
+  --page: #f6f4ef;
+  --surface-2: #f0efec;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --border: rgba(11, 11, 11, 0.12);
+  --accent: #8a3b1f;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #0d0d0d;
+    --surface-2: #242422;
+    --text-primary: #f0efec;
+    --text-secondary: #c3c2b7;
+    --border: rgba(255, 255, 255, 0.12);
+    --accent: #e39a76;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 17px;
+  line-height: 1.6;
+}
+img { max-width: 100%; height: auto; }
+a { color: var(--accent); text-underline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+h1, h2, h3, .wordmark {
+  font-family: "Newsreader", Georgia, "Times New Roman", serif;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 0; }
+.wordmark { font-size: 22px; color: var(--text-primary); text-decoration: none; }
+.top nav { display: flex; gap: 22px; font-size: 15px; }
+.top nav a { color: var(--text-secondary); text-decoration: none; }
+.top nav a:hover { color: var(--text-primary); text-decoration: underline; }
+main { max-width: 780px; padding: 24px 0 64px; }
+h1 { font-size: clamp(38px, 5.4vw, 56px); margin: 0 0 20px; }
+h2 { font-size: 32px; margin: 56px 0 14px; scroll-margin-top: 16px; }
+h3 { font-size: 23px; margin: 36px 0 10px; scroll-margin-top: 16px; }
+hr { border: 0; border-top: 1px solid var(--border); margin: 44px 0; }
+li { margin: 6px 0; }
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.88em; background: var(--surface-2); padding: 0.1em 0.35em; border-radius: 4px;
+}
+pre { background: var(--surface-2); padding: 16px; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; padding: 0; font-size: 14px; }
+.table { overflow-x: auto; margin: 18px 0; }
+table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 15px; line-height: 1.45; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--border); }
+th { font-weight: 600; white-space: nowrap; }
+footer { border-top: 1px solid var(--border); padding: 32px 0 56px; color: var(--text-secondary); font-size: 15px; }
+@media (max-width: 820px) { body { font-size: 16px; } h2 { font-size: 28px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <a class="wordmark" href="../">Shelfprint</a>
+  <nav aria-label="Site">
+    <a href="../app/">Open Shelfprint</a>
+    <a href="https://github.com/ndroark/shelfprint">GitHub</a>
+  </nav>
+</header>
+<main>
+<h1>Shelfprint guide</h1>
+<p><strong>Track once. Share anywhere.</strong></p>
+<p>Keep your reading in your own spreadsheet. Explore it with charts and cover galleries. Then turn it into images to share with the friends and communities you already have: a card for one book, a monthly wrap-up, or your year in books. No account required, and no Shelfprint server: your file stays in your browser.</p>
+<p><a href="https://www.youtube.com/watch?v=Nkw-VlY7GYw"><img src="../docs/shelfprint-intro-thumbnail.jpg" alt="Watch the 1½-minute Shelfprint introduction on YouTube"></a></p>
+<p><em><a href="https://www.youtube.com/watch?v=Nkw-VlY7GYw">Watch the introduction on YouTube</a> (1:34).</em></p>
+<p>I spent a year closely cataloging my reading in a spreadsheet, adding new fields and finding new questions I wanted the data to answer. Eventually, the visualizations I wanted exceeded what I could comfortably build in Excel, so I began experimenting with HTML.</p>
+<p>I wanted to keep the spreadsheet experience for entering and managing books, without depending on an external reading platform. I also wanted to share my reading with friends and communities, including people who don&#39;t use reading apps themselves. Shelfprint grew out of those experiments.</p>
+<p>Two pieces work together to make your own shelfprint:</p>
+<ul>
+<li><strong>Shelfprint Tracker</strong>, a spreadsheet template for Google Sheets, Excel, or LibreOffice Calc, where you log your books.</li>
+<li><strong>The Shelfprint page</strong>, a single web page that reads an export of that spreadsheet and turns it into monthly wrap-ups, a full-year dashboard, image cards for single books, share images, and <strong>My Year in Books</strong>, a set of year-end images you can download, copy, save, and post.</li>
+</ul>
+<p>Plenty of sites will make a year-end recap from your reading. They decide what goes in it, using rules you can&#39;t see, from data they keep. Shelfprint works the other way around. Your log stays in your own spreadsheet. The page reads it in your browser and keeps it there. Every image in My Year in Books comes with a note on precisely what it counted and how, and you choose which images to include, which books to feature, and what order they go in.</p>
+<p>No server, and no Goodreads, Kindle, or Amazon. Use whichever spreadsheet program you like.</p>
+<p><strong>Make something of your reading.</strong></p>
+<hr>
+<h2 id="contents">Contents</h2>
+<ul>
+<li><a href="#quick-start">Quick start</a></li>
+<li><a href="#whats-included">What&#39;s included</a></li>
+<li><a href="#the-spreadsheet">The spreadsheet</a><ul>
+<li><a href="#the-minimum-you-need">The minimum you need</a></li>
+<li><a href="#how-books-are-placed-in-a-year-and-a-month">How books are placed in a year and a month</a></li>
+<li><a href="#tabs">Tabs</a></li>
+<li><a href="#reading-log-columns">Reading Log columns</a></li>
+<li><a href="#the-rating-matrix">The rating matrix</a></li>
+<li><a href="#the-checks-tab">The Checks tab</a></li>
+<li><a href="#capacity">Capacity</a></li>
+<li><a href="#using-excel-instead-of-google-sheets">Using Excel instead of Google Sheets</a></li>
+<li><a href="#using-libreoffice-calc">Using LibreOffice Calc</a></li>
+</ul>
+</li>
+<li><a href="#the-page">The page</a><ul>
+<li><a href="#loading-your-log">Loading your log</a></li>
+<li><a href="#year-and-month-views">Year and month views</a></li>
+<li><a href="#manga-and-comics">Manga and comics</a></li>
+<li><a href="#check-your-sheet">&quot;Check your sheet&quot;</a></li>
+<li><a href="#covers">Covers</a></li>
+<li><a href="#share-images">Share images</a></li>
+<li><a href="#image-cards-for-one-book">Image cards for one book</a></li>
+</ul>
+</li>
+<li><a href="#my-year-in-books">My Year in Books</a></li>
+<li><a href="#privacy-and-outside-connections">Privacy and outside connections</a></li>
+<li><a href="#whats-saved-in-your-browser">What&#39;s saved in your browser</a></li>
+<li><a href="#hosting-your-own-copy">Hosting your own copy</a></li>
+<li><a href="#versions-and-what-stays-stable">Versions and what stays stable</a></li>
+<li><a href="#troubleshooting">Troubleshooting</a></li>
+<li><a href="#known-limits">Known limits</a></li>
+<li><a href="#license">License</a></li>
+<li><a href="#credits">Credits</a></li>
+</ul>
+<hr>
+<h2 id="quick-start">Quick start</h2>
+<ol>
+<li><strong>Make a copy of the template.</strong> Open the <a href="https://docs.google.com/spreadsheets/d/1dd7IoW6CZ1FUxA6jXaDFAfBWa-cRUX_9D34pGI1SGjk/copy">Shelfprint Tracker template</a> in Google Sheets and choose <strong>Make a copy</strong>. It goes into your own Google Drive.</li>
+<li><strong>Log your books</strong> on the <strong>Reading Log</strong> tab. Only <strong>Title</strong> and <strong>End date</strong> are required. No End date? Use <strong>Month read</strong> plus <strong>Year read</strong>. Row 3 is an example; type over it or clear it.</li>
+<li><strong>Download the Reading Log as a CSV file.</strong> Open the Reading Log tab, then <strong>File → Download → Comma-separated values (.csv)</strong>.</li>
+<li><strong>Open the Shelfprint page</strong> at <strong><a href="https://shelfprint.org/app">shelfprint.org/app</a></strong>, and drop the CSV onto it or click <strong>Choose a file…</strong>.</li>
+<li><strong>Bookmark the page.</strong> It keeps your log in this browser, so your books are there the next time you open it. To update, download a fresh CSV and use <strong>Load new export…</strong> at the top of the page.</li>
+</ol>
+<p>Just want to see what it does? On the first screen, click <strong>try it with sample books</strong>. The samples are public-domain classics with an invented reader&#39;s ratings and notes. Nothing is saved.</p>
+<p><strong>Other ways to use Shelfprint:</strong></p>
+<ul>
+<li><strong>Skip the download each time.</strong> Publish the Reading Log tab as a CSV link, and the page loads your latest data whenever it opens. Anyone with that link can read the whole tab, including columns such as Recommended by. See <a href="#loading-your-log">Loading your log</a>.</li>
+<li><strong>Excel or LibreOffice Calc</strong> instead of Google Sheets: download <code>Shelfprint_Tracker.xlsx</code> or <code>Shelfprint_Tracker.ods</code> from this repository. See <a href="#using-excel-instead-of-google-sheets">Using Excel instead of Google Sheets</a> and <a href="#using-libreoffice-calc">Using LibreOffice Calc</a>.</li>
+<li><strong>Open the page from your own computer.</strong> Download <code>shelfprint.html</code> and open it in your browser. It works the same way, though <strong>Copy image</strong> and phone sharing work best from the website.</li>
+<li><strong>Host your own copy</strong>, with your own starting settings. See <a href="#hosting-your-own-copy">Hosting your own copy</a>.</li>
+</ul>
+<hr>
+<h2 id="whats-included">What&#39;s included</h2>
+<div class="table"><table>
+<thead>
+<tr>
+<th>File</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>shelfprint.html</code></td>
+<td>The whole Shelfprint page in one file: no install, no build step. Open it locally, or host it anywhere that serves static files.</td>
+</tr>
+<tr>
+<td><code>Shelfprint_Tracker.xlsx</code></td>
+<td>The Shelfprint Tracker template for Excel (Microsoft 365 or Excel 2019 and later).</td>
+</tr>
+<tr>
+<td><code>Shelfprint_Tracker.ods</code></td>
+<td>The OpenDocument version of the tracker for LibreOffice Calc. Major spreadsheet functions and CSV import into Shelfprint have been tested.</td>
+</tr>
+<tr>
+<td><a href="https://docs.google.com/spreadsheets/d/1dd7IoW6CZ1FUxA6jXaDFAfBWa-cRUX_9D34pGI1SGjk/copy">Google Sheets template</a></td>
+<td>The same template for Google Sheets. The link makes a copy in your own Google Drive.</td>
+</tr>
+<tr>
+<td><code>index.html</code></td>
+<td>The front page at <a href="https://shelfprint.org">shelfprint.org</a>: what Shelfprint is, with links to the page and the templates.</td>
+</tr>
+<tr>
+<td><code>app/index.html</code></td>
+<td>Sends visitors from <a href="https://shelfprint.org/app">shelfprint.org/app</a> to <code>shelfprint.html</code>.</td>
+</tr>
+<tr>
+<td><code>site/</code></td>
+<td>Images and the typeface file for the front page.</td>
+</tr>
+<tr>
+<td><code>guide/index.html</code></td>
+<td>This guide as a web page, at <a href="https://shelfprint.org/guide/">shelfprint.org/guide</a>. It&#39;s built from this file by <code>tests/guide.js</code>; don&#39;t edit it by hand.</td>
+</tr>
+<tr>
+<td><code>sitemap.xml</code>, <code>robots.txt</code></td>
+<td>Tell search engines which pages shelfprint.org has.</td>
+</tr>
+<tr>
+<td><code>CNAME</code></td>
+<td>Tells GitHub Pages that this copy is served at shelfprint.org.</td>
+</tr>
+<tr>
+<td><code>README.md</code></td>
+<td>This file.</td>
+</tr>
+<tr>
+<td><code>CHANGELOG.md</code></td>
+<td>What changed in each version.</td>
+</tr>
+<tr>
+<td><code>LICENSE</code></td>
+<td>The MIT License.</td>
+</tr>
+<tr>
+<td><code>tests/</code></td>
+<td>Checks for people changing the page&#39;s code. Not needed to use Shelfprint. See <a href="https://github.com/ndroark/shelfprint/blob/main/tests/README.md">tests/README.md</a>.</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2 id="the-spreadsheet">The spreadsheet</h2>
+<h3 id="the-minimum-you-need">The minimum you need</h3>
+<p>Every finished or DNF book needs a <strong>Title</strong> and one of these:</p>
+<ul>
+<li>an <strong>End date</strong>, or</li>
+<li>a <strong>Month read</strong> plus a four-digit <strong>Year read</strong>.</li>
+</ul>
+<p>That&#39;s all. Every other column is optional. Leave a column blank, and the page skips the sections that need it. A reader who tracks only titles and dates still gets a complete, shorter wrap-up. Tracking more (ratings, formats, genres, and tags) adds more charts and images.</p>
+<h3 id="how-books-are-placed-in-a-year-and-a-month">How books are placed in a year and a month</h3>
+<p>The spreadsheet and the page use the same rules, so the counts in your sheet and on the page agree.</p>
+<p><strong>Year</strong>, for books marked Finished or DNF:</p>
+<ol>
+<li>The year of the <strong>End date</strong>.<ul>
+<li>One exception: if <strong>Month read</strong> is December and the End date is in early January, the book stays in December&#39;s year. A book you finished just after New Year can still count toward the year you mostly read it in.</li>
+</ul>
+</li>
+<li>Otherwise, <strong>Year read</strong>, if it&#39;s a whole four-digit year.</li>
+<li>Otherwise, the book has <strong>no year</strong>. It isn&#39;t counted in any year, and both the Checks tab and the page tell you about it. Neither ever guesses a year.</li>
+</ol>
+<p><strong>Month:</strong> <strong>Month read</strong> when it&#39;s filled in, otherwise the month of the End date. A Month read one month before the End date is treated as normal (a book that straddles two months). Larger differences are flagged as advisories, and Month read still wins.</p>
+<p><strong>Reading</strong> and <strong>Paused</strong> books don&#39;t belong to a finishing year. The page shows them under <strong>Currently reading</strong>, which covers all years.</p>
+<p>If both an End date and a Year read are present and they disagree, the End date wins, and the disagreement is flagged.</p>
+<h3 id="tabs">Tabs</h3>
+<div class="table"><table>
+<thead>
+<tr>
+<th>Tab</th>
+<th>What it&#39;s for</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Reading Log</strong></td>
+<td>One row per book you read, are reading, or set aside. The page reads this tab.</td>
+</tr>
+<tr>
+<td><strong>TBR</strong></td>
+<td>Books you want to read: where you heard about them, library holds, and wait times. The strip at the top counts holds and how long the oldest book has waited. When you start a book, tick <strong>Started?</strong> and keep the row. The Reading Log looks up where you heard about it, if you have entered that data.</td>
+</tr>
+<tr>
+<td><strong>Series</strong></td>
+<td>One row per series. Read this year, Last read #, Next up #, Left to read, and Next access fill themselves in from the Reading Log and TBR.</td>
+</tr>
+<tr>
+<td><strong>Fields</strong></td>
+<td>A guide to every column: what to enter, an example, and what it&#39;s used for in Shelfprint.</td>
+</tr>
+<tr>
+<td><strong>Lists</strong></td>
+<td>The choices behind every dropdown (genres, formats, statuses, sources, and so on). Add your own at the bottom of any list.</td>
+</tr>
+<tr>
+<td><strong>Settings</strong></td>
+<td><strong>Reading year</strong>, which only sets the year counted in the Series tab&#39;s <em>Read this year</em> column. It doesn&#39;t decide which year a book belongs to.</td>
+</tr>
+<tr>
+<td><strong>Checks</strong></td>
+<td>Data checks that update as you type. See <a href="#the-checks-tab">The Checks tab</a>.</td>
+</tr>
+<tr>
+<td><strong>Found covers</strong></td>
+<td>Optional. Covers the page looked up, pasted back into your sheet so they stay with your data. See <a href="#covers">Covers</a>.</td>
+</tr>
+<tr>
+<td><code>_ChecksData</code> (hidden)</td>
+<td>Helper calculations for the Checks, Series, and Reading Log tabs. Don&#39;t edit or delete it.</td>
+</tr>
+</tbody></table></div>
+<p>Gray (calculated) columns fill themselves in. Don&#39;t type in them.</p>
+<h3 id="reading-log-columns">Reading Log columns</h3>
+<p>The <strong>Fields</strong> tab describes every column in detail. In order:</p>
+<div class="table"><table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Columns</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Core data</strong></td>
+<td>Title, Author, Status</td>
+</tr>
+<tr>
+<td><strong>When you read it</strong></td>
+<td>Start date, End date, Month read, Year read</td>
+</tr>
+<tr>
+<td><strong>About the book</strong></td>
+<td>New-to-me author?, Genre, Sub-genre(s)</td>
+</tr>
+<tr>
+<td><strong>Rating matrix</strong></td>
+<td>Character pressure, Style &amp; Voice, Conceptual Charge, Structure &amp; Form, Affective Afterlife, Matrix Average <em>(calculated)</em></td>
+</tr>
+<tr>
+<td><strong>Simple rating</strong></td>
+<td>Rating</td>
+</tr>
+<tr>
+<td><strong>Additional data</strong></td>
+<td>Series, Series #, Publication year, Audience, Form, Format, Page count, Word count, Audio length, Listening speed</td>
+</tr>
+<tr>
+<td><strong>Reading data</strong></td>
+<td>Days to read, Percent at DNF?, Reread?, Source, How I found it, Recommended by, Publisher, Imprint, Original title, Original language, Language read, Author gender, Bipoc author?, Tags, Narrative perspective, Freeform thoughts, Translator, Narrator, Illustrator / artist</td>
+</tr>
+<tr>
+<td><strong>Identifiers</strong></td>
+<td>ISBN, Cover URL, Found cover <em>(calculated)</em>, Record ID</td>
+</tr>
+</tbody></table></div>
+<p>A few columns worth knowing about:</p>
+<ul>
+<li><strong>Author:</strong> &quot;Last, First&quot; or &quot;First Last&quot; both work. Separate co-authors with a semicolon.</li>
+<li><strong>Rating and matrix scores:</strong> any number from 0.5 to 5, in whatever steps you like (3.75 is fine).</li>
+<li><strong>Audio length:</strong> hours:minutes, such as <code>10:30</code>. <strong>Listening speed:</strong> a decimal such as <code>1.5</code>; blank means 1×. The page reports both total audio length and actual listening time.</li>
+<li><strong>Form:</strong> how the book is told: Prose, Verse, Short stories, Graphic novel, Manga, Manhwa, Manhua, Webtoon, or Comics. Add your own on the Lists tab. See <a href="#manga-and-comics">Manga and comics</a> for what the page does with it. <strong>Audience:</strong> who the book was published for, such as Adult, Young adult, Shonen, or Josei.</li>
+<li><strong>Tags and Sub-genre(s):</strong> comma-separated, all in one cell. Reuse the same wording each time (&quot;Grief&quot;, not &quot;Grieving&quot;) so they count together. The Checks tab catches tags that differ only by capital letters or a final s.</li>
+<li><strong>How I found it / Recommended by:</strong> fill themselves in from the TBR tab when the title matches there. Type over them for books that weren&#39;t on your TBR.</li>
+<li><strong>Cover URL:</strong> a link to a cover image you chose. It always wins over looked-up covers.</li>
+<li><strong>Record ID:</strong> optional. A code for the row that never changes, such as <code>2026-001</code>. Use it when you log two editions of the same title, or a reread, and want each row to keep its own cover. Don&#39;t reuse an ID.</li>
+</ul>
+<p>The page finds columns <strong>by their header names</strong>, not their positions. You can reorder columns, and other spreadsheets work too, as long as the headers match. A few alternative headers are also recognized, such as &quot;Date finished&quot; for End date or &quot;Pages&quot; for Page count.</p>
+<h3 id="the-rating-matrix">The rating matrix</h3>
+<p>The five matrix categories are a suggestion. You can rename them, and you can add or remove categories, as long as all the score columns sit <strong>directly to the left of Matrix Average</strong>:</p>
+<ul>
+<li>The page uses up to eight matrix columns and shows whatever names you give them.</li>
+<li><strong>Matrix Average</strong> is calculated only when every score in the row is filled in. One blank score means no average, never a misleading partial one.</li>
+<li>Scores outside 0.5–5 are left out, and the page reports them.</li>
+</ul>
+<h3 id="the-checks-tab">The Checks tab</h3>
+<p>The Checks tab lists problems the page would trip over, with a count, a severity, the rows involved, and how to fix each one.</p>
+<ul>
+<li><strong>Errors</strong> stop a book from appearing correctly in Shelfprint:<ul>
+<li>books that can&#39;t be placed in a month</li>
+<li>a Month read with no year</li>
+<li>an End date and Year read that disagree</li>
+<li>a Status not on the list</li>
+<li>Record IDs used more than once</li>
+</ul>
+</li>
+<li><strong>Advisories</strong> are worth a look but won&#39;t break anything:<ul>
+<li>a Month read that doesn&#39;t match the End date</li>
+<li>finished books missing a rating</li>
+<li>a partly filled matrix</li>
+<li>titles logged twice without Reread? ticked</li>
+<li>repeated titles without Record IDs</li>
+<li>series names missing from the Series tab</li>
+<li>tag and author spelling variants</li>
+<li>TBR books not ticked Started?</li>
+<li>values that aren&#39;t on their dropdown lists</li>
+</ul>
+</li>
+</ul>
+<p>A count of <strong>0</strong> means the check passed. <strong>Check failed</strong> means a helper formula broke, usually because the hidden <code>_ChecksData</code> tab was edited. The check never shows a reassuring 0 when it couldn&#39;t run.</p>
+<h3 id="capacity">Capacity</h3>
+<p>The Reading Log supports rows <strong>3 to 1000</strong>, which is about 998 books. The TBR supports rows 4 to 1001. Dropdowns, validation, and every check cover those full ranges.</p>
+<p>You can keep several years in one sheet. At 100–150 books a year, that&#39;s six years or more. Each book&#39;s year comes from its own dates, so years never mix. In testing, a sheet with all 998 rows filled recalculated in well under a second after a normal edit. Rows beyond 1000 get no dropdowns or checks.</p>
+<h3 id="using-excel-instead-of-google-sheets">Using Excel instead of Google Sheets</h3>
+<p>The Excel template has the same tabs, formulas, dropdowns, and checks as the Google Sheets version.</p>
+<ul>
+<li><strong>Requires Microsoft 365 or Excel 2019 or later.</strong> The checks use TEXTJOIN, MAXIFS, and MINIFS, which older versions show as <code>#NAME?</code>.</li>
+<li><strong>To export:</strong> select the <strong>Reading Log</strong> tab, then <strong>File → Save a Copy</strong> (or <strong>Save As</strong>) <strong>→ CSV UTF-8 (Comma delimited)</strong>. Excel saves only the active tab, so make sure Reading Log is the one selected.</li>
+<li>LibreOffice Calc also opens the template and calculates it correctly.</li>
+</ul>
+<h3 id="using-libreoffice-calc">Using LibreOffice Calc</h3>
+<p>The repository also includes <code>Shelfprint_Tracker.ods</code>, an OpenDocument Spreadsheet version of the tracker for LibreOffice Calc. It does not require Excel or a Google account.</p>
+<p>The major spreadsheet functions have been checked in LibreOffice Calc, and a CSV exported from the tracker has been successfully imported into the Shelfprint page. This was a practical compatibility check, not an exhaustive test of every formula, validation rule, or edge case.</p>
+<p><strong>To export:</strong> select the <strong>Reading Log</strong> tab, choose <strong>File → Save As</strong>, select <strong>Text CSV (.csv)</strong> as the file type, and confirm that you&#39;re exporting only the current sheet. Keep UTF-8 and comma-separated fields when prompted. Load the resulting CSV into <code>shelfprint.html</code>.</p>
+<hr>
+<h2 id="the-page">The page</h2>
+<h3 id="loading-your-log">Loading your log</h3>
+<p>Drop a CSV onto the page, or click <strong>Choose a file…</strong>. The file is read in your browser and kept in that browser, so the page shows the same data next time you open it. To update, export again, and use <strong>Load new export…</strong> at the top of the page. This is the default, and the most private way: your log goes only where you put it.</p>
+<p><strong>Optional: load straight from a published sheet.</strong> In Google Sheets you can publish the Reading Log tab as a CSV (<strong>File → Share → Publish to web</strong>, then choose the Reading Log tab and CSV) and paste that link into the page&#39;s <strong>Settings</strong>. The page then loads your latest data each time it opens. Publishing makes the whole tab readable by anyone with the link, including personal columns such as Source, How I found it, and Recommended by, so share the link with care. If the link can&#39;t be reached, the page shows the copy saved in your browser with a <strong>Not up to date</strong> notice, rather than presenting old data as current.</p>
+<h3 id="year-and-month-views">Year and month views</h3>
+<p>The bar at the top switches between the year and each month, with the number of books finished in each. Month pages also have links back to the year and to the months on either side.</p>
+<ul>
+<li><strong>Year view:</strong> headline numbers (books, hours of audio, pages, average rating, new-to-you authors, busiest month, and pace), then:<ul>
+<li>books finished each month</li>
+<li>your top-rated books</li>
+<li>genre, format, and rating breakdowns</li>
+<li>form and audience breakdowns, when your books have more than one of either</li>
+<li>who you read</li>
+<li>series progress</li>
+<li>books you set aside (DNF)</li>
+<li>your currently reading list</li>
+<li>if you use the matrix: matrix charts, including <em>Gut vs. rubric</em></li>
+</ul>
+</li>
+<li><strong>Month view:</strong> the month&#39;s shelf, ranked by your rating, with the same kinds of breakdowns for that month.</li>
+<li><strong>Book details:</strong> click any cover to see everything you logged about that book, choose its cover, and pick it for My Year in Books. With a book open, Left and Right move to the previous or next book in the same list. In the year&#39;s month-by-month strips, Up and Down move to the first book of the month before or after. In the table, the arrow keys move through the rows.</li>
+<li><strong>Find a book:</strong> in the year view, type part of a title or author in <strong>Find a book in [year]</strong> to open that book&#39;s details. Finding a book doesn&#39;t filter the page or change any numbers.</li>
+<li><strong>Filters:</strong> click a bar, a tag, an author, and so on to show only matching books. <strong>Clear filter</strong>, or your browser&#39;s back button, undoes it. In a month, <strong>Show all of [year]</strong> keeps the filter and opens the year view.</li>
+<li><strong>Table:</strong> every view ends with a collapsible table of its books.</li>
+</ul>
+<p>If your file covers more than one year, a year picker appears next to the year.</p>
+<h3 id="manga-and-comics">Manga and comics</h3>
+<p>Books whose <strong>Form</strong> is Manga, Manhwa, Manhua, Webtoon, Graphic novel, Graphic memoir, Graphic nonfiction, or Comics count like every other book: in books finished, pages read, ratings, and everything else. When a month or year includes some, the page adds detail about them, and takes nothing out of the totals:</p>
+<ul>
+<li><strong>A tile of their own</strong> in the headline numbers, such as &quot;12 manga and comics,&quot; with a count for each form. The tile uses the name that fits what you read: &quot;manga&quot; when that&#39;s all there is, &quot;graphic novels&quot; likewise, and &quot;manga and comics&quot; for a mix.</li>
+<li><strong>Pages read</strong> stays the full total, and its note adds how many of those pages were manga and comics.</li>
+<li><strong>Days per book</strong> stays the median for all books, and its note adds the median for manga and comics beside the median for other books.</li>
+<li><strong>Series</strong> made up of manga or comics are counted in volumes (&quot;vols. 1–5&quot;). For any series, a dash joins only numbers that follow one another, so volumes 1, 3, and 5 read &quot;vols. 1, 3, 5&quot; and never suggest you read the ones between.</li>
+</ul>
+<p>In images, they count in the same way, and get a few additions of their own:</p>
+<ul>
+<li><strong>Share images</strong> offer an <strong>Include manga and comics</strong> checkbox (named for what&#39;s there, such as &quot;Include 2 manga&quot;) when some of the books are. It starts ticked. Untick it to leave them off that image: its stats line and other counts then cover only the books shown. Your page and your sheet don&#39;t change, and the checkbox is ticked again the next time you open the dialog. A month of nothing but manga and comics has no checkbox, since leaving them off would leave nothing.</li>
+<li><strong>Genre shelves</strong> in My Year in Books can include <strong>Form</strong> values, such as Manga, alongside genres and sub-genres. They&#39;re listed in a group of their own, headed Form. Nothing is added for you: a manga shelf exists only if you make one.</li>
+<li><strong>Book cards</strong> can show <strong>Art by</strong> under the author, from the <strong>Illustrator / artist</strong> column, when it names someone other than the author. Names match however they&#39;re written, so &quot;Sato, Ren&quot; and &quot;Ren Sato&quot; are one person. It&#39;s one of the <strong>Include</strong> choices, on to start with and remembered like the others.</li>
+</ul>
+<p>A month or year without any looks exactly as it did before, and so does a log that doesn&#39;t use the Form column. A month of nothing but one form (all manga, say) doesn&#39;t get the extra tile. Instead, the books finished tile says &quot;all manga,&quot; and the pages note says &quot;all in manga.&quot;</p>
+<p>Capital letters and a final s don&#39;t matter (&quot;graphic novels&quot; and &quot;mangas&quot; both work), and &quot;Comic book&quot; and &quot;Webcomic&quot; are recognized too. Each form keeps its own name: a graphic memoir is counted as a graphic memoir, not as a graphic novel. A book with no Form, or a Form the page doesn&#39;t know, is never assumed to be prose or comics. It shows under its own name, or as &quot;not recorded,&quot; in the Form chart. If you copied the template before version 1.1, add <strong>Webtoon</strong> and <strong>Manhua</strong> to the Form list on your Lists tab if you want them in the dropdown.</p>
+<p>Verse and short stories aren&#39;t part of this. They show in the Form chart like any other form.</p>
+<h3 id="check-your-sheet">&quot;Check your sheet&quot;</h3>
+<p>After each load, the page lists anything it couldn&#39;t settle, with a <strong>Show which</strong> list:</p>
+<ul>
+<li>books with no year</li>
+<li>Year read values that aren&#39;t a four-digit year</li>
+<li>End dates that disagree with Year read</li>
+<li>Month read values that don&#39;t match the End date</li>
+<li>duplicate Record IDs</li>
+<li>matrix scores outside 0.5–5</li>
+</ul>
+<p>Nothing drops out of the counts without a mention.</p>
+<h3 id="covers">Covers</h3>
+<p>Each book&#39;s cover comes from the first of these that has one:</p>
+<ol>
+<li><strong>A cover you chose on the page.</strong> In a book&#39;s details, paste a link to any cover image under <strong>Choose your cover</strong>. It&#39;s saved in your browser. To keep it everywhere, click <strong>Copy link</strong>, and paste it into that book&#39;s <strong>Cover URL</strong> cell.</li>
+<li><strong>Cover URL</strong> from your sheet.</li>
+<li><strong>Found cover</strong> from your sheet (filled from the Found covers tab).</li>
+<li><strong>Cover lookup</strong>, if you turned it on: Open Library, then optionally Google Books for books Open Library can&#39;t find. A book&#39;s title is sent out only when the sheet has no cover for it.</li>
+<li>Otherwise, a <strong>title card</strong>: a colored card with the title and author. The book&#39;s details say so and link straight to the cover chooser.</li>
+</ol>
+<p><strong>Keeping looked-up covers in your sheet</strong> (optional): in <strong>Settings → Advanced: keep looked-up covers in your sheet</strong>, click <strong>Copy found covers</strong>, then paste at cell <strong>A2</strong> of the <strong>Found covers</strong> tab. The Found cover column then picks them up, matching by Record ID first and then by title. You can then turn cover lookup off and keep the covers.</p>
+<p><strong>Two editions of the same title?</strong> Give each row its own <strong>Record ID</strong>. Saved covers are keyed by Record ID when there is one, so each edition keeps its own. Rows without IDs that share a title and author also share a cover choice.</p>
+<h3 id="share-images">Share images</h3>
+<p>Month views have a <strong>Share image…</strong> button at the top of the page. In the year view, the same single image is available as <strong>One image</strong> inside <strong>Create My Year in Books</strong>.</p>
+<ul>
+<li><strong>Sizes:</strong> post (4:5), square, or story (9:16)</li>
+<li><strong>Look:</strong> Paper (light) or Ink (dark)</li>
+<li><strong>Year images:</strong> your top 10, top 20, or all books</li>
+<li><strong>Options:</strong> titles under covers, a stats line, rank numbers, your handle (optional and blank by default), and the word &quot;Shelfprint&quot; in small type (on by default; one choice shared with book cards)</li>
+<li><strong>Include manga and comics:</strong> only when some of the books are manga or comics. See <a href="#manga-and-comics">Manga and comics</a>.</li>
+</ul>
+<p><strong>Download PNG</strong>, <strong>Copy image</strong>, or on phones, <strong>Share…</strong>. The status line under the preview says how many covers made it in, and how many use a different image than the one you chose. Some image hosts don&#39;t allow their covers to be copied into an image. Those books show title cards, and the optional <strong>Share-image fallback</strong> in Settings can usually fix that.</p>
+<h3 id="image-cards-for-one-book">Image cards for one book</h3>
+<p>Open any book and click <strong>Create image card</strong> to make an image about that book. The book&#39;s details window is your record; the card is what you choose to show other people.</p>
+<ul>
+<li><strong>Layout:</strong> <strong>Standard</strong> (cover, title, and your words), <strong>Cover feature</strong> (a large cover, for books with no writing on the card), or <strong>Long-form</strong> (a numbered set of up to 10 cards for a long review). Cards with words start as Standard, and switch to Long-form when the text doesn&#39;t fit on one card; cards without words start as Cover feature. You can always switch.</li>
+<li><strong>Text to share:</strong> <strong>As written</strong> (your Freeform thoughts), <strong>Edit for card</strong>, or <strong>None</strong>. <strong>Edit for card</strong> lets you shorten, tighten, or rewrite the text for that card, at any length and in either layout, or paste in a passage to quote; your sheet isn&#39;t changed. <strong>Revert to Tracker text</strong> puts back what&#39;s in your sheet. For a book with no Freeform thoughts, the choice is <strong>Write for card</strong>. Either way, the card reminds you that the text is only on that card, with a <strong>Copy text</strong> button so you can paste it into your sheet to keep it. A line or two, like a quick one-line take, shows in large type.</li>
+<li><strong>Present as:</strong> <strong>Review</strong>, <strong>Quotation</strong>, or <strong>Mixed</strong>. The page starts from your quotation marks: text that&#39;s all in quotation marks is shown as a quotation, with a large quotation mark, the <strong>Quotation author</strong>, and the <strong>Source work</strong>. Those start as the book&#39;s author and title; change them if you&#39;re quoting someone else, such as another reviewer, or leave them blank. A quoted passage inside your own words is Mixed, which sets just the quoted part in italics. You can change it either way.</li>
+<li><strong>Include:</strong> art by (for manga and comics; see <a href="#manga-and-comics">Manga and comics</a>), rating, sub-genres and genre, when you read it, the new-author note, reread, matrix scores, format and length, and tags (you pick which). Only what the book has is offered. Matrix scores and tags don&#39;t fit in Cover feature, so they&#39;re greyed out there and come back when you switch. In Long-form they&#39;re on the last card. Sub-genres and Genre each show their values. A book with sub-genres starts with just those checked; one without starts with Genre. Check both to show both, such as &quot;Fiction · Historical fiction, Sapphic romance.&quot;</li>
+<li><strong>Personal details:</strong> Source, How I found it, and Recommended by can name people or places, so they&#39;re left off every card until you turn them on, one card at a time. They&#39;re never remembered.</li>
+<li><strong>Footer:</strong> your name or handle, if you want one, and the word &quot;Shelfprint&quot; in small type, which you can turn off.</li>
+</ul>
+<p>The new-author note reads &quot;First book I&#39;ve read by this author&quot; only for the earliest dated book marked new-to-me by that author; any others say &quot;New-to-me author.&quot;</p>
+<p>Nothing on a card is cut off to fit. Titles print whole, long words, links, and text without spaces wrap, quotation credits wrap, and tags wrap onto up to three rows. If something still doesn&#39;t fit at a readable size, the card says what and can&#39;t be saved until you change it, for example by choosing <strong>Edit for card</strong>, turning off some details or tags, or trying another size. If a cover&#39;s host won&#39;t let it into the image, you can use an image from your device or fetch that one cover through images.weserv.nl, for that card only. If the card could only use a different cover than the one you chose (for example, the Open Library cover still in your sheet&#39;s Found cover column), it says so and offers the same choices, or you can use the cover it found. Your saved cover choice doesn&#39;t change. Sizes, looks, and the choices under <strong>Include</strong> are remembered in this browser.</p>
+<p><strong>Long-form.</strong> The first card shows the book, and later cards repeat the title with &quot;Continued&quot; and a number, such as &quot;2 / 3.&quot; Breaks fall at the end of a paragraph where they can, otherwise between sentences. If that would leave one card with much less of your text than another, a break can fall inside a sentence instead, after a semicolon, colon, or dash. Only a passage too long for one card continues onto the next between words. Each way of dividing the text is measured as the cards will be drawn, with the cover and book details on the first card and the credit, matrix scores, and tags on the last; the most even set is used. Every card in the set uses the same type size: the largest from 36 to 46 px that needs no more cards than 36 px would, made smaller only to keep a sentence from breaking between words. Your text is never cut, repeated, or changed, and nothing is added to fill a card. Matrix scores, tags, and a quotation&#39;s credit are on the last card, with the end of the text. Click a thumbnail to see each card. <strong>Download all (ZIP)</strong> saves the set with names that sort in order, and <strong>Share</strong> sends the whole set.</p>
+<hr>
+<h2 id="my-year-in-books">My Year in Books</h2>
+<p>In the year view, click <strong>Create My Year in Books</strong> to make a set of images about your year, sized for an Instagram-style carousel: <strong>1080 × 1350 (4:5)</strong>, in Paper or Ink. Text on the images is in the first person, since they&#39;re yours to post.</p>
+<div class="table"><table>
+<thead>
+<tr>
+<th>Image</th>
+<th>Shows</th>
+<th>Appears when</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>The year</strong></td>
+<td>The year, books finished, and up to four measures (pages read, hours listened, books by new-to-me authors, and books in translation), with a row of covers</td>
+<td>You finished at least one book that year</td>
+</tr>
+<tr>
+<td><strong>My five-star reads</strong> / <strong>My top reads</strong> / <strong>My top picks</strong></td>
+<td>Every book at your highest rating, in reading order. If you&#39;ve picked books yourself, exactly those instead.</td>
+<td>Always. With no ratings or picks, it becomes <strong>From my shelf</strong>: books spread through the year, with no ranking.</td>
+</tr>
+<tr>
+<td><strong>Genre shelves</strong> <em>(optional, your own)</em></td>
+<td>The best of a genre you choose, such as Romantasy or Non-fiction</td>
+<td>You add them (see below)</td>
+</tr>
+<tr>
+<td><strong>Genres, sub-genres, and tags</strong></td>
+<td>Top genres with bars, plus the sub-genres and tags that came up on at least two books</td>
+<td>At least two genres, sub-genres, or tags repeat</td>
+</tr>
+<tr>
+<td><strong>Month by month</strong></td>
+<td>Books finished each month, naming the busiest month only when it clearly stands out</td>
+<td>At least six books across three or more months</td>
+</tr>
+<tr>
+<td><strong>Gut vs. rubric</strong></td>
+<td>Your average matrix scores, the book with the highest matrix average, and the book whose rating differs most from its matrix average</td>
+<td>At least five books with every matrix score</td>
+</tr>
+<tr>
+<td><strong>The whole shelf</strong></td>
+<td>Every book you finished, in reading order. Continues onto further images past 60 covers.</td>
+<td>Always</td>
+</tr>
+</tbody></table></div>
+<p><strong>How the top images choose books.</strong> There&#39;s no hidden ranking:</p>
+<ul>
+<li><strong>Without picks,</strong> the image shows every book at your top rating. If fewer than three books share it, the image widens in half-star steps, up to one star lower, and says so: &quot;Rated 4 and up&quot;. Matrix averages are never used to choose or order these books.</li>
+<li><strong>With picks,</strong> the image shows the books you picked, in the order you picked them. Ratings play no part.</li>
+<li><strong>To pick books</strong> (up to 10), use the checklist for that image in the My Year in Books panel, or <strong>Include in my top picks</strong> in any book&#39;s details.</li>
+</ul>
+<p><strong>Genre shelves.</strong> Click <strong>Add a shelf…</strong>, and tick one or more <strong>Genre</strong> or <strong>Sub-genre(s)</strong> values. When the year includes manga or comics, <strong>Form</strong> values are offered too, in a group of their own. A book goes on the shelf if it matches any of them, so &quot;Romantasy&quot; and &quot;Romantic fantasy&quot; can share one shelf, and so can &quot;Fantasy&quot; and &quot;Manga.&quot; You can give the shelf its own name. Each shelf follows the same rules as the top image, with its own separate picks.</p>
+<p><strong>You can see how every image was made.</strong> Open <strong>What … is based on</strong> under the list of images to see:</p>
+<ul>
+<li>the columns used and the rule applied</li>
+<li>any cut-offs</li>
+<li>any books left out, such as books with no year</li>
+</ul>
+<p><strong>Arranging the set.</strong> Use the checkboxes to include or leave out images, and the ↑ ↓ buttons to reorder them. Your choices, picks, and shelves are saved in your browser for each year.</p>
+<p><strong>Exporting:</strong></p>
+<ul>
+<li><strong>Download this image:</strong> one PNG.</li>
+<li><strong>Download all (ZIP):</strong> every image, numbered in order: <code>my-year-in-books-2026.zip</code>, containing <code>my-year-in-books-2026-01.png</code>, <code>-02.png</code>, and so on. The ZIP is made in your browser. A progress line counts the images as they&#39;re made.</li>
+<li><strong>On phones, Share all…</strong> makes the images first. Then tap <strong>Share 7 images</strong> (or however many there are) to open your share sheet. Phones only allow the share sheet right after a tap, so this is two steps.</li>
+</ul>
+<p>My Year in Books always covers the whole year. A filter on the page isn&#39;t applied to it.</p>
+<hr>
+<h2 id="privacy-and-outside-connections">Privacy and outside connections</h2>
+<p>Your reading log is read and kept in your browser. Shelfprint has no server, no account, no database, and no analytics, so there&#39;s nowhere for your log to be sent.</p>
+<p>A few optional features reach outside services to fetch images or fonts. Each one is listed under <strong>Privacy &amp; outside connections</strong> on the first screen and in <strong>Settings</strong>, with exactly what it sends. Anything that would send information about your books is <strong>off</strong> until you turn it on.</p>
+<div class="table"><table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Default</th>
+<th>What it sends, and to whom</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Use cover links from my sheet</strong></td>
+<td>On</td>
+<td>Loads only the image links in your sheet&#39;s Cover URL and Found cover columns, plus any link you paste on a book.</td>
+</tr>
+<tr>
+<td><strong>Look up covers</strong></td>
+<td>Off</td>
+<td>Each book&#39;s title, author, and ISBN, to <a href="https://openlibrary.org">Open Library</a>, the Internet Archive&#39;s nonprofit book catalog. Only for books without a cover in your sheet. Results are remembered in your browser.</td>
+</tr>
+<tr>
+<td><strong>Also try Google Books</strong></td>
+<td>Off</td>
+<td>For books Open Library can&#39;t find: the title and author, to Google Books.</td>
+</tr>
+<tr>
+<td><strong>Share-image fallback</strong></td>
+<td>Off</td>
+<td>When a cover&#39;s host won&#39;t let it be copied into a share image: that image&#39;s address, to <a href="https://images.weserv.nl">images.weserv.nl</a>.</td>
+</tr>
+<tr>
+<td><strong>Web font</strong></td>
+<td>On</td>
+<td>Loads the Newsreader typeface from Google Fonts. Sends nothing about your books. Off uses Georgia.</td>
+</tr>
+</tbody></table></div>
+<p>Turning a setting off stops those requests.</p>
+<hr>
+<h2 id="whats-saved-in-your-browser">What&#39;s saved in your browser</h2>
+<p>All of these live in your browser&#39;s local storage, on that device only. Nothing syncs between devices, and clearing your browser&#39;s site data removes them.</p>
+<ul>
+<li>The last CSV you loaded, its file name, and when it was saved</li>
+<li>Your Settings choices</li>
+<li>Covers you picked for individual books, and remembered cover-lookup results</li>
+<li>Your share-image handle</li>
+<li>Image card choices: size, look, what to include, and whether the &quot;Shelfprint&quot; credit shows. Personal details are never remembered.</li>
+<li>My Year in Books choices for each year: image order, images switched off, top picks, and genre shelves</li>
+</ul>
+<p>Your sheet is the permanent record. To keep a picked cover for good, copy its link into your sheet&#39;s Cover URL column. To keep looked-up covers, use <strong>Copy found covers</strong>.</p>
+<p><strong>Saved choices follow the book&#39;s Record ID, or its title and author.</strong> A picked cover, a top pick, or a place on a shelf is tied to the book&#39;s <strong>Record ID</strong> when the row has one, and otherwise to its title and author. If you change a title or author in your sheet, or add a Record ID to a row later, the page no longer matches those choices to that book. For a picked cover, it offers to carry the old choice over; picks and shelves need choosing again. If you expect to edit titles, give rows a Record ID when you log them, and don&#39;t change it.</p>
+<p><strong>Safari can clear saved data.</strong> Safari, on iPhone, iPad, and Mac, may delete what a site has saved, including the copy of your log and all of the choices above, if you use Safari for seven days without opening the page. Your sheet isn&#39;t affected: load your CSV again to bring your books back. Choices that live only in the browser, such as picks and picked covers, would need making again, so keep cover choices in your sheet&#39;s Cover URL column.</p>
+<hr>
+<h2 id="hosting-your-own-copy">Hosting your own copy</h2>
+<p><code>shelfprint.html</code> is a single self-contained file. You can:</p>
+<ul>
+<li>open it straight from your computer, or</li>
+<li>put it on any static host, such as <strong>GitHub Pages</strong>.</li>
+</ul>
+<p><strong>Copy image</strong> and phone sharing work most reliably when the page is served over https rather than opened as a local file.</p>
+<p><strong>If you copy the whole repository</strong> to host it, <code>shelfprint.html</code> is the only file you need. <code>index.html</code>, <code>app/</code>, <code>site/</code>, <code>guide/</code>, <code>sitemap.xml</code>, <code>robots.txt</code>, and <code>CNAME</code> belong to shelfprint.org: remove <code>CNAME</code>, or GitHub Pages will try to serve your copy at that address, and replace <code>index.html</code> with a page of your own or a link to <code>shelfprint.html</code>.</p>
+<p><strong>Defaults for your copy.</strong> The <code>SETTINGS</code> block at the top of the file sets the starting choices:</p>
+<pre><code class="language-js">const SETTINGS = {
+  handle: &quot;&quot;,               // optional default handle for share images
+  lockSettings: false,      // true = readers can see the connections but can&#39;t change them
+  coverUrls:   true,        // show Cover URL / Found cover images from the sheet
+  coverLookup: false,       // Open Library cover lookup
+  googleBooks: false,       // also try Google Books (only with coverLookup)
+  exportProxy: false,       // share-image fallback through images.weserv.nl
+  webFont:     true,        // Newsreader from Google Fonts
+  dataUrl:     &quot;&quot;           // optional published-CSV link to load on open
+};
+
+const TEMPLATE_URL = &quot;…&quot;;   // the &quot;Make a copy&quot; link shown on the welcome screen
+const SOURCE_URL = &quot;&quot;;      // &quot;Guide and source&quot; link on the welcome screen and in the footer; fills itself in
+</code></pre>
+<p>Readers can change these in <strong>Settings</strong>, saved in their own browser, unless <code>lockSettings</code> is <code>true</code>. That&#39;s useful when you set the page up for someone else, such as a library or a classroom, and want the connections fixed.</p>
+<hr>
+<h2 id="versions-and-what-stays-stable">Versions and what stays stable</h2>
+<p>Shelfprint uses <a href="https://semver.org">semantic versioning</a>. The version in use appears at the bottom of the page, and <a href="https://github.com/ndroark/shelfprint/blob/main/CHANGELOG.md">CHANGELOG.md</a> lists what changed in each one.</p>
+<p>From 1.0 on, three things stay stable through every 1.x version:</p>
+<ul>
+<li><strong>Your sheet.</strong> Every Reading Log column the page reads by name keeps being read under that name. New columns are optional, and if a column is ever renamed, its old name keeps working too. A sheet that works with 1.0 works with every 1.x version.</li>
+<li><strong>What&#39;s saved in your browser.</strong> Picked covers, top picks, genre shelves, My Year in Books choices, image card choices, Settings, and the saved copy of your log carry forward to each new 1.x version.</li>
+<li><strong>The <code>SETTINGS</code> block</strong>, for anyone hosting their own copy. Existing settings keep their names and meanings.</li>
+</ul>
+<p>How the pages and images look can keep improving within 1.x: layouts, card designs, wording, and new features. A change that would break one of the three promises above would be version 2.0, and the changelog would say what to do.</p>
+<hr>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<p><strong>A book isn&#39;t showing up in its year.</strong> Look at <strong>Check your sheet</strong> at the top of the page, or the <strong>Checks</strong> tab. A Finished or DNF book needs an End date, or a Month read plus a four-digit Year read.</p>
+<p><strong>Lots of books &quot;aren&#39;t in any year&quot; after updating.</strong> Earlier versions guessed a year for books with only a Month read. The current version doesn&#39;t. Fill in <strong>Year read</strong> for those rows. The Checks tab lists them under <em>Month read with no year</em>.</p>
+<p><strong>Covers are missing from the share image but show on the page.</strong> Some image hosts don&#39;t allow their images to be copied into a picture. Turn on <strong>Share-image fallback</strong> in Settings, or use a cover link from another host. Those books show title cards in the meantime.</p>
+<p><strong>&quot;Sharing didn&#39;t work here.&quot;</strong> Sharing needs a browser that supports it, and works best when the page is opened from a website (https) rather than a saved file. Use <strong>Download this image</strong>, <strong>Download all (ZIP)</strong>, or <strong>Download PNG</strong> instead.</p>
+<p><strong>A Checks count says &quot;Check failed.&quot;</strong> A helper formula returned an error, usually because the hidden <code>_ChecksData</code> tab was changed. Copy that tab from a fresh copy of the template.</p>
+<p><strong><code>#NAME?</code> in Excel.</strong> Your Excel version is older than 2019. Use Microsoft 365, Excel 2019 or later, Google Sheets, or LibreOffice.</p>
+<p><strong>Matrix Average is blank.</strong> Every matrix score in the row must be filled in.</p>
+<hr>
+<h2 id="known-limits">Known limits</h2>
+<ul>
+<li>The template supports about <strong>998 books</strong> per sheet (Reading Log rows 3–1000).</li>
+<li>My Year in Books images are <strong>4:5</strong> only. The single share image also offers square and story sizes.</li>
+<li>Picks, genre shelves, picked covers, and other choices are saved <strong>per browser</strong>. They don&#39;t move between devices, and Safari may clear them after seven days without a visit. See <a href="#whats-saved-in-your-browser">What&#39;s saved in your browser</a>.</li>
+<li>The Excel template needs <strong>Excel 2019 or Microsoft 365</strong>. A separately supplied <code>.ods</code> version is available for LibreOffice Calc; its major functions and CSV export/import workflow have been tested, but not every feature and edge case.</li>
+<li>Cover lookup depends on Open Library&#39;s (and optionally Google Books&#39;) catalog. New, indie, and self-published books are the most likely to need a Cover URL.</li>
+</ul>
+<hr>
+<h2 id="license">License</h2>
+<p>Shelfprint (the page, the spreadsheet template, and this README) is released under the <a href="https://github.com/ndroark/shelfprint/blob/main/LICENSE">MIT License</a>. You&#39;re free to use, change, and share it, including in your own projects, as long as you keep the copyright and license notice. The fingerprint icon is used under a separate purchased royalty-free license from The Noun Project. It is not included under Shelfprint&#39;s MIT License.</p>
+<hr>
+<h2 id="credits">Credits</h2>
+<ul>
+<li>Cover lookup: <a href="https://openlibrary.org">Open Library</a> (Internet Archive) and, optionally, <a href="https://books.google.com">Google Books</a></li>
+<li>Typeface: <a href="https://fonts.google.com/specimen/Newsreader">Newsreader</a> via Google Fonts. The front page at shelfprint.org serves its own copy of the font file, under the SIL Open Font License (<code>site/newsreader-LICENSE.txt</code>).</li>
+<li>Optional share-image fallback: <a href="https://images.weserv.nl">images.weserv.nl</a></li>
+<li>Fingerprint favicon: licensed from The Noun Project under a purchased royalty-free license; attribution is not required.</li>
+<li>Some formulas and most html generated by Claude Opus 5.5, reviewed by GPT 6.</li>
+</ul>
+<p>Shelfprint is made by NDSR.</p>
+</main>
+<footer>
+  <p>This guide is the project's <a href="https://github.com/ndroark/shelfprint#readme">README</a>, shown here for reading. <a href="../">Back to the front page</a>.</p>
+</footer>
+</div>
+</body>
+</html>
