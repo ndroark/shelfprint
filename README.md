@@ -143,6 +143,8 @@ If both an End date and a Year read are present and they disagree, the End date 
 
 Gray (calculated) columns fill themselves in. Don't type in them.
 
+To remove a book from the Reading Log or TBR, clear its row or delete the row. Either is fine.
+
 ### Reading Log columns
 
 The **Fields** tab describes every column in detail. In order:
@@ -200,7 +202,7 @@ The Checks tab lists problems the page would trip over, with a count, a severity
   - TBR books not ticked Started?
   - values that aren't on their dropdown lists
 
-A count of **0** means the check passed. **Check failed** means a helper formula broke, usually because the hidden `_ChecksData` tab was edited. The check never shows a reassuring 0 when it couldn't run.
+A count of **0** means the check passed. **Check failed** means a helper formula broke, and the check never shows a reassuring 0 when it couldn't run. In a copy of the template from before version 1.2.1, deleting a row from the Reading Log or TBR does this. Otherwise, the hidden `_ChecksData` tab was probably edited. See [Troubleshooting](#troubleshooting) for the fix.
 
 ### Capacity
 
@@ -469,7 +471,17 @@ How the pages and images look can keep improving within 1.x: layouts, card desig
 
 **"Sharing didn't work here."** Sharing needs a browser that supports it, and works best when the page is opened from a website (https) rather than a saved file. Use **Download this image**, **Download all (ZIP)**, or **Download PNG** instead.
 
-**A Checks count says "Check failed."** A helper formula returned an error, usually because the hidden `_ChecksData` tab was changed. Copy that tab from a fresh copy of the template.
+**A Checks count says "Check failed."** A helper formula returned an error. Your books aren't affected, and the page's own **Check your sheet** report still works.
+
+If your copy of the template is from before version 1.2.1, the usual cause is a row deleted from the Reading Log or TBR. (Clearing a row never caused it.) The Series tab's Read this year column may show errors too. If you only just deleted the row, undo it. Otherwise, repair your sheet from a fresh copy of the template:
+
+1. In both spreadsheets, show the hidden `_ChecksData` tab.
+2. Copy every cell of the fresh `_ChecksData` tab, and paste it at cell A1 of yours.
+3. Copy three calculated columns the same way, from row 3 down: **Read this year** and **Next access** on the Series tab, and **Found cover** on the Reading Log. Paste each at row 3 of the same column in your sheet.
+
+After that, deleting rows is safe. These steps assume you haven't added, removed, or moved columns on the Reading Log or TBR. If you have, the pasted formulas would read the wrong columns: move your books into a fresh copy of the template instead.
+
+In a newer copy, the hidden `_ChecksData` tab was probably changed. Paste it over from a fresh copy, as in steps 1 and 2.
 
 **`#NAME?` in Excel.** Your Excel version is older than 2019. Use Microsoft 365, Excel 2019 or later, Google Sheets, or LibreOffice.
 

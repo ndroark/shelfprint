@@ -4,6 +4,16 @@ What changed in each version of Shelfprint. The version in use appears at the bo
 
 Shelfprint uses [semantic versioning](https://semver.org): the middle number goes up for new features, and the last number for fixes.
 
+## 1.2.1 — 2026-11-14
+
+A fix to the spreadsheet template. The page is unchanged, and so are your saved choices and the `SETTINGS` block.
+
+### Fixed
+- **Deleting a row no longer breaks the Checks tab.** In earlier copies of the template, deleting a row from the Reading Log (the example row, say) made every Reading Log check read "Check failed" and put errors in the Series tab's Read this year column. Deleting a row from the TBR did the same to the TBR checks, and could make the Series tab's Next access show another book's entry. The helper formulas now look up each row by its position, so you can delete rows, or clear them, as you like. No columns changed.
+- The README said "Check failed" usually meant the hidden `_ChecksData` tab had been edited, and its fix didn't work for a deleted row. It now gives the likelier cause and steps that repair an existing sheet.
+
+If you copied the template before this version and have never deleted a row, nothing is wrong with your sheet. To make it safe to delete rows, follow the repair steps under "A Checks count says 'Check failed'" in the README's Troubleshooting.
+
 ## 1.2.0 — 2026-11-11
 
 Manga and comics in the images. They still count in every total, rating, and cover gallery. If your log has none, or doesn't use the Form column, nothing changes for you.
